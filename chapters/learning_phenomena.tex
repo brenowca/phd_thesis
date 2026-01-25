@@ -1,0 +1,228 @@
+\documentclass[../infufrgs/ppgc-tese.tex]{subfiles}
+\begin{document}
+
+\begin{flushright}
+\mbox{}%\vfill
+{\sffamily\itshape
+``Not all those who wander are lost.'' \\}
+--- \textsc{J.R.R.~Tolkien}
+\end{flushright}
+
+
+We highlight a few interesting learning phenomena. Also report different visualization methods that allow us to extract insights on important properties of those methods.
+
+Contribution: We use our specific methods, and also propose ours.
+
+
+\section{Grokking --- Late Generalization}
+The grokking phenomenon is a sudden improvement in model performance on unseen data after a period of seemingly stagnant learning, also known as late or delayed generalization. It was first detected in 2021, in the work of \cite{Grokking}. The subsequent literature attributed the phenomenon mostly to three main factors: data sparsity, large initialization values, and high regularization rates. Although the combination of these factors may indeed cause grokking in some situations, they cannot be said to be the cause or to provide a complete explanation of grokking.
+
+As illustrated in Figure \ref{fig:grokking-def}, grokking can be characterized by the transitioning from a low-performing region to a high-performing region as measured on the test set (curve $T_E$ in Fig.\ref{fig:grokking-def}) after the training set performance has converged ($T_R$ in Fig.\ref{fig:grokking-def}). The interval between the inflection points $\alpha_0$ (end of memorization phase) and $\alpha_1$ (start of generalization phase) signifies the transition phase, during which the test set performance gradually improves and aligns with the performance on the training set. 
+
+\begin{definition}
+[Grokking]\label{grokking-definition}    
+Let $\Delta_T$ denote an interval with lower bound $\sigma_E$ containing the limit value of a converging training set performance curve at time $\alpha_0$. Let $\sigma_S \ll \sigma_E$ denote an upper bound on the test set performance measured up to time point $\alpha_0$. We say that \textit{grokking} took place if at time point $\alpha_1$ > $\alpha_0$, the test set performance is within $\Delta_T$ and remains within $\Delta_T$ for an interval $S \gg (\alpha_1 - \alpha_0)$.
+\end{definition}
+
+
+Understanding intriguing learning phenomena such as grokking can provide valuable insights into the inner workings of deep neural networks. Late generalization challenges traditional stopping criteria, which rely on monitoring training and test set losses. While it remains difficult to predict when late generalization might occur, this paper takes an important step forward by elucidating how distribution shifts contribute to grokking. Specifically, we explore how modeling class relationships can increase the probability of generalization and guide the design of alternative stopping criteria. These findings are expected to help identify conditions under which models are more likely to generalize after training convergence.  %TODO rewrite
+
+\subsection{Grokking: Visualization and metrics}
+
+Our study reveals that a specific type of distribution shift, caused by the sampling of data organized into classes and subclasses, can reliably produce late generalization. Unlike prior research, where grokking was observed sporadically, we demonstrate that grokking occurs systematically when certain subcategories or subpatterns in the data are under-represented. Our experiments suggest that a model’s ability to generalize to unseen data depends on subtle data interactions, which may emerge under weak training signals, leading to significant improvements in test performance --- even when performance on specific subcategories remains poor.
+
+The contributions of this paper are as follows:
+\begin{enumerate*}[label=(\roman*)]
+    \item We introduce two synthetic datasets based on class hierarchies, designed to serve as benchmarks for analyzing late generalization and grokking intensity; 
+    \item We replicate previous experiments and conduct new analyses, showing that grokking is more strongly associated with distribution shifts than with sparsity and regularization, as previously believed (\url{\repourl} scripts are provided for replication);
+    \item We conduct experiments on the MNIST dataset, where we induce distribution shifts via clustering of latent representations, examining the limits of our findings and providing a case study on the challenges of reproducing the phenomenon on complex real-world data;
+    \item We report results using both multilayer perceptrons and transformers, concluding that late generalization is largely architecture-independent. 
+\end{enumerate*}
+
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.7\linewidth]{figures/grokking_definition.pdf}
+    \caption{An illustration of the key terms used to define grokking. After training accuracy ($T_R$) converges, test accuracy ($T_E$) transitions from a low-performance plateau (ending at $\alpha_0$) to a high-performance one (starting at $\alpha_1$). We measure the grokking intensity by the performance gain, $\Delta_S$, and its stability by the support interval, $S$.}
+    \label{fig:grokking-def}
+\end{figure}
+
+However, if the evaluation loss decreases sharply at a later time, even after the training loss has approached zero, this indicates a capability to generalize, rather than memorization, given a very weak training signal that needs to be understood. 
+
+\subsection{Distribution-shift impact on equidistant subclasses}
+\begin{figure*}[!ht]
+    \centering
+    \begin{subfigure}[b]{\textwidth}
+         \centering
+         %\includegraphics[width=1.06cm]{figures/legend.pdf}
+         
+         \includegraphics[width=\textwidth]{figures/equidistant/result_eq_line-1.pdf}
+         \caption{Effect of dataset size on the equidistant dataset. Grokking occurs across all sample sizes, but its intensity ($\Delta_s$) is inversely proportional to the number of samples.}
+         \label{fig:balanced_data_varying_sample_size}
+    \end{subfigure}%\vspace{0.5cm}
+
+    \begin{subfigure}[t]{\linewidth}
+         \centering
+         \includegraphics[width=0.6\textwidth]{figures/equidistant/result_small.pdf}
+         \caption{Effect of subclass removal on the equidistant dataset. Removing a subclass ($f=0$, top) prevents generalization, while re-introducing a small fraction ($f=0.2$, bottom) is sufficient to induce grokking.}
+         \label{fig:small_unbalance_balance_eq}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{\linewidth}
+         \centering
+         \includegraphics[width=0.6\textwidth]{figures/equidistant/result_large.pdf}
+         \caption{Grokking in large datasets. With a highly skewed distribution ($f \ll 1$), the phenomenon is observed even in larger datasets, contrary to what was previously assumed.}
+         \label{fig:medium_unbalance_balance}
+    \end{subfigure}
+
+    \caption{Grokking dynamics in the equidistant dataset under different sampling conditions. (a) The effect of varying dataset size with balanced sampling. (b) Comparing subclass removal ($f=0$) with under-sampling ($f=0.2$). (c) Inducing grokking in large datasets with extreme imbalance.}
+    \label{fig:exp_samples_100-200_frac_0.0-0.2-1.0}
+\end{figure*}
+
+
+%This phenomenon challenges conventional wisdom and underscores the importance of evaluating model performance not just on the training data but also on unseen data to ensure robust generalization capabilities.
+
+Our hypothesis is that grokking is a statistical phenomenon derived from a distribution shift between test data and training data, which can be reproduced systematically and which is amplified, not defined, by high regularization and use of specific parametrization and initialization values.
+
+\paragraph{Distribution shifts inducing grokking:}
+% \begin{itemize}
+%     \item Loss function -> strong incentive to keep decision boundaries
+%     \item Regularization as a tool to reach a simpler minimum (less parameters)
+% \cite{Grokking} showed grokking in models that do not rely on an internal latent space to represent the data points which points that although the particular model is relevant the data distribution is a more determinant factor.
+% \end{itemize}
+The phenomenon of grokking, induced by distribution shifts, can be attributed to several key factors.
+Firstly, even a faint, i.e. close to zero, training signal may interact with related data within a class or across nearby classes to provide an incentive for models to maintain decision boundaries.
+Additionally, regularization serves as a tool to guide models toward simpler solutions with a sparse weight matrix influencing but not determining the occurrence of grokking.
+Research by \cite{Grokking} demonstrated grokking in models that do not rely on an internal latent space to represent data, suggesting that while the specific model architecture may be relevant, it is the underlying data distribution and the compounding of learning that will determine late generalization.
+
+
+In order to confirm or reject our hypothesis, we created two synthetic datasets that allow for controlling the assumed underlying conditions for grokking, as described next. 
+
+%We then... NIST data set... to test those conditions in a more realistic setting.
+
+
+\section{New Synthetic Datasets for Grokking}\label{sec:artificial-datasets}
+
+The two synthetic datasets introduced in this paper enable the induction of grokking with minimal tuning of model parameters, avoiding an extensive search of the parameter space. These datasets enable the creation of a shift between training and test set distributions, allowing for user control over how much information each subclass carries, as detailed below. The datasets are available in the supplementary material accompanying the paper.
+
+The primary goal of the datasets is to be linearly separable when considering all sample dimensions $d$, while also being non-trivial to solve even with the addition of noise or extreme down-sampling. Data can be created with an arbitrary number of dimensions $d$. The datasets are defined by projecting classes onto this $d$-dimensional space using multivariate normal distributions, ensuring control over both class definitions and their distances in the $d$-dimensional space.
+
+We define classes $C_1, \dots, C_n$, where each class $C_i$, $1 \leq i \leq n$, is the union of the samples in the disjoint subclasses $C_{i,1}, \dots, C_{i,m}$. We say that $C_i = \bigcup_{j=1}^{m} C_{i,j}$, and $C_{i,p} \cap C_{i,k} = \emptyset$ for all $k \neq p$.
+
+
+%TODO the dataset explanation here is too convoluted. Start with an example
+
+The above structure of classes and subclasses mimics the organization of some real-world datasets, such as COCO \cite{lin2014COCO}, which is used in image segmentation where objects can be part of a larger scene or other objects. More importantly, it provides a straightforward and effective method to induce distribution shifts on demand by down-sampling specific subclasses while preserving the original proportions of the other classes. We also define the dimensionality, $d$, of the dataset.
+
+In the creation of the datasets, we ensure that each subclass $C_{i,j}$ samples a normal multivariate distribution projected onto a $d$-dimensional space for a given $d$. By doing this, we ensure that the dataset is linearly separable in the $d$-dimensional space. Thus, the datasets require a simple classification task solvable with a few optimization steps, but are not so trivial that noise or missing samples would not change model performance.
+
+We cause arbitrary distribution shifts in the datasets by selecting a specific set of subclasses to contain fewer samples than the other subclasses. Without loss of generality, we create all subclasses with the same number of samples in every dataset that we study, i.e. $|C_{i,j}| = s$, for all $i,j$. For example, to create a dataset $D$ with 4,000 samples and four classes, $C_{1}, C_{2}, C_{3}, C_{4}$, each with two subclasses, $C_{i,1}, C_{i,2}, 1 \leq i \leq 4$, each subclass will have 500 samples. To downsample any given subclass, we define $f \in [0, 1]$ such that if $f = 0$ then every sample of that subclass is removed; if $f = 1$ no change is made to the number of samples in the subclass. Given a choice of value for $f$, let $\mathcal{\gamma}_{s}$ denote the number of subclasses to subsample and $\mathcal{\gamma}_{r}$ the number of remaining subclasses. Then, we sample $s_{s}$ examples from each subclass to subsample, and we sample $s_{r}$ examples from the remaining subclasses, as defined in Equation \ref{eq:num_samples_unbalanced}, where $\gamma_D < |D|$ is the total number of samples we want to keep.
+
+\begin{equation}\label{eq:num_samples_unbalanced}
+    s_{s} = \ceil[\bigg]{\frac{f\gamma_D}{f\gamma_s + \gamma_r}}
+    \quad \text{and} \quad
+    s_{r} = \floor[\bigg]{\frac{\gamma_D}{f\gamma_s + \gamma_r}}
+\end{equation}
+
+%Where $\gamma_s$ means the cardinality of $\mathcal{C}_{s}$, $\gamma_r$ means the cardinality of $\mathcal{C}_{r}$. 
+
+Returning to our example of four classes with two subclasses each, if $\gamma_D = 2000$, $f = 0.2$ and we want to subsample one subclass per class then $s_{s} = \ceil[\bigg]{\frac{0.2 \cdot 2000}{0.2 \cdot 4 + 4}} = 84$ examples and $s_{r} = \floor[\bigg]{\frac{2000}{0.2 \cdot 4 + 4}} = 416$ examples. 
+%
+In what follows, we will subsample the subclasses using different values for $f$ up to the point of removing them from the training set altogether. We will study equidistant subclasses (dataset 1) and equivariant subclasses (dataset 2), as described next.  
+
+\noindent \textbf{Dataset 1 (equidistant subclasses)}\label{sec:eqdist-dataset}: to investigate the impact of shifting the training distribution away from the test set distribution in a systematic way, we created a dataset with 4 classes, 
+        $C_1,\dots, C_4$, such that each class $C_i$ is composed of two disjoint subclasses $C_{i,1}$ and $C_{i,2}$, $C_i = C_{i,1} \cup C_{i,2}$,
+        $C_{i,1} \cap C_{i,2} = \varnothing$.
+All the subclasses (no matter which class they belong to) have equidistant centroids. This means that each subclass is a multivariate normal distribution whose central value is equidistant to the central values of every other distribution. Also, if we consider the centroids of each class they will be equidistant to each other. This concept is illustrated in figure~\ref{fig:group_eqdist}.
+Although we can generate an unbound number of samples, we use a test set consisting of 10,000 samples.
+More detail about the properties of the dataset can be found in the project's git repository.% Appendix~\ref{app:equidistant_dataset}.
+
+\noindent \textbf{Dataset 2 (equivariant subclasses)}:\label{sec:similar-dataset}
+We created a dataset with 4 classes, each class is composed of 10 subclasses.
+
+All the subclasses of a given class have equidistant centroids, calculated as the mean point in the $d$-dimensional space of the samples. The centroids of subclasses from different classes are more distant from each other than they are from the centroids of subclasses of the same class. This means that if $\centroid{C_{i,j}}$ is the centroid of subclass $j$ of class $i$, then:
+\[
+|\centroid{C_{i,j}} - \centroid{C_{i,l}}| > |\centroid{C_{i,j}} - \centroid{C_{k,l}}|
+, i \neq k.
+\]
+
+As mentioned previously, with respect to the equidistant dataset, we utilize a test set consisting of 10,000 samples, even though we could generate an unlimited number of samples. This same dataset is employed to examine whether the absence of samples from specific subclasses can be compensated for by the similarity of these subclasses to other classes within the dataset, thereby providing sufficient information for us to test whether grokking takes place as a result of this characteristic.
+
+% \begin{itemize}
+%     \item Dataset characteristics
+%     \begin{itemize}
+%         \item number of classes, total number of samples (potentially infinite).
+%         \item Distance between classes (equivariant subclasses)
+%     \end{itemize}
+% \end{itemize}
+
+Further information about the datasets can be found in the git repository. %Appendix~\ref{app:dataset-creation}.
+
+\section{Experimental Results}\label{sec:results}
+
+All our experiments were designed to run on a single GPU, although we ran multiple experiments in parallel to expedite the data analysis process. Each compute node used in the experiments was equipped with an NVIDIA V100 GPU and 16 GB of memory. We conducted experiments in batches, varying the sample size, fraction $f$, and model parameters such as the learning rate and weight decay. Each batch took less than 24 hours to run under these settings. For robustness sake, the results presented in this paper are aggregated from 10 independent runs. 
+
+\subsection{Network architectures evaluated}\label{sec:archtectures}
+ % \begin{itemize}
+ %     \item MLP
+ %     \item 2-layer Transformer
+ %     \item Throughout the paper we are showing results for the MLP architecture since the results on both architectures showed very similar behavior. For completeness, the reader might refer to the appendices~\ref{app:equivariant_dataset}, and~\ref{app:equidistant_dataset} for the results on the 2-layer transformer architecture.
+ %     \item The start of each plot in this paper occurs after 100 optimization steps, this is usually enough time for the algorithm converge to perfect train accuracy.
+ %     \item We use a batch size of 200 samples in all our experiments, except in the cases we downsample a training dataset to 100 samples to investigate its impact in the grokking phenomenon, in this case we use batch size of 100 samples.
+ % \end{itemize}
+
+%We evaluated different architectures on each dataset to inspect how training behaves and under which conditions grokking occurs.
+
+We conducted our experiments using two different architectures: a Multi-layer Perceptron (MLP) and a 2-layer Transformer.
+Throughout this paper, we primarily present results for the MLP architecture since the results obtained with both architectures exhibited very similar patterns.
+For completeness, the results obtained with the 2-layer Transformer can be found in the git repository. %Appendix~\ref{app:dataset-creation}.
+We also provide the code for replicating the experiments in the repository \url{\repourl}.
+
+% Each plot in this paper starts after 100 optimization steps, which is typically sufficient for the algorithm to converge to perfect training accuracy. In all our experiments, we use a batch size of 200 samples.
+%
+In the experiments reported in this paper we set the learning rate of the models to $10^{-3}$, the weight decay to $10^{-4}$, and have an initialization scale factor of 8 (i.e., we multiply all the weights of the model to this number as described in \cite{liu2022Grokking}, for both architectures tested.
+
+\paragraph{Distribution-shift caused by data sparsity} When performing a balanced down-sampling of our training set, i.e. without forcing any subclass to be sampled more than any other, we find that grokking diminishes as the number of samples increases, only existing in considerably small sample sizes, as depicted in Figure~\ref{fig:balanced_data_varying_sample_size}. This is consistent with the literature, as discussed in Section~\ref{sec:grokking}.
+
+%TODO revise this analysis after rerunning the experiments
+\paragraph{Distribution-shift caused by unbalanced equidistant subclass sampling}
+In order to evaluate the impact of distribution shifts in the  occurrence of grokking, we evaluated different data unbalancing created by the use of different values for $f$ as described in Section~\ref{sec:artificial-datasets}. It is clear from Figure~\ref{fig:small_unbalance_balance_eq} that removing completely a subclass has a detrimental effect on generalization, with the models being stuck on a sub-optimal plateau. Nevertheless, adding even a very small number of examples in that subclass (as defined by the fraction e.g. $f = 0.01$ of the missing subclasses) not only allowed the model to generalize well, but allowed the model to generalize late (i.e. grokking occurred). Since this very small fraction of the examples was not visibly relevant for training (was not misclassified) their impact on the test set performance was seen only after training converged and weight decay led the network to a more sparse internal representation.
+
+When we increase the training data size, as mentioned, we see a diminishing effect on grokking. In order to keep analyzing this, we then evaluated more aggressive imbalance factors, such as $f = 0.01$ and $f = 0.05$. In a nutshell, Figure~\ref{fig:medium_unbalance_balance} shows that the data distribution shift alone is able to induce late generalization.
+
+% -----------------
+\subsection{Distribution-shift impact on equivariant subclasses}
+We investigate the effects of sampling strategies on the grokking phenomenon by examining unbalanced sampling of classes. Firstly, we analyze balanced sampling of classes, as illustrated in Figure~\ref{fig:shift-equifariant}. Next, we explore the impact of unbalanced sampling, depicted in Figure~\ref{fig:equivariant-few-samples}. Our findings reveal some form of information leakage among subclasses due to their proximity, which is evidenced by the comparison between the similar graphs with and without sampling (Figures~\ref{fig:equivariant-no-sample} and \ref{fig:equivariant-few-samples}).
+
+\paragraph{Distribution-shift caused by unbalanced equivariant subclass sampling}
+The other setting evaluated in our experiments consisted of inducing different imbalances, using different values of $f$ as described in Section~\ref{fig:equivariant-no-sample}. The first noteworthy result here is that we were able to detect grokking even in the cases where samples were removed completely from specific subclasses, as depicted in Figure~\ref{fig:equivariant-few-samples}. This surprising behavior contrasts with the results obtained for the equidistant dataset. It is attributed to the fact that in the equivariant case, subclasses of a given class are closer to each other than to subclasses of other classes, thus carrying information that may result in grokking.
+
+\begin{figure*}[t]
+    \centering
+    \begin{subfigure}[b]{\linewidth}
+         \centering
+         %\includegraphics[width=1.06cm]{figures/legend.pdf}
+         \includegraphics[width=0.67\textwidth]{figures/result_exp_unb_samples_100_400_800_frac_0.0-1.0a.pdf}
+         \caption{Generalization occurs even if a subclass is removed ($f=0$).}
+         \label{fig:equivariant-no-sample}
+    \end{subfigure}
+    
+    \vspace{0.5cm}
+    
+    \begin{subfigure}[b]{\linewidth}
+         \centering
+         \includegraphics[width=5.5cm]{figures/legend.pdf}
+         
+         \includegraphics[width=0.67\textwidth]{figures/result_exp_unb_samples_100_400_800_frac_0.0-1.0b.pdf}
+         \caption{An imbalanced sample ($f=0.2$) induces a more classic grokking pattern.}
+         \label{fig:equivariant-few-samples}
+    \end{subfigure}
+    \caption{Grokking in the equivariant dataset, where subclasses are structurally similar. Unlike in the equidistant dataset, the model generalizes even when a subclass is absent ($f=0$, top plots).}
+    \label{fig:shift-equifariant}
+\end{figure*}
+
+
+% \section{Double descent}
+
+\end{document}
+

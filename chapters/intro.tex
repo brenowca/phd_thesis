@@ -1,0 +1,81 @@
+\documentclass[../infufrgs/ppgc-tese.tex]{subfiles}
+\begin{document}
+\begin{flushright}
+\mbox{}%\vfill
+{\sffamily\itshape
+``What we don't understand, we fear. What we fear, we judge as evil. What we judge as evil, we attempt to control. And what we cannot control\dots we attack.'' \\}
+--- \textsc{Dan~Brown}
+\end{flushright}
+
+% The year is 2026, humanity has made outstanding progress in the field of Artificial Intelligence, AI, but it is arguably in the infancy of its journey to general intelligence.
+
+% There is an important distinction between AI systems and AI learning models.% 
+Attention-based neural networks (e.g., Transformers and related architectures) currently achieve state-of-the-art performance across language, vision, and multimodal tasks. Despite their empirical success, we still lack reliable local explanations for why a given model produced a particular output, how internal mechanisms associated with “reasoning-like” behavior arise during training, and how we can steer models toward desired behaviors with minimal side-effects. 
+
+Following the Kautz strategy \cite{kautz2022thirdaisummer} we are able to build systems that leverage trained models and chain their processing to achieve impressive goals. Those systems mitigate the various shortcommings of current language models, for instance.
+
+This thesis studies local interpretability in attention-based models through three interconnected lenses: (i) training dynamics, with emphasis on abrupt transitions such as late generalization (grokking-like phenomena); (ii) behavioral control, focusing on neuro-symbolic steering methods that enforce human-interpretable constraints; and (iii) robustness diagnostics, investigating whether internal activation/attention signatures can reveal distribution shifts or adversarial perturbations before output quality visibly degrades. 
+
+The core hypothesis is that high-level behaviors emerge from partially identifiable internal structures (features/circuits) that can be tracked across training and inference. Building on this hypothesis, we test whether logic-inspired constraints can target and modulate such structures in a controllable way, and whether the same internal signals can serve as early-warning indicators for shifts and attacks. 
+
+Concretely, the thesis will
+(1) characterize representational changes around grokking-like transitions using mechanistic probes;
+(2) implement and evaluate a constraint-based steering pipeline (neuro-symbolic validators and reranking/decoding integration) and measure locality/regressions; and
+(3) design detection criteria for shifts/attacks based on internal patterns rather than outputs alone.
+The expected outcome is a coherent framework and empirical evidence connecting training-phase emergence, controllable steering, and diagnostic signals under distribution shift. 
+
+% What we do
+How do internal mechanisms that produce “reasoning-like” behavior arise, how can we inspect them faithfully, and how can we steer them with minimal side-effects across text and non-verbal domains?
+
+Core claims (to argue \& test):
+
+\begin{itemize}
+    % \item Reasoning behaviors emerge via identifiable phases/circuits that can be tracked and probed (e.g., grokking-like dynamics).
+    % \item Neuro-symbolic steering can target those circuits and change behavior with controllable locality and few regressions.
+    % \item CoT-style “reasoning” in LLMs has measurable faithfulness and causal structure that can be inspected and stress-tested.
+    % \item Similar interpretability/steerability principles hold for non-verbal models (PDE/physics), if we adopt domain-appropriate probes and invariance/residual tests.
+    % \item Current visual models can not only extract concepts from its inputs but also how those concepts were provided to them and one can use this activation pattern as a method to detect attacks.
+    \item \textbf{C1 (Emergence):} identifiable representational changes precede/track late generalization, measurable via mechanistic metrics (feature stability, consistency across layers).
+    \item \textbf{C2 (Steering locality):} neuro-symbolic constraints can shift behavior with quantifiable trade-offs (constraint satisfaction vs. quality; regressions on control tasks).
+    \item \textbf{C3 (Shift/attack diagnostics):} internal signals provide earlier/more stable indicators of shift/adversarial perturbation than output-only heuristics.
+\end{itemize}
+
+
+% This thesis encapsulates several attempts to better understand state-of-the-art neural models. At the time of writing, the best performing models in a wide range of multi-modal tasks are attention-based neural networks\cite{}.
+
+% We start with an overview of what is the current state of attention-based neural networks models and the most successful interpretability methods currently used with an emphasis on (large) language models, LLMs.
+% %
+% Then we present the main contribution of this thesis:
+% our analysis of different learning phenomena such as grokking (late generalization),
+% and also exercises on model steering \cite{}. 
+% Those exercises led us to demonstrate how LLMs rationalize their answers when they contradict their chain of thoughts.
+This thesis consolidates a set of empirical and mechanistic studies aimed at improving local interpretability for attention-based models. We review the current landscape of interpretability for large-scale attention architectures, then introduce the main thesis contribution: an analysis of learning phenomena (with emphasis on late generalization/grokking), and a constraint-based steering pipeline grounded in soft logic.
+
+Throughout the thesis, we connect behavioral evidence (task performance, constraint adherence, quality trade-offs) with mechanistic evidence (sparse features, cross-layer consistency, and logical constraint satisfaction), aiming to provide explanations that are both locally actionable and empirically testable.
+
+Ultimately, this work aims to support safer and more predictable deployment of attention-based models by providing tools for diagnosis under distribution shift and controllable, interpretable steering.
+
+% Why we do
+
+%How we do
+
+\section{Intrinsic limitation of interpretability methods}
+Most interpretability methods face a tension between plausibility and faithfulness: explanations that are intuitive (e.g., natural-language rationales) may not be causally grounded, while mechanistic methods  (e.g., probing, attribution, feature discovery) may be difficult to summarize.
+%Additionally, many methods are sensitive to model scale, prompt distribution, and representation drift across layers.
+In addition, modern models are highly distributed: internal variables are often polysemantic, drift across layers, and change across training regimes and prompts. 
+These limitations motivate local, \emph{testable criteria and evaluation protocols that link internal measurements to externally verifiable behavioral effects}.
+
+\section{Analogy to biology}
+Neural networks resemble biological systems in the sense that complex organization emerges from simple learning rules, and the resulting structure is not explicitly designed.
+Like biological systems, neural models exhibit emergent organization not explicitly programmed by designers. 
+This analogy is useful as a methodological stance: progress comes from proposing falsifiable hypotheses about internal organization (e.g., stable features or circuits) and testing them through interventions and controlled evaluations, rather than relying solely on post-hoc narratives.
+We adopt the stance that progress comes from measurable, falsifiable hypotheses about internal structure, e.g., tracking stable features/circuits—rather than relying solely on post-hoc narratives.
+
+\section{Alignment}
+Alignment is ultimately constrained by our ability to understand and predict model behavior under distribution shift and intervention. By developing local diagnostics and controllable steering with explicit constraints, this thesis contributes tools that support safer deployment without assuming perfect global interpretability.
+Alignment in practice depends on our ability to predict and control model behavior under interventions and distribution shift. Local interpretability and constraint-based steering provide complementary tools: interpretability offers diagnosis and early warning signals, while steering offers controllable behavior change with measurable trade-offs. This thesis contributes methods and evaluation designs that connect these aspects in a single empirical framework.
+
+This work is made in the hope of being useful to the community to better understand the AI we currently achieved and ease its integration into humanity social, political and daily lives. 
+\end{document}
+
+

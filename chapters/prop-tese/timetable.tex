@@ -1,0 +1,152 @@
+\documentclass[../../infufrgs/ppgc-prop-tese.tex]{subfiles}
+\begin{document}
+% \begin{table}[ht]
+
+\small\begin{longtable}{p{0.13\textwidth}p{0.38\textwidth}p{0.38\textwidth}}
+\centering
+\textbf{Month} & \textbf{Thesis writing and structure} & \textbf{Experiments and analysis} \\
+\hline
+Oct 2025 &
+\begin{itemize}
+  \item Define a detailed thesis outline (chapters and sections).
+  \item Map how existing papers (grokking, logical steering, LSNC) become thesis chapters.
+  \item Draft the initial version of Chapter~1 (Introduction): motivation, problem statement, overview of contributions.
+\end{itemize}
+&
+\begin{itemize}
+  \item Organize code, data and experiment folders for grokking and steering.
+  \item Decide which experimental results are final and which need to be rerun or cleaned up.
+  \item Align naming and file structure for figures and tables to be reused in the thesis.
+\end{itemize}
+\\
+
+Nov 2025 &
+\begin{itemize}
+  \item Define a detailed thesis outline (chapters and sections).
+  \item Map how existing papers (grokking, logical steering, LSNC) become thesis chapters.
+  \item Draft the initial version of Chapter~1 (Introduction): motivation, problem statement, overview of contributions.
+\end{itemize}
+&
+\begin{itemize}
+  \item Organize code, data and experiment folders for grokking and steering.
+  \item Decide which experimental results are final and which need to be rerun or cleaned up.
+  \item Align naming and file structure for figures and tables to be reused in the thesis.
+\end{itemize}
+\\
+
+Dec 2025 &
+\begin{itemize}
+  \item Turn the grokking paper into its thesis chapter: full narrative, methodology and results.
+  \item Write discussion and threats-to-validity subsections for the grokking chapter.
+  \item Draft the structure of Chapter~2 (Background): transformers, interpretability, grokking, soft logic (LTN/PSL), etc.
+\end{itemize}
+&
+\begin{itemize}
+  \item Make the grokking repository “thesis-ready” (README, tags, clear experiment scripts).
+  \item Decide what will be kept from LSNC as a “negative result / lessons learned” section.
+  \item Collect and centralize logs and results related to LSNC that will appear in the thesis.
+\end{itemize}
+\\
+
+Jan 2026 &
+\begin{itemize}
+  \item Define the structure of the steering chapter (method, LSNC trajectory / negative result, final approach).
+  \item Write the method subsection for logical validators and reranking (including mathematical formulation and intuition).
+  \item Draft the results section for steering, including placeholders for single-rule and multi-rule scenarios.
+\end{itemize}
+&
+\begin{itemize}
+  \item Finalize the steering pipeline: validators, logit mapping, integration with decoding.
+  \item Run main experiments for single-rule steering and compare with baselines (FUDGE, GeDi, PPLM, DExperts, etc.).
+  \item Run multi-rule experiments and ablations (with/without certain rules, with/without calibration, etc.).
+  \item Generate final plots and tables for the steering chapter in a format ready for the thesis.
+\end{itemize}
+\\
+
+Feb 2026 &
+\begin{itemize}
+  \item Integrate and revise the steering chapter so that notation and references match the background and grokking chapters.
+  \item General discussion / synthesis chapter (e.g., Chapter~5): how grokking and steering fit together, limitations, future work.
+  \item Review of Chapter~1 (Introduction) and the conclusions so that they reflect the final set of contributions.
+  \item First complete version of the thesis.
+\end{itemize}
+&
+\begin{itemize}
+  \item Check that the full thesis compiles cleanly (no missing references or figures).
+  \item Minimal reproducibility material (scripts or notebooks) for the main results.
+  \item Defense slides: story arc, key figures, and backup slides for extra results.
+\end{itemize}
+\\
+
+Mar 2026 &
+\begin{itemize}
+  \item Incorporate advisor feedback into all chapters.
+  \item Polish the text: transitions, reduction of repetition, consistent terminology and notation.
+  \item Finalize pre-textual elements: abstract, summary, acknowledgements, lists of figures/tables, etc.
+  \item Freeze the final defense version of the thesis.
+\end{itemize}
+&
+
+\\
+\hline
+\caption{Monthly plan for completing the PhD thesis (Oct 2025 -- Mar 2026).}
+\end{longtable}
+% \end{table}
+
+
+
+
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{p{0.32\textwidth}p{0.58\textwidth}}
+\hline
+\multicolumn{2}{l}{\textbf{Completed items}} \\
+%\hline
+\textbf{Type} & \textbf{Description} \\
+
+\hline
+Research direction and scope defined &
+Overall PhD topic, main research questions, and methodological approach are clearly defined (grokking + logic-based steering of neural models). \\
+
+Conference paper accepted (requirement (ii)) &
+At least one full paper accepted in a venue classified as A3 or higher (e.g., ICTAI conference paper \emph{“Inducing Grokking with Distribution Shifts”}, subject to confirmation of Qualis level by the program). \\
+
+Core grokking experiments and analysis &
+Main grokking experiments are designed, implemented and validated; results are consolidated in the conference paper and ready to be adapted into a thesis chapter. \\
+
+Preliminary logic-based steering work &
+Initial implementations and experiments with logic-based steering (e.g., LSNC / soft-logic approaches) performed, providing material for a “trajectory / lessons learned” part of the thesis. \\
+\hline
+\vspace{1cm}
+\end{tabular}
+
+\begin{tabular}{p{0.32\textwidth}p{0.58\textwidth}}
+\multicolumn{2}{l}{\textbf{Items to be completed}} \\
+\textbf{Type} & \textbf{Description} \\
+\hline
+Journal submission (requirement (i)) &
+Submition of a  full paper to a journal classified as Qualis A3 or higher, derived from the thesis results. \\
+
+Final steering method and experiments &
+Consolidate the final version of the logic-based steering / reranking method, run the definitive experiments, and prepare final tables/figures. \\
+
+Thesis chapters – writing &
+Complete writing of all thesis chapters (Introduction, Background, Grokking chapter, Steering chapter, Discussion/Conclusions), integrating and polishing existing material from the papers. \\
+
+Thesis compilation and internal review &
+Produce a full, coherent thesis manuscript; ensure it compiles correctly, check cross-references and formatting, and obtain advisor’s feedback on the complete draft. \\
+
+Administrative and formal requirements &
+Meet all formal program requirements: deliver printed/digital copies, fill in forms, meet deadlines, follow the official template, and schedule the defense according to regulations. \\
+
+Defense preparation and final corrections &
+Prepare and rehearse the defense presentation, defend the thesis, and implement any mandatory post-defense corrections before the final deposit. \\
+\hline
+\end{tabular}
+\caption{Summary of completed and to be completed PhD items.}
+\end{table}
+
+
+\end{document}

@@ -1,0 +1,48 @@
+\documentclass[../infufrgs/ppgc-tese.tex]{subfiles}
+%\graphicspath{{\subfix{../images/}}}
+\begin{document}
+\begin{flushright}
+\mbox{}\vfill
+{\sffamily\itshape
+``Empathy: the ability to understand and share the feelings of another.''\\}
+--- \textsc{Oxford~Languages}
+\end{flushright}
+
+% agradecimentos
+\chapter*{Acknowledgements}
+% I thank my advisors for their restless end seemingly endless support during the years of my doctor studies. Each one of them presented me with virtues a strong researcher should possess and I am glad to have learned from them.
+% Luis Lamb taught me to be bold, make bold statements and go after validating them.
+% Artur Garcez reminded me to trust the process, the power of diligent work and  and to never loose sight of the scientific method.
+% I also thank Emílio Vital Brazil, who has a unique perspective of reality and human affairs, whenever I got an spark of idea or would think about trying a different approach he would be the first one to push me. It is marvelous how he can see problems from many different points of view and if none of them work, he creates a new one.
+% A specially warm and heartfelt thanks goes to my mother and sisters. At times they didn't have a clue of what I was investigating or why I was asking the questions I asked, but they supported me all the way, anyway.
+
+% I thank you, dear reader, for taking the time and interest in this work. May those words benefit you in someway and imprint in you mind through your learning experience valuable insights for your next adventures.
+
+
+
+% Resumo na língua do documento.
+\begin{abstract}
+Modern attention-based neural models exhibit abrupt changes in behavior during training  and under distribution shifts (e.g., late generalization/grokking), yet the internal mechanisms driving these transitions remain poorly understood. This thesis investigates how interpretable structure emerges and reorganizes inside attention-based networks, and how such structure can be leveraged for local, instance-level understanding and control.
+
+We propose an interpretability pipeline that combines (i) sparse feature discovery (via sparse autoencoders), (ii) cross-layer transcoders to map internal activations into a consistent feature space across layers, and (iii) logic-based validators inspired by Logic Tensor Networks (LTNs) to express and test human-interpretable constraints on model representations and outputs.
+
+The research is organized around three goals: (1) characterize representational phase transitions during training (with emphasis on grokking and late generalization) by tracking sparse features and their stability; (2) study how internal signals change under steering and constraint-based decoding, testing whether models exhibit detectable “awareness” of external steering mechanisms; and (3) detect distribution shifts and adversarial perturbations by identifying consistent activation/attention signatures that precede output degradation.
+
+Evaluation will use controlled algorithmic tasks (for grokking), natural language generation benchmarks (for steering), and adversarial or corruption suites (for robustness), reporting both mechanistic metrics (feature sparsity, stability, cross-layer consistency, logical constraint satisfaction) and behavioral metrics (generalization accuracy, constraint adherence, quality trade-offs).
+
+The expected contributions include: a unified local-interpretability framework for attention-based models across training and inference; empirical evidence about how sparse features reorganize around late generalization; and practical diagnostic signals for steering and adversarial detection.
+\end{abstract}
+
+% resumo na outra língua
+\begin{translatedabstract}
+Modelos neurais baseados em atenção (como Transformers) exibem mudanças abruptas de comportamento ao longo do treinamento — por exemplo, generalização tardia (grokking) — e também sob mudanças de distribuição ou perturbações adversariais. Apesar do sucesso prático desses modelos, ainda faltam explicações locais e mecanísticas sobre o que muda internamente quando a performance “vira a chave”.
+
+Esta tese investiga como estruturas interpretáveis emergem e se reorganizam dentro desses modelos e como tais estruturas podem ser usadas para interpretação local (por instância) e diagnóstico de comportamento. Propomos um pipeline de interpretabilidade que combina: (i) descoberta de características esparsas (via sparse autoencoders), (ii) cross-layer transcoders para mapear ativações de múltiplas camadas em um espaço de características consistente, e (iii) validadores baseados em lógica suave inspirados em Logic Tensor Networks (LTNs) para expressar e testar restrições interpretáveis sobre representações e saídas.
+
+O trabalho é organizado em três objetivos: (1) caracterizar transições de representação ao longo do treinamento (com foco em grokking), rastreando estabilidade e composição de características esparsas; (2) estudar sinais internos associados a procedimentos de steering e decodificação com restrições, avaliando se existem assinaturas detectáveis do processo de controle; e (3) detectar mudanças de distribuição e ataques adversariais identificando padrões consistentes em ativações/atenção que antecedem degradação de saída.
+
+A avaliação utilizará tarefas controladas (grokking), benchmarks de geração de linguagem (steering) e conjuntos de corrupção/adversarial (robustez), reportando métricas mecanísticas (esparsidade, estabilidade, consistência entre camadas, satisfação lógica) e comportamentais (acurácia, aderência a restrições, trade-offs de qualidade).
+% \emph{O texto do resumo não deve conter mais do que 500 palavras.}
+\end{translatedabstract}
+
+\end{document}
