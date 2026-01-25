@@ -7,3 +7,5 @@ infufrgs/*.log
 infufrgs/*.lot
 infufrgs/*.out
 infufrgs/*.toc
+infufrgs/*.fls
+infufrgs/*.fdb_latexmk
