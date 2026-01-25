@@ -6,90 +6,52 @@
 \centering
 \textbf{Month} & \textbf{Thesis writing and structure} & \textbf{Experiments and analysis} \\
 \hline
-Oct 2025 &
-\begin{itemize}
-  \item Define a detailed thesis outline (chapters and sections).
-  \item Map how existing papers (grokking, logical steering, LSNC) become thesis chapters.
-  \item Draft the initial version of Chapter~1 (Introduction): motivation, problem statement, overview of contributions.
-\end{itemize}
-&
-\begin{itemize}
-  \item Organize code, data and experiment folders for grokking and steering.
-  \item Decide which experimental results are final and which need to be rerun or cleaned up.
-  \item Align naming and file structure for figures and tables to be reused in the thesis.
-\end{itemize}
-\\
-
-Nov 2025 &
-\begin{itemize}
-  \item Define a detailed thesis outline (chapters and sections).
-  \item Map how existing papers (grokking, logical steering, LSNC) become thesis chapters.
-  \item Draft the initial version of Chapter~1 (Introduction): motivation, problem statement, overview of contributions.
-\end{itemize}
-&
-\begin{itemize}
-  \item Organize code, data and experiment folders for grokking and steering.
-  \item Decide which experimental results are final and which need to be rerun or cleaned up.
-  \item Align naming and file structure for figures and tables to be reused in the thesis.
-\end{itemize}
-\\
-
-Dec 2025 &
-\begin{itemize}
-  \item Turn the grokking paper into its thesis chapter: full narrative, methodology and results.
-  \item Write discussion and threats-to-validity subsections for the grokking chapter.
-  \item Draft the structure of Chapter~2 (Background): transformers, interpretability, grokking, soft logic (LTN/PSL), etc.
-\end{itemize}
-&
-\begin{itemize}
-  \item Make the grokking repository “thesis-ready” (README, tags, clear experiment scripts).
-  \item Decide what will be kept from LSNC as a “negative result / lessons learned” section.
-  \item Collect and centralize logs and results related to LSNC that will appear in the thesis.
-\end{itemize}
-\\
-
 Jan 2026 &
 \begin{itemize}
-  \item Define the structure of the steering chapter (method, LSNC trajectory / negative result, final approach).
-  \item Write the method subsection for logical validators and reranking (including mathematical formulation and intuition).
-  \item Draft the results section for steering, including placeholders for single-rule and multi-rule scenarios.
+  \item Chapter~2 (Background): final revision and integration with Chapters~3/4.
+  \item Chapter~4 (Methodology): create Figure~4.1 (pipeline) and components-to-metrics table; draft Sections~4.1.1--4.1.5.
+  \item Build the evaluation matrix (Goal $\times$ Dataset/Task $\times$ Metrics $\times$ Baselines) and reference it in text.
+  \item Draft Sections~4.2--4.4 and list baselines/ablations.
+  \item Deliver v1 of Chapter~2 and v0.8 of Chapter~4 to advisors (end of Jan).
 \end{itemize}
 &
 \begin{itemize}
-  \item Finalize the steering pipeline: validators, logit mapping, integration with decoding.
-  \item Run main experiments for single-rule steering and compare with baselines (FUDGE, GeDi, PPLM, DExperts, etc.).
-  \item Run multi-rule experiments and ablations (with/without certain rules, with/without calibration, etc.).
-  \item Generate final plots and tables for the steering chapter in a format ready for the thesis.
+  \item Finalize steering pipeline: validators, logit adjustment, constrained decoding, reranking.
+  \item Run main experiments (single-rule and multi-rule); compare to baselines (logit-bias, constrained decoding, rerank).
+  \item Report mechanistic metrics (sparsity, reconstruction, stability), transcoder alignment $T_{\ell\to k}$, and constraint satisfaction.
+  \item Generate final figures/tables; start reproducibility package (scripts + seeds).
 \end{itemize}
 \\
 
 Feb 2026 &
 \begin{itemize}
-  \item Integrate and revise the steering chapter so that notation and references match the background and grokking chapters.
-  \item General discussion / synthesis chapter (e.g., Chapter~5): how grokking and steering fit together, limitations, future work.
-  \item Review of Chapter~1 (Introduction) and the conclusions so that they reflect the final set of contributions.
-  \item First complete version of the thesis.
+  \item Revise Chapter~4 with feedback; integrate with Chapter~3; update Introduction/Contributions.
+  \item Assemble full thesis v1.0: compile, check references/lists/numbering.
+  \item Prepare pre-textuals: abstract, summary, acknowledgements, lists of figures/tables.
+  \item Schedule defense and submit version to committee per PPGC deadlines.
 \end{itemize}
 &
 \begin{itemize}
-  \item Check that the full thesis compiles cleanly (no missing references or figures).
-  \item Minimal reproducibility material (scripts or notebooks) for the main results.
-  \item Defense slides: story arc, key figures, and backup slides for extra results.
+  \item Run pending ablations: no LTN; no $T_{\ell\to k}$; sparsity target/calibration variants.
+  \item Calibrate validators; analyze quality vs. satisfaction; freeze main results.
+  \item Freeze repository and replication package; start defense slides (story, key figures, backup).
 \end{itemize}
 \\
 
 Mar 2026 &
 \begin{itemize}
-  \item Incorporate advisor feedback into all chapters.
-  \item Polish the text: transitions, reduction of repetition, consistent terminology and notation.
-  \item Finalize pre-textual elements: abstract, summary, acknowledgements, lists of figures/tables, etc.
-  \item Freeze the final defense version of the thesis.
+  \item Incorporate final advisor/committee feedback.
+  \item Final polish and notation/terminology consistency; freeze defense version.
+  \item Post-defense: implement mandatory corrections and submit final deposit.
 \end{itemize}
 &
-
+\begin{itemize}
+  \item Freeze results/figures; final script checks.
+  \item Rehearsals and slide adjustments; \textbf{Defense}.
+\end{itemize}
 \\
 \hline
-\caption{Monthly plan for completing the PhD thesis (Oct 2025 -- Mar 2026).}
+\caption{Monthly plan for completing the PhD thesis (Jan 2026 -- Mar 2026).}
 \end{longtable}
 % \end{table}
 
