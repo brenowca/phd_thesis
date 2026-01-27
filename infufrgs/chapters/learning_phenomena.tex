@@ -15,6 +15,7 @@ Contribution: We use our specific methods, and also propose ours.
 
 
 \section{Grokking --- Late Generalization}
+\label{sec:grokking}
 The grokking phenomenon is a sudden improvement in model performance on unseen data after a period of seemingly stagnant learning, also known as late or delayed generalization. It was first detected in 2021, in the work of \cite{Grokking}. The subsequent literature attributed the phenomenon mostly to three main factors: data sparsity, large initialization values, and high regularization rates. Although the combination of these factors may indeed cause grokking in some situations, they cannot be said to be the cause or to provide a complete explanation of grokking.
 
 As illustrated in Figure \ref{fig:grokking-def}, grokking can be characterized by the transitioning from a low-performing region to a high-performing region as measured on the test set (curve $T_E$ in Fig.\ref{fig:grokking-def}) after the training set performance has converged ($T_R$ in Fig.\ref{fig:grokking-def}). The interval between the inflection points $\alpha_0$ (end of memorization phase) and $\alpha_1$ (start of generalization phase) signifies the transition phase, during which the test set performance gradually improves and aligns with the performance on the training set. 
@@ -133,7 +134,7 @@ In what follows, we will subsample the subclasses using different values for $f$
 \noindent \textbf{Dataset 1 (equidistant subclasses)}\label{sec:eqdist-dataset}: to investigate the impact of shifting the training distribution away from the test set distribution in a systematic way, we created a dataset with 4 classes, 
         $C_1,\dots, C_4$, such that each class $C_i$ is composed of two disjoint subclasses $C_{i,1}$ and $C_{i,2}$, $C_i = C_{i,1} \cup C_{i,2}$,
         $C_{i,1} \cap C_{i,2} = \varnothing$.
-All the subclasses (no matter which class they belong to) have equidistant centroids. This means that each subclass is a multivariate normal distribution whose central value is equidistant to the central values of every other distribution. Also, if we consider the centroids of each class they will be equidistant to each other. This concept is illustrated in figure~\ref{fig:group_eqdist}.
+All the subclasses (no matter which class they belong to) have equidistant centroids. This means that each subclass is a multivariate normal distribution whose central value is equidistant to the central values of every other distribution. Also, if we consider the centroids of each class they will be equidistant to each other. This concept is illustrated in the dataset schematic (to be added).
 Although we can generate an unbound number of samples, we use a test set consisting of 10,000 samples.
 More detail about the properties of the dataset can be found in the project's git repository.% Appendix~\ref{app:equidistant_dataset}.
 
