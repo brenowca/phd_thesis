@@ -5,6 +5,8 @@
 % This is an example file and is hereby explicitly put in the
 % public domain.
 %
+% Ensure url is loaded with hyphenation support before hyperref
+\PassOptionsToPackage{hyphens}{url}
 \documentclass[ppgc,prop-tese,english]{iiufrgs}
 % Para usar o modelo, deve-se informar o programa e o tipo de documento.
 % Programas :
@@ -51,7 +53,6 @@
 % For theorems and such
 \usepackage{mathtools}
 \usepackage{amssymb}
-\usepackage[hyphens]{url}
 \usepackage{xcolor}
 \usepackage{cite}
 \usepackage{mathrsfs}
