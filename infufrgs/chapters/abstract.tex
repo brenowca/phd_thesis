@@ -1,4 +1,4 @@
-\documentclass[../infufrgs/ppgc-tese.tex]{subfiles}
+﻿\documentclass[../infufrgs/ppgc-tese.tex]{subfiles}
 %\graphicspath{{\subfix{../images/}}}
 \begin{document}
 \begin{flushright}
@@ -26,7 +26,7 @@ Modern attention-based neural models exhibit abrupt changes in behavior during t
 
 We propose an interpretability pipeline that combines (i) sparse feature discovery (via sparse autoencoders), (ii) cross-layer transcoders to map internal activations into a consistent feature space across layers, and (iii) logic-based validators inspired by Logic Tensor Networks (LTNs) to express and test human-interpretable constraints on model representations and outputs.
 
-The research is organized around three goals: (1) characterize representational phase transitions during training (with emphasis on grokking and late generalization) by tracking sparse features and their stability; (2) study how internal signals change under steering and constraint-based decoding, testing whether models exhibit detectable “awareness” of external steering mechanisms; and (3) detect distribution shifts and adversarial perturbations by identifying consistent activation/attention signatures that precede output degradation.
+The research is organized around three goals: (1) characterize representational phase transitions during training (with emphasis on grokking and late generalization) by tracking sparse features and their stability; (2) study how internal signals change under steering and constraint-based decoding, testing whether models exhibit detectable ``awareness'' of external steering mechanisms; and (3) detect distribution shifts and adversarial perturbations by identifying consistent activation/attention signatures that precede output degradation.
 
 Evaluation will use controlled algorithmic tasks (for grokking), natural language generation benchmarks (for steering), and adversarial or corruption suites (for robustness), reporting both mechanistic metrics (feature sparsity, stability, cross-layer consistency, logical constraint satisfaction) and behavioral metrics (generalization accuracy, constraint adherence, quality trade-offs).
 
@@ -35,7 +35,7 @@ The expected contributions include: a unified local-interpretability framework f
 
 % resumo na outra língua
 \begin{translatedabstract}
-Modelos neurais baseados em atenção (como Transformers) exibem mudanças abruptas de comportamento ao longo do treinamento — por exemplo, generalização tardia (grokking) — e também sob mudanças de distribuição ou perturbações adversariais. Apesar do sucesso prático desses modelos, ainda faltam explicações locais e mecanísticas sobre o que muda internamente quando a performance “vira a chave”.
+Modelos neurais baseados em atenção (como Transformers) exibem mudanças abruptas de comportamento ao longo do treinamento --- por exemplo, generalização tardia (grokking) --- e também sob mudanças de distribuição ou perturbações adversariais. Apesar do sucesso prático desses modelos, ainda faltam explicações locais e mecanísticas sobre o que muda internamente quando a performance ``vira a chave''.
 
 Esta tese investiga como estruturas interpretáveis emergem e se reorganizam dentro desses modelos e como tais estruturas podem ser usadas para interpretação local (por instância) e diagnóstico de comportamento. Propomos um pipeline de interpretabilidade que combina: (i) descoberta de características esparsas (via sparse autoencoders), (ii) cross-layer transcoders para mapear ativações de múltiplas camadas em um espaço de características consistente, e (iii) validadores baseados em lógica suave inspirados em Logic Tensor Networks (LTNs) para expressar e testar restrições interpretáveis sobre representações e saídas.
 

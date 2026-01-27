@@ -1,4 +1,4 @@
-\documentclass[../infufrgs/ppgc-tese.tex]{subfiles}
+﻿\documentclass[../infufrgs/ppgc-tese.tex]{subfiles}
 \begin{document}
 \begin{flushright}
 \mbox{}%\vfill
@@ -10,9 +10,9 @@
 % The year is 2026, humanity has made outstanding progress in the field of Artificial Intelligence, AI, but it is arguably in the infancy of its journey to general intelligence.
 
 % There is an important distinction between AI systems and AI learning models.% 
-Attention-based neural networks (e.g., Transformers and related architectures) currently achieve state-of-the-art performance across language, vision, and multimodal tasks. Despite their empirical success, we still lack reliable local explanations for why a given model produced a particular output, how internal mechanisms associated with “reasoning-like” behavior arise during training, and how we can steer models toward desired behaviors with minimal side-effects. 
+Attention-based neural networks (e.g., Transformers and related architectures) currently achieve state-of-the-art performance across language, vision, and multimodal tasks. Despite their empirical success, we still lack reliable local explanations for why a given model produced a particular output, how internal mechanisms associated with ``reasoning-like'' behavior arise during training, and how we can steer models toward desired behaviors with minimal side-effects. 
 
-Following the Kautz strategy \cite{kautz2022thirdaisummer} we are able to build systems that leverage trained models and chain their processing to achieve impressive goals. Those systems mitigate the various shortcommings of current language models, for instance.
+Following the Kautz strategy \cite{kautz2022thirdaisummer} we are able to build systems that leverage trained models and chain their processing to achieve impressive goals. Those systems mitigate the various shortcomings of current language models, for instance.
 
 This thesis studies local interpretability in attention-based models through three interconnected lenses: (i) training dynamics, with emphasis on abrupt transitions such as late generalization (grokking-like phenomena); (ii) behavioral control, focusing on neuro-symbolic steering methods that enforce human-interpretable constraints; and (iii) robustness diagnostics, investigating whether internal activation/attention signatures can reveal distribution shifts or adversarial perturbations before output quality visibly degrades. 
 
@@ -25,14 +25,14 @@ Concretely, the thesis will
 The expected outcome is a coherent framework and empirical evidence connecting training-phase emergence, controllable steering, and diagnostic signals under distribution shift. 
 
 % What we do
-How do internal mechanisms that produce “reasoning-like” behavior arise, how can we inspect them faithfully, and how can we steer them with minimal side-effects across text and non-verbal domains?
+How do internal mechanisms that produce ``reasoning-like'' behavior arise, how can we inspect them faithfully, and how can we steer them with minimal side-effects across text and non-verbal domains?
 
 Core claims (to argue \& test):
 
 \begin{itemize}
     % \item Reasoning behaviors emerge via identifiable phases/circuits that can be tracked and probed (e.g., grokking-like dynamics).
     % \item Neuro-symbolic steering can target those circuits and change behavior with controllable locality and few regressions.
-    % \item CoT-style “reasoning” in LLMs has measurable faithfulness and causal structure that can be inspected and stress-tested.
+    % \item CoT-style ``reasoning'' in LLMs has measurable faithfulness and causal structure that can be inspected and stress-tested.
     % \item Similar interpretability/steerability principles hold for non-verbal models (PDE/physics), if we adopt domain-appropriate probes and invariance/residual tests.
     % \item Current visual models can not only extract concepts from its inputs but also how those concepts were provided to them and one can use this activation pattern as a method to detect attacks.
     \item \textbf{C1 (Emergence):} identifiable representational changes precede/track late generalization, measurable via mechanistic metrics (feature stability, consistency across layers).
@@ -69,7 +69,7 @@ These limitations motivate local, \emph{testable criteria and evaluation protoco
 Neural networks resemble biological systems in the sense that complex organization emerges from simple learning rules, and the resulting structure is not explicitly designed.
 Like biological systems, neural models exhibit emergent organization not explicitly programmed by designers. 
 This analogy is useful as a methodological stance: progress comes from proposing falsifiable hypotheses about internal organization (e.g., stable features or circuits) and testing them through interventions and controlled evaluations, rather than relying solely on post-hoc narratives.
-We adopt the stance that progress comes from measurable, falsifiable hypotheses about internal structure, e.g., tracking stable features/circuits—rather than relying solely on post-hoc narratives.
+We adopt the stance that progress comes from measurable, falsifiable hypotheses about internal structure, e.g., tracking stable features/circuits---rather than relying solely on post-hoc narratives.
 
 \section{Alignment}
 Alignment is ultimately constrained by our ability to understand and predict model behavior under distribution shift and intervention. By developing local diagnostics and controllable steering with explicit constraints, this thesis contributes tools that support safer deployment without assuming perfect global interpretability.
@@ -77,5 +77,7 @@ Alignment in practice depends on our ability to predict and control model behavi
 
 This work is made in the hope of being useful to the community to better understand the AI we currently achieved and ease its integration into humanity social, political and daily lives. 
 \end{document}
+
+
 
 

@@ -1,4 +1,4 @@
-\documentclass[../infufrgs/ppgc-tese.tex]{subfiles}
+﻿\documentclass[../infufrgs/ppgc-tese.tex]{subfiles}
 \begin{document}
 
 \begin{flushright}
@@ -25,13 +25,13 @@ Let $\Delta_T$ denote an interval with lower bound $\sigma_E$ containing the lim
 \end{definition}
 
 
-Understanding intriguing learning phenomena such as grokking can provide valuable insights into the inner workings of deep neural networks. Late generalization challenges traditional stopping criteria, which rely on monitoring training and test set losses. While it remains difficult to predict when late generalization might occur, this paper takes an important step forward by elucidating how distribution shifts contribute to grokking. Specifically, we explore how modeling class relationships can increase the probability of generalization and guide the design of alternative stopping criteria. These findings are expected to help identify conditions under which models are more likely to generalize after training convergence.  %TODO rewrite
+Understanding intriguing learning phenomena such as grokking can provide valuable insights into the inner workings of deep neural networks. Late generalization challenges traditional stopping criteria, which rely on monitoring training and test set losses. While it remains difficult to predict when late generalization might occur, this chapter takes an important step forward by elucidating how distribution shifts contribute to grokking. Specifically, we explore how modeling class relationships can increase the probability of generalization and guide the design of alternative stopping criteria. These findings are expected to help identify conditions under which models are more likely to generalize after training convergence.  %TODO rewrite
 
 \subsection{Grokking: Visualization and metrics}
 
-Our study reveals that a specific type of distribution shift, caused by the sampling of data organized into classes and subclasses, can reliably produce late generalization. Unlike prior research, where grokking was observed sporadically, we demonstrate that grokking occurs systematically when certain subcategories or subpatterns in the data are under-represented. Our experiments suggest that a model’s ability to generalize to unseen data depends on subtle data interactions, which may emerge under weak training signals, leading to significant improvements in test performance --- even when performance on specific subcategories remains poor.
+Our study reveals that a specific type of distribution shift, caused by the sampling of data organized into classes and subclasses, can reliably produce late generalization. Unlike prior research, where grokking was observed sporadically, we demonstrate that grokking occurs systematically when certain subcategories or subpatterns in the data are under-represented. Our experiments suggest that a model's ability to generalize to unseen data depends on subtle data interactions, which may emerge under weak training signals, leading to significant improvements in test performance --- even when performance on specific subcategories remains poor.
 
-The contributions of this paper are as follows:
+The contributions of this chapter are as follows:
 \begin{enumerate*}[label=(\roman*)]
     \item We introduce two synthetic datasets based on class hierarchies, designed to serve as benchmarks for analyzing late generalization and grokking intensity; 
     \item We replicate previous experiments and conduct new analyses, showing that grokking is more strongly associated with distribution shifts than with sparsity and regularization, as previously believed (\url{\repourl} scripts are provided for replication);
@@ -103,7 +103,7 @@ In order to confirm or reject our hypothesis, we created two synthetic datasets 
 
 \section{New Synthetic Datasets for Grokking}\label{sec:artificial-datasets}
 
-The two synthetic datasets introduced in this paper enable the induction of grokking with minimal tuning of model parameters, avoiding an extensive search of the parameter space. These datasets enable the creation of a shift between training and test set distributions, allowing for user control over how much information each subclass carries, as detailed below. The datasets are available in the supplementary material accompanying the paper.
+The two synthetic datasets introduced in this chapter enable the induction of grokking with minimal tuning of model parameters, avoiding an extensive search of the parameter space. These datasets enable the creation of a shift between training and test set distributions, allowing for user control over how much information each subclass carries, as detailed below. The datasets are available in the supplementary material accompanying the paper.
 
 The primary goal of the datasets is to be linearly separable when considering all sample dimensions $d$, while also being non-trivial to solve even with the addition of noise or extreme down-sampling. Data can be created with an arbitrary number of dimensions $d$. The datasets are defined by projecting classes onto this $d$-dimensional space using multivariate normal distributions, ensuring control over both class definitions and their distances in the $d$-dimensional space.
 
@@ -160,7 +160,7 @@ Further information about the datasets can be found in the git repository. %Appe
 
 \section{Experimental Results}\label{sec:results}
 
-All our experiments were designed to run on a single GPU, although we ran multiple experiments in parallel to expedite the data analysis process. Each compute node used in the experiments was equipped with an NVIDIA V100 GPU and 16 GB of memory. We conducted experiments in batches, varying the sample size, fraction $f$, and model parameters such as the learning rate and weight decay. Each batch took less than 24 hours to run under these settings. For robustness sake, the results presented in this paper are aggregated from 10 independent runs. 
+All our experiments were designed to run on a single GPU, although we ran multiple experiments in parallel to expedite the data analysis process. Each compute node used in the experiments was equipped with an NVIDIA V100 GPU and 16 GB of memory. We conducted experiments in batches, varying the sample size, fraction $f$, and model parameters such as the learning rate and weight decay. Each batch took less than 24 hours to run under these settings. For robustness sake, the results presented in this chapter are aggregated from 10 independent runs. 
 
 \subsection{Network architectures evaluated}\label{sec:archtectures}
  % \begin{itemize}
@@ -174,13 +174,13 @@ All our experiments were designed to run on a single GPU, although we ran multip
 %We evaluated different architectures on each dataset to inspect how training behaves and under which conditions grokking occurs.
 
 We conducted our experiments using two different architectures: a Multi-layer Perceptron (MLP) and a 2-layer Transformer.
-Throughout this paper, we primarily present results for the MLP architecture since the results obtained with both architectures exhibited very similar patterns.
+Throughout this chapter, we primarily present results for the MLP architecture since the results obtained with both architectures exhibited very similar patterns.
 For completeness, the results obtained with the 2-layer Transformer can be found in the git repository. %Appendix~\ref{app:dataset-creation}.
 We also provide the code for replicating the experiments in the repository \url{\repourl}.
 
 % Each plot in this paper starts after 100 optimization steps, which is typically sufficient for the algorithm to converge to perfect training accuracy. In all our experiments, we use a batch size of 200 samples.
 %
-In the experiments reported in this paper we set the learning rate of the models to $10^{-3}$, the weight decay to $10^{-4}$, and have an initialization scale factor of 8 (i.e., we multiply all the weights of the model to this number as described in \cite{liu2022Grokking}, for both architectures tested.
+In the experiments reported in this chapter we set the learning rate of the models to $10^{-3}$, the weight decay to $10^{-4}$, and have an initialization scale factor of 8 (i.e., we multiply all the weights of the model to this number as described in \cite{liu2022Grokking}, for both architectures tested.
 
 \paragraph{Distribution-shift caused by data sparsity} When performing a balanced down-sampling of our training set, i.e. without forcing any subclass to be sampled more than any other, we find that grokking diminishes as the number of samples increases, only existing in considerably small sample sizes, as depicted in Figure~\ref{fig:balanced_data_varying_sample_size}. This is consistent with the literature, as discussed in Section~\ref{sec:grokking}.
 
@@ -225,4 +225,6 @@ The other setting evaluated in our experiments consisted of inducing different i
 % \section{Double descent}
 
 \end{document}
+
+
 
