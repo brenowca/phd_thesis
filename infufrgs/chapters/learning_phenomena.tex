@@ -134,7 +134,7 @@ In what follows, we will subsample the subclasses using different values for $f$
 \noindent \textbf{Dataset 1 (equidistant subclasses)}\label{sec:eqdist-dataset}: to investigate the impact of shifting the training distribution away from the test set distribution in a systematic way, we created a dataset with 4 classes, 
         $C_1,\dots, C_4$, such that each class $C_i$ is composed of two disjoint subclasses $C_{i,1}$ and $C_{i,2}$, $C_i = C_{i,1} \cup C_{i,2}$,
         $C_{i,1} \cap C_{i,2} = \varnothing$.
-All the subclasses (no matter which class they belong to) have equidistant centroids. This means that each subclass is a multivariate normal distribution whose central value is equidistant to the central values of every other distribution. Also, if we consider the centroids of each class they will be equidistant to each other. This concept is illustrated in the dataset schematic (to be added).
+All the subclasses (no matter which class they belong to) have equidistant centroids. This means that each subclass is a multivariate normal distribution whose central value is equidistant to the central values of every other distribution. Also, if we consider the centroids of each class they will be equidistant to each other. This concept is illustrated in figure~\ref{fig:group_eqdist}.
 Although we can generate an unbound number of samples, we use a test set consisting of 10,000 samples.
 More detail about the properties of the dataset can be found in the project's git repository.% Appendix~\ref{app:equidistant_dataset}.
 
