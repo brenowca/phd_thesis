@@ -1,2 +1,47 @@
-﻿    % \item CoT-style ``reasoning'' in LLMs has measurable faithfulness and causal structure that can be inspected and stress-tested.
-    % \item Similar interpretability/steerability principles hold for non-verbal models (PDE/physics), if we adopt domain-appropriate probes and invariance/residual tests.
+\documentclass[../../infufrgs/ppgc-prop-tese.tex]{subfiles}
+\begin{document}
+
+\section{Expected contributions}
+This thesis is expected to deliver four main contributions:
+\begin{enumerate}
+    \item \textbf{A unified local-interpretability pipeline} for attention-based models, integrating sparse feature discovery (SAE), cross-layer alignment, and logic-based validators in one reproducible workflow.
+    \item \textbf{Empirical evidence on emergence dynamics} showing how distribution shifts and training phases relate to delayed generalization, with feature-level measurements that complement behavioral curves.
+    \item \textbf{A measurable framework for steering locality} that quantifies targeted behavior change versus collateral regressions using both behavioral and mechanistic metrics.
+    \item \textbf{Practical diagnostics for perturbation/shift detection} based on sparse latent signatures, extending previous vision results to a broader attention-model setting.
+\end{enumerate}
+
+\section{Risks and mitigation}
+\textbf{R1: Sparse features are unstable across seeds or checkpoints.}
+\begin{itemize}
+    \item \textit{Impact:} weak reproducibility and low trust in local explanations.
+    \item \textit{Mitigation:} enforce multi-seed reporting, add feature-matching protocols across runs, and report confidence intervals for all key metrics.
+\end{itemize}
+
+\textbf{R2: Cross-layer transcoder alignment is numerically good but semantically weak.}
+\begin{itemize}
+    \item \textit{Impact:} misleading interpretation of transferred features.
+    \item \textit{Mitigation:} require validator consistency and ablations against identity/baseline mappings before claiming semantic transfer.
+\end{itemize}
+
+\textbf{R3: Logic constraints improve adherence but degrade output quality excessively.}
+\begin{itemize}
+    \item \textit{Impact:} steering method becomes impractical.
+    \item \textit{Mitigation:} perform rule-weight calibration, evaluate Pareto curves (quality vs. satisfaction), and keep unconstrained baselines as fallback.
+\end{itemize}
+
+\textbf{R4: Shift/attack signatures do not generalize beyond controlled tasks.}
+\begin{itemize}
+    \item \textit{Impact:} limited external validity.
+    \item \textit{Mitigation:} test across synthetic and real benchmarks, include transfer experiments, and explicitly report failure modes.
+\end{itemize}
+
+\textbf{R5: Time risk close to defense deadlines.}
+\begin{itemize}
+    \item \textit{Impact:} incomplete ablation coverage.
+    \item \textit{Mitigation:} prioritize a minimum publishable matrix (one strong baseline per goal), freeze core experiments early, and defer non-critical extensions to post-defense work.
+\end{itemize}
+
+\section{Scope boundaries}
+This proposal does not claim full global interpretability of large attention models. The scope is local, feature-level, and experimentally testable: explain and control specific behaviors with quantified uncertainty and explicit trade-offs.
+
+\end{document}

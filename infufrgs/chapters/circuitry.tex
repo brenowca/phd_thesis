@@ -9,8 +9,60 @@
 \end{flushright}
 
 \section{LTN Cross-layer Transcoder}
+The methodology combines three components: sparse feature extraction, cross-layer alignment, and logic-based validation/steering. The design is grounded on two completed lines of work: (i) controlled late-generalization experiments with distribution shifts (ICTAI paper), and (ii) sparse-autoencoder analyses showing that small latent subsets can separate clean and perturbed samples in vision models. In this thesis, we transfer these insights to attention-based models under a unified pipeline.
+
+Given a model and an input sequence, we collect residual activations $h_\ell$ at selected layers. We train sparse autoencoders (SAEs) to obtain sparse codes $s_\ell$, then learn cross-layer transcoders $T_{\ell\to k}$ to map features across depth. On top of $s_\ell$ and $\hat s_k$, we define soft logic validators (LTN-style predicates/rules) that produce differentiable satisfaction scores. These scores are used both for analysis (semantic consistency) and for control signals during inference (e.g., reranking, constrained decoding, and logit adjustments).
+
+The key methodological claim is that local behavior is better diagnosed when feature-level geometry, cross-layer consistency, and rule satisfaction are measured together, rather than separately.
 
 \section{Implementation Strategy}
+\textbf{Stage 1: Reproducible data and model setup.}
+We instantiate three families of experiments: (a) synthetic class/subclass datasets that induce measurable distribution shifts and grokking-like transitions; (b) language-generation tasks for steering; and (c) robustness tasks with adversarial/corruption perturbations. This follows the principle validated in previous work: stress-test the mechanism in controlled environments first, then transfer to more realistic benchmarks.
+
+\textbf{Stage 2: Layerwise sparse feature learning.}
+For each selected layer $\ell$, we train an SAE with reconstruction and sparsity objectives. We track reconstruction error, activation sparsity, dead-feature rate, and feature stability across seeds/epochs. This stage provides the canonical latent representation used downstream.
+
+\textbf{Stage 3: Cross-layer alignment.}
+We train $T_{\ell\to k}$ to predict layer-$k$ sparse codes from layer-$\ell$ sparse codes. Optimization combines alignment loss and regularization, with optional validator consistency penalties. We evaluate whether mappings preserve both numeric alignment and semantic behavior under validators.
+
+\textbf{Stage 4: Logic-guided evaluation and steering.}
+We define LTN-style predicates/rules on sparse features (and optionally outputs), producing satisfaction scores in $[0,1]$. These scores are used in two modes: evaluation-time diagnostics and inference-time steering. Ablations remove one component at a time (no SAE, no transcoder, no logic constraints) to isolate causal contribution.
+
+\textbf{Stage 5: Statistical analysis and reproducibility.}
+All reported results are aggregated over multiple seeds. We report confidence intervals for key metrics and publish scripts/configurations for exact reruns.
+
 \section{Evaluation Tasks}
+\textbf{Goal G1: Emergence and late generalization.}
+\begin{itemize}
+    \item Tasks: synthetic class/subclass benchmarks and grokking-prone setups from previous work.
+    \item Behavioral metrics: train/test accuracy dynamics, delay to generalization, stability of post-transition performance.
+    \item Mechanistic metrics: SAE sparsity/reconstruction, cross-seed feature stability, cross-layer alignment quality.
+\end{itemize}
+
+\textbf{Goal G2: Steering locality and trade-offs.}
+\begin{itemize}
+    \item Tasks: constrained generation with single-rule and multi-rule settings.
+    \item Behavioral metrics: constraint adherence, task quality, regression on non-targeted behaviors.
+    \item Mechanistic metrics: validator satisfaction, layerwise activation shifts, consistency of targeted vs collateral feature changes.
+\end{itemize}
+
+\textbf{Goal G3: Shift/attack diagnostics.}
+\begin{itemize}
+    \item Tasks: adversarial/corruption perturbation suites and controlled watermark-like perturbations.
+    \item Behavioral metrics: detection ROC-AUC/PR-AUC, calibration, early-warning lead time.
+    \item Mechanistic metrics: proportion of attack-sensitive sparse features, separability of clean vs perturbed latent codes, cross-layer signature persistence.
+\end{itemize}
+
+\textbf{Baselines and ablations.}
+Baselines include output-only heuristics (logit margin and confidence), dense-activation detectors, and steering without logic constraints. Core ablations remove each pipeline module and vary sparsity targets to quantify robustness of conclusions.
+
 \section{Observed Effects}
+The completed work already supports feasibility of the methodology:
+\begin{itemize}
+    \item Distribution shifts can reliably induce late generalization in controlled datasets, supporting G1 experimental design.
+    \item Sparse latent representations in vision models show clear clean-vs-perturbed separation with interpretable features, supporting G3 diagnostics design.
+    \item Detection with a compact subset of sparse features can remain competitive with dense baselines, suggesting practical value of sparse local representations.
+\end{itemize}
+
+These observations motivate the final thesis experiments: extending sparse-feature diagnostics from vision and synthetic settings to attention-based steering and cross-layer logical validation in a single framework.
 \end{document}
