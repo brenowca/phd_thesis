@@ -134,16 +134,26 @@ In what follows, we will subsample the subclasses using different values for $f$
 \noindent \textbf{Dataset 1 (equidistant subclasses)}\label{sec:eqdist-dataset}: to investigate the impact of shifting the training distribution away from the test set distribution in a systematic way, we created a dataset with 4 classes, 
         $C_1,\dots, C_4$, such that each class $C_i$ is composed of two disjoint subclasses $C_{i,1}$ and $C_{i,2}$, $C_i = C_{i,1} \cup C_{i,2}$,
         $C_{i,1} \cap C_{i,2} = \varnothing$.
-\begin{figure}[t]
+\begin{figure*}[t]
     \centering
-    \fbox{\begin{minipage}[c][4.0cm][c]{0.75\linewidth}
-    \centering
-    Placeholder diagram for the equidistant-subclass geometry.\par
-    (To be replaced by the final schematic figure.)
-    \end{minipage}}
-    \caption{Placeholder for the geometric layout of classes and equidistant subclasses used in Dataset 1.}
-    \label{fig:group_eqdist}
-\end{figure}
+
+    \begin{subfigure}[t]{0.475\textwidth}
+         \centering
+         \includegraphics[width=0.3\textwidth]{figures/group_eqdist.pdf}
+         \caption{A schematic of the equidistant dataset. Each subclass is equidistant from all others, creating a challenging scenario for generalization.}
+         \label{fig:group_eqdist}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.475\textwidth}
+         \centering
+         \includegraphics[width=0.4\textwidth]{figures/group_eqvariant.png}
+         \caption{A schematic of the equivariant dataset. Subclasses are grouped by similarity into larger classes, providing a relational structure for the model to learn.}
+         \label{fig:group_eqvariant}
+    \end{subfigure}
+    \caption{Schematic representations of the (a) equidistant and (b) equivariant synthetic datasets developed for this study.}
+    \label{fig:synthetic_dataset}
+\end{figure*}
+
 All the subclasses (no matter which class they belong to) have equidistant centroids. This means that each subclass is a multivariate normal distribution whose central value is equidistant to the central values of every other distribution. Also, if we consider the centroids of each class they will be equidistant to each other. This concept is illustrated in figure~\ref{fig:group_eqdist}.
 Although we can generate an unbound number of samples, we use a test set consisting of 10,000 samples.
 More detail about the properties of the dataset can be found in the project's git repository.% Appendix~\ref{app:equidistant_dataset}.

@@ -56,6 +56,62 @@ All reported results are aggregated over multiple seeds. We report confidence in
 \textbf{Baselines and ablations.}
 Baselines include output-only heuristics (logit margin and confidence), dense-activation detectors, and steering without logic constraints. Core ablations remove each pipeline module and vary sparsity targets to quantify robustness of conclusions.
 
+\section{Reproducible experimental settings}
+This section consolidates concrete settings extracted from prior work so the methodology can be replicated with minimal ambiguity.
+
+\textbf{G1 (late generalization under shift), grounded in prior work \cite{carvalho2025inducing_grokking_distribution_shifts}.}
+\begin{itemize}
+    \item \textbf{Data design:} synthetic equidistant/equivariant class--subclass datasets with controlled sampling factor $f$ to induce train--test distribution shift; test set size fixed at 10,000.
+    \item \textbf{Architectures:} Multi-layer Perceptron (primary report) and 2-layer Transformer (confirmatory trend).
+    \item \textbf{Optimization defaults:} learning rate $10^{-3}$, weight decay $10^{-4}$, initialization scale factor $8$.
+    \item \textbf{Statistical protocol:} aggregate key curves/metrics over 10 independent runs.
+    \item \textbf{Compute reference:} single NVIDIA V100 (16GB) per run; batches of experiments under 24h in the reported setup.
+\end{itemize}
+
+\textbf{G3 (shift/attack diagnostics), grounded in prior work \cite{carvalho2026interpretable_stego_detection_sae}.}
+\begin{itemize}
+    \item \textbf{Backbones/datasets:} pretrained ViT-B/16 (primary) and CLIP ViT-B/32 (transfer check); CIFAR-10 and an ImageNet-10 subset.
+    \item \textbf{Input protocol:} resize to $224\times224$ and normalize with ImageNet statistics; create clean/adversarial/stego variants from training splits and evaluate on held-out validation/test splits.
+    \item \textbf{Attack settings:} FGSM with $\epsilon=0.012$; PGD with $\epsilon=0.05$, 20 iterations, step size $0.005$, random initialization in the $L_\infty$ ball; plus low-opacity text-overlay steganographic perturbations.
+    \item \textbf{SAE settings:} hooks at encoder layers 1/2/5/10/11; latent size 1024; objective $\|h-\hat h\|_2^2+\lambda\|z\|_1$ with $\lambda=10^{-3}$; Adam, learning rate $10^{-3}$, batch size 256, 10 epochs.
+    \item \textbf{Detector protocol:} train logistic/MLP detectors on latent codes with binary cross-entropy and Adam; report ROC-AUC and PR-AUC.
+\end{itemize}
+
+\textbf{G2 (steering locality), currently provisional from LSNC evidence.}
+\begin{itemize}
+    \item The available LSNC material supports the controller structure (LoRA-grounded predicates + LTN satisfaction + guided beam search), and reports GPT-2 with beam size 5 as an experimental base.
+    \item However, final reproducibility-grade settings (predicate datasets, LoRA rank/alpha grid, final split policy, and full ablation matrix) remain thesis deliverables and are therefore explicitly frozen in the experimental protocol chapter before final runs.
+\end{itemize}
+
+\section{Evaluation matrix}
+Before presenting final experiments, Table~\ref{tab:evaluation-matrix} gives the reader a compact map of how each thesis goal is operationalized. I.e., which tasks are used to test it, which behavioral/mechanistic metrics will determine success, and which baselines are needed to make causal claims and distinguish strong prior evidence from still-open validation.
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{p{0.20\textwidth}p{0.28\textwidth}p{0.27\textwidth}p{0.20\textwidth}}
+\hline
+\textbf{Goal} & \textbf{Datasets/Tasks} & \textbf{Metrics} & \textbf{Baselines} \\
+\hline
+G1: Emergence &
+Synthetic class/subclass and grokking-prone controlled settings under shift &
+Train/test dynamics, delay-to-generalization, feature stability, cross-layer alignment &
+No-shift controls; dense activation probes  \\
+
+G2: Steering locality &
+Constraint-guided generation (single-rule and multi-rule) &
+Constraint satisfaction, task quality, collateral regression rate &
+Unconstrained decoding, logit-bias only, rerank-only \\
+
+G3: Shift/attack diagnostics &
+ViT/CLIP clean vs stego and FGSM/PGD perturbations; transfer to additional perturbation suites &
+ROC-AUC, PR-AUC, calibration, early-warning lead time &
+Output confidence/margin, dense-feature detectors \\
+\hline
+\end{tabular}
+\caption{Evaluation matrix (Goal $\times$ Task $\times$ Metrics $\times$ Baselines) with current evidence level.}
+\label{tab:evaluation-matrix}
+\end{table}
+
 \section{Observed Effects}
 The completed work already supports feasibility of the methodology:
 \begin{itemize}

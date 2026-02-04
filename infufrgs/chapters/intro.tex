@@ -40,6 +40,19 @@ Core claims (to argue \& test):
     \item \textbf{C3 (Shift/attack diagnostics):} internal signals provide earlier/more stable indicators of shift/adversarial perturbation than output-only heuristics.
 \end{itemize}
 
+\section{Research questions and hypotheses}
+To make the proposal directly testable, we organize the core claims into three research questions and paired hypotheses:
+\begin{itemize}
+    \item \textbf{RQ1 (Emergence):} Can distribution shifts induce measurable late-generalization transitions that coincide with stable changes in internal sparse representations?
+    \item \textbf{H1:} In controlled grokking-prone settings, late test improvements are preceded or accompanied by increases in cross-seed/cross-layer feature consistency, as suggested by prior results on induced grokking under distribution shift \cite{carvalho2025inducing_grokking_distribution_shifts}.
+
+    \item \textbf{RQ2 (Steering locality):} Can logic-guided steering change targeted behavior while keeping collateral regressions bounded?
+    \item \textbf{H2:} Logic-based constraints applied over sparse/interpretable internal features can improve rule satisfaction with an explicit and acceptable quality trade-off, measurable through task quality versus constraint-adherence curves.
+
+    \item \textbf{RQ3 (Diagnostics):} Are internal sparse-feature signatures more reliable for perturbation/shift detection than output-only heuristics?
+    \item \textbf{H3:} Sparse latent signatures provide competitive or better detection stability (ROC-AUC/PR-AUC and calibration) than output-only baselines, consistent with prior ViT/CLIP evidence on stego and FGSM/PGD perturbations \cite{carvalho2026interpretable_stego_detection_sae}.
+\end{itemize}
+
 
 % This thesis encapsulates several attempts to better understand state-of-the-art neural models. At the time of writing, the best performing models in a wide range of multi-modal tasks are attention-based neural networks\cite{}.
 

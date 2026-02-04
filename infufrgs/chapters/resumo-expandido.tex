@@ -1,0 +1,59 @@
+\chapter{Resumo expandido}
+
+\noindent
+\textbf{Resolução 02/2021 -- Redação de Teses e Dissertações em Inglês}
+Dissertações de Mestrado e Teses de Doutorado do PPGC, bem como outros
+trabalhos escritos tais como Proposta de Tese e PEP, poderão ser
+redigidas em inglês desde que contenham um título e resumo expandido
+redigidos em português. O resumo expandido deve conter no mínimo duas
+páginas inteiras, deve aparecer como apêndice e deve conter as
+principais contribuições e resultados do trabalho.
+
+\vspace{0.8em}
+\noindent
+Esta proposta de tese investiga interpretabilidade local em modelos neurais baseados em atenção, com foco em três eixos complementares: (i) dinâmica de aprendizagem e emergência de generalização tardia (grokking), (ii) controle comportamental por restrições neuro-simbólicas, e (iii) diagnóstico de mudanças de distribuição e perturbações adversariais a partir de sinais internos do modelo. O problema central é que modelos modernos apresentam alto desempenho prático, mas ainda carecemos de métodos confiáveis para explicar, em nível local, por que uma saída específica foi produzida, como estruturas internas emergem durante o treinamento e como intervir com baixo efeito colateral.
+
+\section*{Motivação e problema}
+Em aplicações reais, desempenho médio não é suficiente: é necessário compreender falhas, antecipar degradações e justificar decisões em casos individuais. Métodos de interpretabilidade pós-hoc frequentemente oferecem explicações plausíveis, porém nem sempre fiéis aos mecanismos internos do modelo. Em contrapartida, abordagens mecanísticas tendem a ser mais rigorosas, mas exigem protocolos de avaliação claros para conectar medições internas a efeitos observáveis no comportamento.
+
+Neste contexto, esta tese parte da hipótese de que comportamentos de alto nível emergem de estruturas internas parcialmente identificáveis (características, circuitos e padrões de ativação) que podem ser medidas, alinhadas entre camadas e usadas para diagnóstico e controle local. A contribuição proposta não é uma promessa de interpretabilidade global completa, mas um arcabouço experimentalmente testável para análise e intervenção local, com métricas explícitas e avaliação de trade-offs.
+
+\section*{Objetivos}
+Os objetivos científicos são:
+\begin{enumerate}
+    \item caracterizar mudanças representacionais ao longo do treinamento, especialmente em transições de generalização tardia;
+    \item desenvolver e avaliar um pipeline de steering por restrições lógicas suaves, medindo localidade do efeito e regressões colaterais;
+    \item detectar mudanças de distribuição e ataques a partir de assinaturas internas em ativações/atenção, complementando sinais baseados apenas na saída.
+\end{enumerate}
+
+Esses objetivos são avaliados por métricas comportamentais (acurácia, aderência a restrições, qualidade de geração, ROC-AUC/PR-AUC em detecção) e métricas mecanísticas (esparsidade, erro de reconstrução, estabilidade entre sementes, alinhamento entre camadas e satisfação de regras lógicas).
+
+\section*{Metodologia proposta}
+A metodologia integra três componentes principais:
+\begin{itemize}
+    \item \textbf{SAEs (Sparse Autoencoders):} extração de códigos esparsos por camada para reduzir polissemia e facilitar interpretação de características latentes;
+    \item \textbf{Cross-layer transcoders:} mapeamento entre espaços latentes de diferentes camadas para medir consistência semântica ao longo da profundidade;
+    \item \textbf{Validadores lógicos (LTN-style):} predicados e regras diferenciáveis usados tanto como critério de avaliação quanto como sinal de controle no processo de geração.
+\end{itemize}
+
+O desenho experimental é organizado em três famílias de tarefas: (i) cenários controlados de grokking e distribuição deslocada; (ii) tarefas de geração para steering por restrições; e (iii) cenários de robustez com corrupção/adversarial. Em cada família, são executadas ablações (remoção de cada módulo do pipeline) e comparações com baselines para isolar contribuição causal dos componentes.
+
+\section*{Resultados já obtidos}
+Dois resultados prévios sustentam a viabilidade da proposta. Primeiro, o trabalho \cite{carvalho2025inducing_grokking_distribution_shifts} mostrou que mudanças de distribuição podem induzir grokking de forma sistemática em cenários controlados, com evidências de que estrutura relacional dos dados influencia fortemente a generalização tardia. Segundo, o estudo \cite{carvalho2026interpretable_stego_detection_sae} indicou que representações esparsas em modelos de visão (ViT/CLIP) permitem separar entradas limpas e perturbadas com poucas características latentes interpretáveis, alcançando resultados competitivos de detecção.
+
+Esses resultados prévios são incorporados nesta tese como base metodológica: uso de ambientes controlados para validar hipóteses mecanísticas e uso de assinaturas latentes esparsas para diagnóstico local.
+
+\section*{Contribuições esperadas}
+As contribuições esperadas da tese são:
+\begin{itemize}
+    \item um framework unificado de interpretabilidade local para modelos baseados em atenção, conectando aprendizado, inferência e controle;
+    \item evidências empíricas sobre como \textit{sparse features} se reorganizam em fases de generalização tardia;
+    \item um protocolo de steering com medição explícita de trade-off entre satisfação de restrições e qualidade de saída;
+    \item sinais diagnósticos práticos para detecção precoce de mudança de regime e perturbação adversarial.
+\end{itemize}
+
+\section*{Riscos e mitigação}
+Os principais riscos incluem instabilidade de \textit{latent features} entre sementes, alinhamento entre camadas sem preservação semântica, degradação de qualidade sob restrições fortes e baixa transferência de assinaturas de ataque para cenários mais realistas. Como mitigação, a proposta prevê múltiplas sementes, avaliação estatística com intervalos de confiança, ablações sistemáticas, calibração de pesos de regras e relato explícito de falhas e limites de generalização.
+
+\section*{Síntese}
+Em síntese, esta proposta organiza uma agenda experimental para conectar interpretabilidade mecanística e utilidade prática. O foco em critérios locais, mensuráveis e reprodutíveis busca produzir conhecimento acionável para análise, controle e robustez de modelos neurais baseados em atenção, contribuindo para seu uso mais seguro e previsível em aplicações reais.

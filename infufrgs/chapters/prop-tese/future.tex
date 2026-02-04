@@ -44,4 +44,20 @@ This thesis is expected to deliver four main contributions:
 \section{Scope boundaries}
 This proposal does not claim full global interpretability of large attention models. The scope is local, feature-level, and experimentally testable: explain and control specific behaviors with quantified uncertainty and explicit trade-offs.
 
+\section{Threats to validity and limitations}
+\textbf{Internal validity.}
+Controlled settings are necessary to isolate mechanisms, but observed gains may be partially explained by training choices (regularization, optimizer schedules, or data composition) rather than by the proposed pipeline alone. We address this with explicit controls and module-level ablations.
+
+\textbf{Construct validity.}
+Proxy metrics (e.g., sparsity, reconstruction, rule satisfaction) may not fully capture ``interpretability'' or ``semantic alignment.'' For this reason, claims are restricted to measurable local criteria and paired behavioral effects.
+
+\textbf{External validity.}
+Evidence from synthetic grokking and ViT/CLIP perturbation studies \cite{carvalho2025inducing_grokking_distribution_shifts,carvalho2026interpretable_stego_detection_sae} may not transfer uniformly to all architectures and domains. The thesis will therefore report transfer failures explicitly, not only positive cases.
+
+\textbf{Statistical conclusion validity.}
+Seed sensitivity and run-to-run variance can inflate apparent effects in mechanistic studies. We mitigate this with multi-seed reporting, confidence intervals, and frozen evaluation protocols.
+
+\textbf{Practical limitation.}
+The proposal prioritizes local interpretability and control over complete global explanations. As a result, the final outcomes are expected to be actionable but partial.
+
 \end{document}
