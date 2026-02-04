@@ -12,7 +12,7 @@
 % There is an important distinction between AI systems and AI learning models.% 
 Attention-based neural networks (e.g., Transformers and related architectures) currently achieve state-of-the-art performance across language, vision, and multimodal tasks. Despite their empirical success, we still lack reliable local explanations for why a given model produced a particular output, how internal mechanisms associated with ``reasoning-like'' behavior arise during training, and how we can steer models toward desired behaviors with minimal side-effects. 
 
-Following the Kautz strategy \cite{kautz2022thirdaisummer} we are able to build systems that leverage trained models and chain their processing to achieve impressive goals. Those systems mitigate the various shortcomings of current language models, for instance.
+Following the Kautz taxonomy \cite{kautz2022thirdaisummer} we are able to build systems that leverage trained models and chain their processing to achieve impressive goals. Those systems mitigate the various shortcomings of current language models, for instance.
 
 This thesis studies local interpretability in attention-based models through three interconnected lenses: (i) training dynamics, with emphasis on abrupt transitions such as late generalization (grokking-like phenomena); (ii) behavioral control, focusing on neuro-symbolic steering methods that enforce human-interpretable constraints; and (iii) robustness diagnostics, investigating whether internal activation/attention signatures can reveal distribution shifts or adversarial perturbations before output quality visibly degrades. 
 
@@ -44,7 +44,7 @@ Core claims (to argue \& test):
 To make the proposal directly testable, we organize the core claims into three research questions and paired hypotheses:
 \begin{itemize}
     \item \textbf{RQ1 (Emergence):} Can distribution shifts induce measurable late-generalization transitions that coincide with stable changes in internal sparse representations?
-    \item \textbf{H1:} In controlled grokking-prone settings, late test improvements are preceded or accompanied by increases in cross-seed/cross-layer feature consistency, as suggested by prior results on induced grokking under distribution shift \cite{carvalho2025inducing_grokking_distribution_shifts}.
+    \item \textbf{H1:} In controlled settings for grokking, late test improvements are preceded or accompanied by increases in the consistency of cross-seed/cross-layer features, as suggested by previous results on induced grokking under distribution shift \cite{carvalho2025inducing_grokking_distribution_shifts}.
 
     \item \textbf{RQ2 (Steering locality):} Can logic-guided steering change targeted behavior while keeping collateral regressions bounded?
     \item \textbf{H2:} Logic-based constraints applied over sparse/interpretable internal features can improve rule satisfaction with an explicit and acceptable quality trade-off, measurable through task quality versus constraint-adherence curves.
@@ -80,7 +80,7 @@ These limitations motivate local, \emph{testable criteria and evaluation protoco
 
 \section{Analogy to biology}
 Neural networks resemble biological systems in the sense that complex organization emerges from simple learning rules, and the resulting structure is not explicitly designed.
-Like biological systems, neural models exhibit emergent organization not explicitly programmed by designers. 
+Like biological systems, neural models exhibit emergent organization that is not explicitly programmed by designers. 
 This analogy is useful as a methodological stance: progress comes from proposing falsifiable hypotheses about internal organization (e.g., stable features or circuits) and testing them through interventions and controlled evaluations, rather than relying solely on post-hoc narratives.
 We adopt the stance that progress comes from measurable, falsifiable hypotheses about internal structure, e.g., tracking stable features/circuits---rather than relying solely on post-hoc narratives.
 
@@ -88,7 +88,7 @@ We adopt the stance that progress comes from measurable, falsifiable hypotheses 
 Alignment is ultimately constrained by our ability to understand and predict model behavior under distribution shift and intervention. By developing local diagnostics and controllable steering with explicit constraints, this thesis contributes tools that support safer deployment without assuming perfect global interpretability.
 Alignment in practice depends on our ability to predict and control model behavior under interventions and distribution shift. Local interpretability and constraint-based steering provide complementary tools: interpretability offers diagnosis and early warning signals, while steering offers controllable behavior change with measurable trade-offs. This thesis contributes methods and evaluation designs that connect these aspects in a single empirical framework.
 
-This work is made in the hope of being useful to the community to better understand the AI we currently achieved and ease its integration into humanity social, political and daily lives. 
+This work is made in the hope of being useful to the community to better understand the AI we currently achieved and ease its integration into humanity social, political, and daily lives. 
 \end{document}
 
 
