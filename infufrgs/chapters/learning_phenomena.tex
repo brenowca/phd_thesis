@@ -104,7 +104,7 @@ In order to confirm or reject our hypothesis, we created two synthetic datasets 
 
 \section{New Synthetic Datasets for Grokking}\label{sec:artificial-datasets}
 
-The two synthetic datasets introduced in this chapter enable the induction of grokking with minimal tuning of model parameters, avoiding an extensive search of the parameter space. These datasets enable the creation of a shift between training and test set distributions, allowing for user control over how much information each subclass carries, as detailed below. The datasets are available in the supplementary material accompanying the paper.
+The two synthetic datasets introduced in this chapter enable the induction of grokking with minimal tuning of model parameters, avoiding an extensive search of the parameter space. These datasets enable the creation of a shift between training and test set distributions, allowing for user control over how much information each subclass carries, as detailed below. The datasets are available in the supplementary material accompanying this thesis.
 
 The primary goal of the datasets is to be linearly separable when considering all sample dimensions $d$, while also being non-trivial to solve even with the addition of noise or extreme down-sampling. Data can be created with an arbitrary number of dimensions $d$. The datasets are defined by projecting classes onto this $d$-dimensional space using multivariate normal distributions, ensuring control over both class definitions and their distances in the $d$-dimensional space.
 
