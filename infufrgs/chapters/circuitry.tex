@@ -9,7 +9,7 @@
 \end{flushright}
 
 \section{LTN Cross-layer Transcoder}
-The methodology combines three components: sparse feature extraction, cross-layer alignment, and logic-based validation/steering. The design is grounded on two completed lines of work: (i) controlled late-generalization experiments with distribution shifts (ICTAI paper), and (ii) sparse-autoencoder analyses showing that small latent subsets can separate clean and perturbed samples in vision models. In this thesis, we transfer these insights to attention-based models under a unified pipeline.
+The methodology combines three components: sparse feature extraction, cross-layer alignment, and logic-based validation/steering. The design is grounded on two completed lines of work: (i) controlled late-generalization experiments with distribution shifts \cite{carvalho2025inducing_grokking_distribution_shifts}, and (ii) sparse-autoencoder analyses showing that small latent subsets can separate clean and perturbed samples in vision models \cite{carvalho2026interpretable_stego_detection_sae}. In this thesis, we transfer these insights to attention-based models under a unified pipeline.
 
 Given a model and an input sequence, we collect residual activations $h_\ell$ at selected layers. We train sparse autoencoders (SAEs) to obtain sparse codes $s_\ell$, then learn cross-layer transcoders $T_{\ell\to k}$ to map features across depth. On top of $s_\ell$ and $\hat s_k$, we define soft logic validators (LTN-style predicates/rules) that produce differentiable satisfaction scores. These scores are used both for analysis (semantic consistency) and for control signals during inference (e.g., reranking, constrained decoding, and logit adjustments).
 

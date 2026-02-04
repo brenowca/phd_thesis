@@ -26,7 +26,7 @@ Let $\Delta_T$ denote an interval with lower bound $\sigma_E$ containing the lim
 \end{definition}
 
 
-Understanding intriguing learning phenomena such as grokking can provide valuable insights into the inner workings of deep neural networks. Late generalization challenges traditional stopping criteria, which rely on monitoring training and test set losses. While it remains difficult to predict when late generalization might occur, this chapter takes an important step forward by elucidating how distribution shifts contribute to grokking. Specifically, we explore how modeling class relationships can increase the probability of generalization and guide the design of alternative stopping criteria. These findings are expected to help identify conditions under which models are more likely to generalize after training convergence.  %TODO rewrite
+Understanding intriguing learning phenomena such as grokking can provide valuable insights into the inner workings of deep neural networks. Late generalization challenges traditional stopping criteria, which rely on monitoring training and test set losses. While it remains difficult to predict when late generalization might occur, this chapter advances the discussion by elucidating how distribution shifts contribute to grokking. Specifically, we explore how modeling class relationships can increase the probability of generalization and guide the design of alternative stopping criteria. These findings help identify conditions under which models are more likely to generalize after training convergence.
 
 \subsection{Grokking: Visualization and metrics}
 
@@ -111,7 +111,7 @@ The primary goal of the datasets is to be linearly separable when considering al
 We define classes $C_1, \dots, C_n$, where each class $C_i$, $1 \leq i \leq n$, is the union of the samples in the disjoint subclasses $C_{i,1}, \dots, C_{i,m}$. We say that $C_i = \bigcup_{j=1}^{m} C_{i,j}$, and $C_{i,p} \cap C_{i,k} = \emptyset$ for all $k \neq p$.
 
 
-%TODO the dataset explanation here is too convoluted. Start with an example
+As a concrete example, consider four classes with two subclasses each. When one subclass per class is strongly under-sampled, the model still receives weak relational signals from neighboring subclasses. This controlled imbalance is sufficient to induce delayed generalization in our setting, and motivates the full formal definition below.
 
 The above structure of classes and subclasses mimics the organization of some real-world datasets, such as COCO \cite{lin2014COCO}, which is used in image segmentation where objects can be part of a larger scene or other objects. More importantly, it provides a straightforward and effective method to induce distribution shifts on demand by down-sampling specific subclasses while preserving the original proportions of the other classes. We also define the dimensionality, $d$, of the dataset.
 
@@ -195,7 +195,6 @@ In the experiments reported in this chapter we set the learning rate of the mode
 
 \paragraph{Distribution-shift caused by data sparsity} When performing a balanced down-sampling of our training set, i.e. without forcing any subclass to be sampled more than any other, we find that grokking diminishes as the number of samples increases, only existing in considerably small sample sizes, as depicted in Figure~\ref{fig:balanced_data_varying_sample_size}. This is consistent with the literature, as discussed in Section~\ref{sec:grokking}.
 
-%TODO revise this analysis after rerunning the experiments
 \paragraph{Distribution-shift caused by unbalanced equidistant subclass sampling}
 In order to evaluate the impact of distribution shifts in the  occurrence of grokking, we evaluated different data unbalancing created by the use of different values for $f$ as described in Section~\ref{sec:artificial-datasets}. It is clear from Figure~\ref{fig:small_unbalance_balance_eq} that removing completely a subclass has a detrimental effect on generalization, with the models being stuck on a sub-optimal plateau. Nevertheless, adding even a very small number of examples in that subclass (as defined by the fraction e.g. $f = 0.01$ of the missing subclasses) not only allowed the model to generalize well, but allowed the model to generalize late (i.e. grokking occurred). Since this very small fraction of the examples was not visibly relevant for training (was not misclassified) their impact on the test set performance was seen only after training converged and weight decay led the network to a more sparse internal representation.
 
