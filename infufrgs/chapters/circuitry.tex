@@ -70,7 +70,8 @@ This section consolidates concrete settings extracted from prior work so the met
 
 \textbf{G3 (shift/attack diagnostics), grounded in prior work \cite{carvalho2026interpretable_stego_detection_sae}.}
 \begin{itemize}
-    \item \textbf{Backbones/datasets:} pretrained ViT-B/16 (primary) and CLIP ViT-B/32 (transfer check); CIFAR-10 and an ImageNet-10 subset.
+    \item \textbf{Backbones/datasets:} pretrained ViT-B/16 (primary) and CLIP ViT-B/32 (transfer check);
+    CIFAR-10 and an ImageNet-10 subset.
     \item \textbf{Input protocol:} resize to $224\times224$ and normalize with ImageNet statistics; create clean/adversarial/stego variants from training splits and evaluate on held-out validation/test splits.
     \item \textbf{Attack settings:} FGSM with $\epsilon=0.012$; PGD with $\epsilon=0.05$, 20 iterations, step size $0.005$, random initialization in the $L_\infty$ ball; plus low-opacity text-overlay steganographic perturbations.
     \item \textbf{SAE settings:} hooks at encoder layers 1/2/5/10/11; latent size 1024; objective $\|h-\hat h\|_2^2+\lambda\|z\|_1$ with $\lambda=10^{-3}$; Adam, learning rate $10^{-3}$, batch size 256, 10 epochs.
@@ -84,7 +85,7 @@ This section consolidates concrete settings extracted from prior work so the met
 \end{itemize}
 
 \section{Evaluation matrix}
-Before presenting final experiments, Table~\ref{tab:evaluation-matrix} gives the reader a compact map of how each thesis goal is operationalized. I.e., which tasks are used to test it, which behavioral/mechanistic metrics will determine success, and which baselines are needed to make causal claims and distinguish strong prior evidence from still-open validation.
+Before presenting final experiments, table~\ref{tab:evaluation-matrix} gives the reader a compact map of how each thesis goal is operationalized. I.e., which tasks are used to test it, which behavioral/mechanistic metrics will determine success, and which baselines are needed to make causal claims and distinguish strong prior evidence from still-open validation.
 \begin{table}[ht]
 \centering
 \small
