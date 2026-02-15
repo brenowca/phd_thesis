@@ -11,6 +11,106 @@ To compare or transfer representations across depth, we define a cross-layer tra
 
 \subsection*{Implications for this thesis.} The symbols $h_\ell$, $s_\ell$, and $T_{\ell\to k}$ are the canonical objects for measurement and control. All metrics (reconstruction, sparsity, stability, alignment, constraint satisfaction) are reported with respect to these objects. The steering surfaces considered later act on logits using signals derived from validators applied to $s_\ell$ or $\hat s_k$.
 
+\section{Core deep learning concepts used in this thesis}
+\label{sec:core-dl-concepts}
+This section summarizes only the deep learning concepts directly required by the proposal claims on emergence, steering locality, and diagnostics. We avoid broad historical coverage and focus on concepts that define measurable quantities used later in the methodology and ablation design.
+
+\subsection{Representation learning and distributed features}
+In high-capacity neural models, useful concepts are usually encoded in distributed form rather than in one-neuron-one-concept form. A single latent concept can span multiple directions, and one coordinate can carry multiple overlapping factors. For interpretability, this means we should model feature geometry explicitly and evaluate whether discovered features are stable and reusable across runs and layers, instead of assuming semantic atomicity from raw coordinates.
+
+Superposition and polysemanticity are therefore expected behaviors at scale, not pathologies that disappear by default \cite{anthropic2022superposition,anthropic2023monosemanticity}. In this proposal, sparse dictionaries are used as an operational tool to reparameterize activations into a more analysis-friendly basis, not as a claim that the model is ``truly sparse'' in an ontological sense.
+
+A thesis-native example is the case where two checkpoints show similar task behavior but yield different raw activation bases; if a sparse dictionary and matching protocol recover corresponding features, we treat this as evidence of underlying representational continuity rather than mere coordinate coincidence. \textit{Takeaway for this thesis:} evidence supporting C1/C2/C3 from this concept is based on reconstruction fidelity, sparsity level, and cross-seed/epoch feature correspondence.
+
+\subsection{Generalization, overfitting, implicit regularization}
+We model training as minimization of empirical risk under regularization:
+\[
+\min_{\theta}\; \frac{1}{N}\sum_{i=1}^{N}\mathcal{L}(f_{\theta}(x_i), y_i) + \lambda\Omega(\theta).
+\]
+In modern overparameterized settings, good generalization can emerge despite near-zero training error due to optimization bias, data structure, and architecture priors. This is central for interpreting delayed generalization phenomena and for avoiding output-only explanations of behavior shifts \cite{kaplan2020scalinglaws,hoffmann2022chinchilla}.
+
+Operationally, we track train/test behavior jointly over time windows (pre-transition, transition, post-transition), rather than using a single endpoint score. A compact statistic used throughout this thesis is the time-indexed generalization gap:
+\[
+\mathrm{gap}(t)=\mathcal{L}_{\mathrm{test}}(t)-\mathcal{L}_{\mathrm{train}}(t).
+\]
+In grokking-like settings, delayed improvement corresponds to a late contraction of this gap after training performance has already saturated.
+
+A thesis-native example is a run where training loss is nearly flat while test accuracy improves later; this is interpreted as representational reorganization only if internal measurements (e.g., feature stability/alignment) change coherently in the same phase window. \textit{Takeaway for this thesis:} C1 claims require joint behavioral-mechanistic evidence, and C3 diagnostics must beat output-only heuristics that rely only on post-hoc performance signals.
+
+\subsection{Optimization dynamics and phase transitions}
+Training can exhibit phase-like behavior: fast fitting of easy patterns, slower reorganization of internal representations, and delayed behavioral transitions. This perspective motivates phase-aware checkpoints and multi-metric reporting, especially in grokking-like settings where test behavior changes long after training metrics appear saturated.
+
+For mechanistic interpretation, the key risk is false positives from curve-only narratives: an apparent transition in accuracy may reflect evaluation noise, calibration effects, or metric saturation rather than a meaningful internal change. Therefore, phase boundaries are treated as analysis windows where both behavioral and representational diagnostics must be examined.
+
+A thesis-native example is reduction of feature drift around the same interval where delayed generalization emerges; this co-occurrence supports the hypothesis that internal organization is changing, while a transition without such internal evidence is treated as insufficient for a mechanistic claim. \textit{Takeaway for this thesis:} C1 acceptance requires behavioral shift and mechanistic shift to co-occur under the same experimental protocol.
+
+\subsection*{Implications for this thesis.}
+C1 (\emph{Emergence}) is tested through phase-aware representation dynamics, combining delayed behavioral transitions with feature stability/alignment changes over matched training windows.
+
+C2 (\emph{Steering locality}) is tested through constrained interventions where behavioral gains must be accompanied by bounded collateral changes in internal and external metrics.
+
+C3 (\emph{Diagnostics}) is tested by internal-signal detectors that must outperform or match output-only baselines under calibration and transfer checks.
+
+\section{Attention-based model internals relevant to interpretation}
+\label{sec:attention-internals}
+\subsection{Self-attention as content-based routing}
+Self-attention computes token-to-token mixing weights from query-key compatibility and applies them to values:
+\[
+\mathrm{Attn}(Q,K,V)=\mathrm{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right)V.
+\]
+For interpretation, attention is treated as a routing mechanism that redistributes information across positions; its relevance is not only in attribution maps but in how it modifies downstream residual activations where features are measured \cite{vaswani2017attention,olsson2022inductionheads}. \textit{Takeaway for this thesis:} attention is analyzed through its effect on $h_\ell$ and derived sparse features, not as a standalone explanation artifact.
+
+\subsection{Residual stream as computation substrate}
+At layer $\ell$, we use a residual-style update view:
+\[
+h_{\ell+1} = h_{\ell} + \Delta^{\text{attn}}_{\ell}(h_{\ell}) + \Delta^{\text{mlp}}_{\ell}(h_{\ell}).
+\]
+This representation makes cross-layer analysis operational: SAEs are trained on $h_\ell$, and transcoders map between sparse bases inferred from these layerwise states.
+\textit{Takeaway for this thesis:} the residual stream is the primary substrate linking mechanistic analysis and controllable intervention.
+
+\subsection{MLP blocks, feature superposition, and polysemanticity}
+MLP blocks can be interpreted as content-dependent transformations over residual features; in practice they often exhibit superposition, where multiple latent factors share coordinates \cite{geva2021ffn,anthropic2022superposition}. This motivates sparse dictionary methods and explicit stability tests across seeds/epochs.
+\textit{Takeaway for this thesis:} polysemanticity is treated as a measurable risk and SAE training/ablation is the primary mitigation mechanism.
+
+\subsection{LayerNorm and training stability (why it matters for feature comparability)}
+Normalization layers affect activation scale and distribution, which can change apparent feature sparsity and cross-run comparability even when task behavior is similar. Therefore, normalization-aware reporting (e.g., consistent hook points and scale-sensitive diagnostics) is necessary when comparing features across checkpoints, layers, or architectures.
+\textit{Takeaway for this thesis:} feature-level conclusions are accepted only under controlled activation collection and comparable normalization conditions.
+
+\section{Decoder-only transformer variants and invariants}
+\label{sec:decoder-variants-invariants}
+\subsection{Baseline decoder-only stack (GPT-style)}
+Decoder-only models combine autoregressive prediction with stacked attention-MLP blocks and a residual stream, which is the baseline setting for this proposal's interpretability objects \cite{radford2018improving,radford2019language,brown2020gpt3}. What changes with scale is mainly capability and optimization behavior; what remains invariant is the layerwise representation interface used by $h_\ell$, $s_\ell$, and $T_{\ell\to k}$.
+\textit{Takeaway for this thesis:} GPT-style decoders define the reference analysis interface for all later variants.
+
+\subsection{MoE routing variants}
+MoE models replace dense MLP computation with expert routing, increasing conditional computation efficiency \cite{fedus2022switch,jiang2024mixtral}. The main challenge is routing-induced feature instability; however, residual activations and layerwise sparse coding remain analyzable with stricter variance controls.
+\textit{Takeaway for this thesis:} MoE changes transfer difficulty, not the validity of representation-level measurement.
+
+\subsection{Long-context adaptations}
+Long-context improvements modify efficiency and context handling, often without removing the same core residual-attention interface \cite{rae2022scaling}. This can alter distribution of activation norms and long-range dependencies, which should be treated as a shift in analysis conditions rather than a new interpretability regime.
+\textit{Takeaway for this thesis:} long-context variants are handled as controlled setting shifts with unchanged core measurement objects.
+
+\subsection{Instruction/alignment adaptations}
+Instruction tuning and preference optimization alter objective functions and behavior priors while keeping architecture mostly fixed \cite{ouyang2022instructgpt,bai2022constitutional,wei2022chainofthought,rafailov2023dpo}. This is directly relevant for steering claims because improved instruction behavior may mask or reshape internal mechanisms if not measured with mechanistic metrics.
+\textit{Takeaway for this thesis:} alignment-stage behavior changes must be evaluated jointly with internal feature and validator metrics.
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{p{0.20\textwidth}p{0.24\textwidth}p{0.24\textwidth}p{0.24\textwidth}}
+\hline
+\textbf{Variant} & \textbf{Changed component} & \textbf{Invariant analysis object} & \textbf{Risk for transfer} \\
+\hline
+GPT-style dense decoder & Scale/data/training recipe & Residual activations $h_\ell$ and sparse codes $s_\ell$ & Scale-induced feature drift across checkpoints \\
+MoE decoder & Expert routing in feed-forward path & Layerwise residual interface and validator signals & Route-dependent instability and harder feature matching \\
+Long-context decoder & Context handling and efficiency mechanisms & Same layerwise readout protocol & Shifted activation statistics and long-range confounders \\
+Instruction/aligned decoder & Objective and preference optimization stage & Same architecture-level hooks and transcoder interface & Behavioral shifts without transparent internal causal attribution \\
+\hline
+\end{tabular}
+\caption{Decoder variant changes versus invariant measurement interfaces used in this thesis.}
+\label{tab:variant-invariant-map}
+\end{table}
+
 \section{Architecture lineage from ChatGPT and why mechanistic interpretability still transfers}
 \label{sec:arch-lineage-chatgpt}
 From a systems perspective, ChatGPT can be read as a product layer built on top of decoder-only Transformer language models, instruction tuning, and preference optimization procedures such as RLHF \cite{vaswani2017attention,ouyang2022instructgpt,christiano2017rlhf,openai2023gpt4}. In this sense, the practical jump from base next-token predictors to useful assistants reflects training and alignment choices over a stable architectural backbone rather than a complete departure from Transformer internals.
@@ -28,6 +128,23 @@ Architectural variation changes important details: tokenizer granularity, model 
 This motivates a transfer principle used throughout the proposal: interpretability claims should be attached to measurable objects that are architecture-robust. In our pipeline, these are $h_\ell$, $s_\ell$, $\hat s_k$, and $T_{\ell\to k}$, paired with reconstruction, sparsity, stability, alignment, and validator satisfaction metrics. The same principle supports cross-variant comparability: we do not assume feature identities are identical across models, only that comparable measurement protocols can detect when local structure is stable, transferable, or fragile.
 
 The approach has boundaries. Transfer can degrade when routing is extremely sparse and highly input-conditional (making feature identity unstable), when multimodal fusion introduces non-homogeneous representational spaces, or when aggressive compression/distillation/quantization collapses fine-grained internal geometry. For this reason, negative transfer outcomes are treated as first-class results, and claims are restricted to settings where protocol-level validity is empirically demonstrated.
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{p{0.21\textwidth}p{0.20\textwidth}p{0.19\textwidth}p{0.30\textwidth}}
+\hline
+\textbf{Concept} & \textbf{Observable} & \textbf{Metric} & \textbf{Failure mode} \\
+\hline
+Feature stability & Cross-seed/epoch feature correspondence & Match rate and drift statistics & Feature identities collapse under reruns or checkpoint shifts \\
+Cross-layer transfer & Consistency of $\hat s_k$ with $s_k$ & Alignment error and validator consistency & Numerically aligned mapping without semantic preservation \\
+Steering locality & Targeted vs collateral activation shifts & Constraint satisfaction vs quality/regression curves & Apparent control with uncontrolled collateral degradation \\
+Diagnostic reliability & Internal signature separation under perturbation & ROC-AUC/PR-AUC/calibration/lead-time & Output-only baselines match or outperform internal metrics \\
+\hline
+\end{tabular}
+\caption{Concept-to-observable map used to operationalize mechanistic claims across variants.}
+\label{tab:concept-observable-metric}
+\end{table}
 
 \subsection*{Research gap and thesis positioning}
 \label{sec:research-gap-positioning}
@@ -74,6 +191,11 @@ Interpretability goals vary along two axes: local vs.~global and mechanistic vs.
 Polysemanticity---multiple unrelated features entangled within a single dimension of the residual stream---motivates SAEs: by promoting sparsity and overcomplete bases, SAEs aim to separate conflated concepts into more interpretable features. However, SAEs must be evaluated for fidelity (reconstruction), usefulness (downstream control), and stability (consistency across seeds and epochs).
 
 In this thesis, we use SAEs to obtain sparse features $s_\ell$ per layer, transcoders to align features across layers, and validators to attach semantic meaning to features. This triad supports both mechanistic inspection (feature alignment and validator transfer) and practical steering.
+
+\subsection{Criteria for actionable mechanistic interpretability}
+We evaluate interpretability by four criteria connected to downstream decisions. \textbf{Faithfulness} asks whether internal measurements track causal or algorithmic structure rather than plausible narratives; we operationalize it with intervention-aware checks and baseline comparisons. \textbf{Stability} asks whether features persist across seeds/checkpoints; we operationalize it with correspondence and drift metrics. \textbf{Transferability} asks whether local structures and validators remain meaningful across layers/variants; we operationalize it with transcoder alignment and validator consistency. \textbf{Actionability} asks whether explanations support controllable interventions; we operationalize it with steering-locality trade-off curves and collateral regression reporting.
+
+\textit{Takeaway for this thesis:} interpretability claims are accepted only when faithfulness, stability, transferability, and actionability are jointly supported by reproducible metrics in Chapter~\ref{chpt:circuitry}.
 
 \subsection*{Implications for this thesis.} We prioritize mechanistic interpretability with practical utility: features should reconstruct well, be sparse and stable, align across layers, and satisfy reusable validators. These criteria drive the metrics and ablations used later.
 
