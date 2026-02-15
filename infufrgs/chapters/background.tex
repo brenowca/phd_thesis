@@ -11,6 +11,30 @@ To compare or transfer representations across depth, we define a cross-layer tra
 
 \subsection*{Implications for this thesis.} The symbols $h_\ell$, $s_\ell$, and $T_{\ell\to k}$ are the canonical objects for measurement and control. All metrics (reconstruction, sparsity, stability, alignment, constraint satisfaction) are reported with respect to these objects. The steering surfaces considered later act on logits using signals derived from validators applied to $s_\ell$ or $\hat s_k$.
 
+\section{Architecture lineage from ChatGPT and why mechanistic interpretability still transfers}
+\label{sec:arch-lineage-chatgpt}
+From a systems perspective, ChatGPT can be read as a product layer built on top of decoder-only Transformer language models, instruction tuning, and preference optimization procedures such as RLHF \cite{vaswani2017attention,ouyang2022instructgpt,christiano2017rlhf,openai2023gpt4}. In this sense, the practical jump from base next-token predictors to useful assistants reflects training and alignment choices over a stable architectural backbone rather than a complete departure from Transformer internals.
+
+Tracing backwards, the core lineage is well defined: Transformer blocks \cite{vaswani2017attention}, GPT-style autoregressive pre-training \cite{radford2018improving,radford2019language}, large-scale in-context learning behavior \cite{brown2020gpt3}, and instruction-following alignment pipelines \cite{ouyang2022instructgpt}. This progression is the same history often emphasized in build-from-scratch perspectives for modern reasoning-capable models \cite{raschka2024buildllm}: capability gains accumulate through scale, data, and training objectives while preserving key computational primitives.
+
+Forward and parallel variants relevant to this thesis retain these primitives while changing operational details. Open-weight families (e.g., LLaMA-style models) keep decoder-only residual-stream computation \cite{touvron2023llama}; mixture-of-experts variants introduce sparse routing over MLP submodules while preserving layered attention-residual composition \cite{fedus2022switch,jiang2024mixtral}; and long-context model engineering largely modifies efficiency and context handling without removing layerwise residual features as analysis targets \cite{rae2022scaling}. Reasoning-oriented adaptations also predominantly alter training curricula, supervision formats, or inference-time search, again operating over the same internal representational objects.
+
+For this thesis, the relevant invariants are explicit: residual streams, attention-mediated token interactions, MLP-channel transformations, and depth-wise composition. These invariants justify using common measurement objects across variants, namely $h_\ell$ (layer activations), sparse feature dictionaries $s_\ell$, and cross-layer mappings $T_{\ell\to k}$.
+
+\section{Mechanistic interpretability under architectural variation}
+\label{sec:mechinterp-variation}
+Architectural variation changes important details: tokenizer granularity, model scale, optimizer and data mixture, context length, and (in MoE settings) routing sparsity. These changes affect interpretability difficulty, especially feature stability and cross-run comparability, but they do not eliminate mechanistic observables. Layer activations remain available, sparse dictionaries can still be trained, and cross-layer correspondence can still be tested via explicit alignment criteria.
+
+This motivates a transfer principle used throughout the proposal: interpretability claims should be attached to measurable objects that are architecture-robust. In our pipeline, these are $h_\ell$, $s_\ell$, $\hat s_k$, and $T_{\ell\to k}$, paired with reconstruction, sparsity, stability, alignment, and validator satisfaction metrics. The same principle supports cross-variant comparability: we do not assume feature identities are identical across models, only that comparable measurement protocols can detect when local structure is stable, transferable, or fragile.
+
+The approach has boundaries. Transfer can degrade when routing is extremely sparse and highly input-conditional (making feature identity unstable), when multimodal fusion introduces non-homogeneous representational spaces, or when aggressive compression/distillation/quantization collapses fine-grained internal geometry. For this reason, negative transfer outcomes are treated as first-class results, and claims are restricted to settings where protocol-level validity is empirically demonstrated.
+
+\subsection*{Research gap and thesis positioning}
+\label{sec:research-gap-positioning}
+Most prior work either presents architecture history or evaluates a specific interpretability method in isolation. The missing piece is an integrated argument about why and when local mechanistic measurements should transfer across modern model variants. This thesis addresses that gap with a unified, measurable framework centered on sparse features, cross-layer alignment, and logic-based semantic validation. Success and failure are operationalized in the methodology chapter through explicit metrics, baselines, and falsification criteria (Chapter~\ref{chpt:circuitry}).
+
+\paragraph{}With this context in place, we now position the learning phenomena literature that motivates the first thesis track (emergence under distribution shift).
+
 \section{Learning phenomena}
 We briefly position the learning phenomena relevant to this work. Generalization denotes performance on unseen data; overfitting occurs when training performance improves while validation/test performance degrades; underfitting is failure to fit even the training data. In practice, we monitor paired training/validation curves and compare gaps over time to assess whether improvements reflect memorization or genuine structure acquisition.
 

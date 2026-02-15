@@ -56,6 +56,40 @@ All reported results are aggregated over multiple seeds. We report confidence in
 \textbf{Baselines and ablations.}
 Baselines include output-only heuristics (logit margin and confidence), dense-activation detectors, and steering without logic constraints. Core ablations remove each pipeline module and vary sparsity targets to quantify robustness of conclusions.
 
+\section{Claim-to-Evidence Map}
+\label{sec:claim-evidence-map}
+Table~\ref{tab:claim-evidence-falsification} makes the proposal falsifiable claim by claim. For each core claim (C1--C3), we define an observable, the primary metrics, the baseline comparison, and a falsification condition that would invalidate the claim under the proposed protocol.
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{p{0.14\textwidth}p{0.22\textwidth}p{0.19\textwidth}p{0.17\textwidth}p{0.22\textwidth}}
+\hline
+\textbf{Claim} & \textbf{Observable} & \textbf{Primary metrics} & \textbf{Baseline} & \textbf{Falsification condition} \\
+\hline
+C1 (Emergence) &
+Phase transition around delayed generalization under controlled shift &
+Delay-to-generalization, feature stability, cross-layer alignment &
+No-shift controls; dense probes &
+No systematic association between transition timing and mechanistic changes across seeds \\
+
+C2 (Steering locality) &
+Targeted behavior change with bounded collateral effects &
+Constraint satisfaction, task quality, collateral regression rate &
+Unconstrained decoding; logit-bias only; rerank-only &
+Constraint gains require unacceptable quality loss or collateral regressions exceed preset bounds \\
+
+C3 (Diagnostics) &
+Early and stable detection of perturbation/shift from internal signatures &
+ROC-AUC, PR-AUC, calibration, early-warning lead time &
+Output confidence/margin; dense-feature detectors &
+Internal signatures do not outperform or match output-only baselines under transfer settings \\
+\hline
+\end{tabular}
+\caption{Claim-to-evidence mapping with explicit falsification conditions for C1--C3.}
+\label{tab:claim-evidence-falsification}
+\end{table}
+
 \section{Reproducible experimental settings}
 This section consolidates concrete settings extracted from prior work so the methodology can be replicated with minimal ambiguity.
 
@@ -77,10 +111,12 @@ This section consolidates concrete settings extracted from prior work so the met
     \item \textbf{Detector protocol:} train logistic/MLP detectors on latent codes with binary cross-entropy and Adam; report ROC-AUC and PR-AUC.
 \end{itemize}
 
-\textbf{G2 (steering locality), currently provisional from LSNC evidence.}
+\textbf{G2 (steering locality), protocol freeze and minimum evidence criteria.}
 \begin{itemize}
-    \item The available LSNC material supports the controller structure (LoRA-grounded predicates + LTN satisfaction + guided beam search), and reports GPT-2 with beam size 5 as an experimental base.
-    \item However, final reproducibility-grade settings (predicate datasets, LoRA rank/alpha grid, final split policy, and full ablation matrix) remain thesis deliverables and are therefore explicitly frozen in the experimental protocol chapter before final runs.
+    \item \textbf{Frozen protocol window:} the definitive steering protocol is frozen after the February 2026 calibration cycle and before final March--April 2026 runs.
+    \item \textbf{Frozen components:} predicate datasets, split policy, LoRA rank/alpha grid, decoder settings (including beam size/search policy), and the ablation matrix (no LTN, no $T_{\ell\to k}$, no SAE-guided features).
+    \item \textbf{Minimum acceptance evidence:} report multi-seed gains in constraint satisfaction with bounded quality degradation and bounded collateral regressions against all steering baselines.
+    \item \textbf{Failure policy:} if acceptance criteria are not met, G2 claims are downgraded to negative evidence and retained as explicit limitations rather than positive conclusions.
 \end{itemize}
 
 \section{Evaluation matrix}

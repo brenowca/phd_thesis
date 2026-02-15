@@ -53,6 +53,14 @@ To make the proposal directly testable, we organize the core claims into three r
     \item \textbf{H3:} Sparse latent signatures provide competitive or better detection stability (ROC-AUC/PR-AUC and calibration) than output-only baselines, consistent with prior ViT/CLIP evidence on stego and FGSM/PGD perturbations \cite{carvalho2026interpretable_stego_detection_sae}.
 \end{itemize}
 
+\section{Proposal positioning}
+\label{sec:proposal-positioning}
+\textbf{Thesis statement.} This proposal argues that local interpretability for attention-based models can be made operationally useful when sparse feature representations, cross-layer alignment, and logic-based validators are evaluated jointly under explicit behavioral and mechanistic criteria.
+
+\textbf{Novelty beyond prior publications.} The accepted grokking work and the SAE-based perturbation diagnostics establish feasibility in two isolated tracks. The thesis contribution is to integrate these tracks with a steering-locality program in one unified protocol, so that emergence, controllability, and robustness diagnostics are analyzed with shared objects ($h_\ell$, $s_\ell$, $T_{\ell\to k}$), common evaluation logic, and explicit cross-track ablations.
+
+\textbf{Evidence status.} \emph{Completed:} controlled late-generalization evidence and initial sparse-feature diagnostics. \emph{Partial:} steering-controller implementation and preliminary logic-guided experiments. \emph{Pending:} finalized steering protocol, full baseline/ablation matrix across all goals, and transfer/failure characterization under the frozen evaluation plan.
+
 
 % This thesis encapsulates several attempts to better understand state-of-the-art neural models. At the time of writing, the best performing models in a wide range of multi-modal tasks are attention-based neural networks\cite{}.
 
