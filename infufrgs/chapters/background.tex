@@ -183,7 +183,7 @@ This thesis positions itself as neural-first with loose but differentiable coupl
 
 Validators serve two roles: as training-time regularizers to favor representations that satisfy desired constraints and as evaluation-time metrics to quantify constraint satisfaction and coverage. In the cross-layer setting, validators can be shared across layers to test whether semantics are preserved by $T_{\ell\to k}$.
 
-\subsection{Implications for this thesis.} We adopt soft logic validators (LTN-style) as both losses and metrics. They provide portable semantic checks across layers and yield signals for steering. We will report satisfaction rates and penalty magnitudes alongside reconstruction/alignment metrics to assess whether aligned features remain semantically meaningful.
+\textbf{Implications for this thesis:} We adopt soft logic validators (LTN-style) as both losses and metrics. They provide portable semantic checks across layers and yield signals for steering. We will report satisfaction rates and penalty magnitudes alongside reconstruction/alignment metrics to assess whether aligned features remain semantically meaningful.
 
 \section*{Interpretability}
 Interpretability goals vary along two axes: local vs.~global and mechanistic vs.~post-hoc. Local methods explain particular inputs or activations; global methods summarize model behavior or circuits. Mechanistic approaches aim to uncover causal or algorithmic structure (e.g., feature-level circuits), while post-hoc methods provide approximate explanations without claiming faithful mechanism \cite{doshi2017rigorous,jacovi2020faithfulness}.
