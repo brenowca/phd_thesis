@@ -217,6 +217,7 @@ Evaluation covers prediction quality of $\hat s_k$ against $s_k$, transfer of va
 The LTN Cross-layer Transcoder combines layerwise SAEs, cross-layer mapping, and soft logic validators. SAEs produce sparse features per layer; $T_{\ell\to k}$ aligns these features; validators score whether features satisfy desired relations. These scores serve two functions: regularizing the transcoder to prefer semantically consistent alignments and producing signals for steering.
 
 At a high level, the method aims to improve interpretability that is useful for control: aligned sparse features that reconstruct well, transfer across depth, and respect declarative constraints. Detailed objectives, training schedules, and steering surfaces are specified in Chapter~4; here we motivate the combination and its expected benefits.
+The concrete LSNC protocol (predicate grounding with LoRA, composite scoring, and guided beam-search failure policies) is intentionally deferred to the methodology chapter to keep this background section conceptual.
 
 \subsection*{Implications for this thesis.} This section bridges Background to Methodology. We will (i) train SAEs per layer and report sparsity/reconstruction/stability, (ii) train $T_{\ell\to k}$ and report alignment and semantic transfer, and (iii) use LTN validators both as regularizers and evaluation metrics, ultimately yielding signals for steering.
 

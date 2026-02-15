@@ -120,6 +120,46 @@ This section consolidates concrete settings extracted from prior work so the met
     \item \textbf{Failure policy:} if acceptance criteria are not met, G2 claims are downgraded to negative evidence and retained as explicit limitations rather than positive conclusions.
 \end{itemize}
 
+\section{G2 steering protocol (preliminary evidence track)}
+\label{sec:g2-steering-protocol}
+This section specifies the frozen G2 protocol in reproducible terms, using LSNC evidence as preliminary feasibility input (not as finalized quantitative proof). Predicate grounding uses a shared encoder with parameter-efficient LoRA adapters \cite{hu2022lora,sanh2019distilbert}. Each adapter predicts one predicate truth value (e.g., tense, voice, lexical constraint, or location-subject indicator), and predicate scores are composed into an LTN satisfaction score with differentiable logic operators \cite{badreddine2022ltn}.
+
+For a partial sequence $Y_t=(y_1,\dots,y_t)$, candidate ranking uses a composite score:
+\[
+S(Y_t)=\log P_{\mathrm{LM}}(Y_t) + w_{\mathrm{logic}}\cdot \mathrm{Sat}_{\mathrm{LTN}}(Y_t),
+\]
+where $\log P_{\mathrm{LM}}$ captures language fluency and $\mathrm{Sat}_{\mathrm{LTN}}\in[0,1]$ captures rule satisfaction. We use guided beam search with the following loop per decoding step: (i) expand candidates with the base decoder, (ii) compute predicate truth values and $\mathrm{Sat}_{\mathrm{LTN}}$ for each hypothesis, (iii) rerank by $S(Y_t)$, and (iv) prune to the beam budget.
+
+The evaluation suite covers two task families. \textbf{DFA-compatible controls} test lexical/ordering and simple structural constraints, allowing comparison with automata-based control baselines such as Ctrl-G \cite{zhang2024ctrlg}. \textbf{Syntax-sensitive controls} require sentence-level predicates (e.g., passive voice + past tense + location-based subject), where neural-symbolic composition is expected to be more expressive than regular-language control \cite{giunchiglia2024ccnplus}.
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{p{0.17\textwidth}p{0.22\textwidth}p{0.23\textwidth}p{0.16\textwidth}p{0.16\textwidth}}
+\hline
+\textbf{Task} & \textbf{Predicate set} & \textbf{Control objective} & \textbf{Metrics} & \textbf{Baselines} \\
+\hline
+DFA-compatible control &
+Keyword/order/length predicates &
+Increase adherence to lexical/structural constraints with bounded fluency loss &
+Success rate, perplexity, collateral regression &
+Unconstrained decoding, logit-bias only, Ctrl-G \\
+
+Syntax-sensitive control &
+Passive-voice, tense, subject-type predicates &
+Satisfy compositional syntactic constraints under fluency and locality bounds &
+Success rate, perplexity, grammaticality/coherence, collateral regression &
+Rerank-only, unconstrained decoding, CCN+-style neuro-symbolic baseline \\
+\hline
+\end{tabular}
+\caption{G2 steering tasks with predicate families, objectives, metrics, and baseline comparisons under the frozen protocol.}
+\label{tab:g2-task-predicate-metric}
+\end{table}
+
+\section{G2 limitations and failure modes}
+\label{sec:g2-limitations}
+LSNC evidence is currently treated as preliminary because three limitations remain active until final frozen runs: (i) \textbf{latency scaling}, where inference cost grows with beam size, predicate count, and reranking frequency; (ii) \textbf{predicate error propagation}, where grounding errors can be amplified by logical composition; and (iii) \textbf{conflicting/impossible constraints}, where the controller may trade fluency for unsatisfiable targets. Final G2 claims are accepted only if these failure modes are bounded by the frozen acceptance criteria in this chapter.
+
 \section{Evaluation matrix}
 Before presenting final experiments, table~\ref{tab:evaluation-matrix} gives the reader a compact map of how each thesis goal is operationalized. I.e., which tasks are used to test it, which behavioral/mechanistic metrics will determine success, and which baselines are needed to make causal claims and distinguish strong prior evidence from still-open validation.
 \begin{table}[ht]

@@ -29,6 +29,24 @@ This thesis is expected to deliver four main contributions:
     \item \textit{Mitigation:} perform rule-weight calibration, evaluate Pareto curves (quality vs. satisfaction), and keep unconstrained baselines as fallback.
 \end{itemize}
 
+\textbf{R3a: LSNC latency grows with beam size and predicate count.}
+\begin{itemize}
+    \item \textit{Impact:} reduced throughput can limit practical deployment and experimental coverage.
+    \item \textit{Mitigation:} freeze a bounded beam/predicate regime, report speed--quality trade-offs explicitly, and evaluate reduced-frequency logic scoring as an ablation.
+\end{itemize}
+
+\textbf{R3b: Predicate grounding errors propagate through logical composition.}
+\begin{itemize}
+    \item \textit{Impact:} local classifier noise can produce unstable global satisfaction scores.
+    \item \textit{Mitigation:} calibrate predicate classifiers, add per-predicate reliability reporting, and include sensitivity ablations with perturbed predicate outputs.
+\end{itemize}
+
+\textbf{R3c: Conflicting or impossible constraints destabilize decoding.}
+\begin{itemize}
+    \item \textit{Impact:} generation can collapse into low-quality or logically inconsistent outputs.
+    \item \textit{Mitigation:} define an explicit conflict-handling policy (soft-violation ranking and fallback decoding) and report unsatisfied-formula cases as negative evidence.
+\end{itemize}
+
 \textbf{R4: Shift/attack signatures do not generalize beyond controlled tasks.}
 \begin{itemize}
     \item \textit{Impact:} limited external validity.
