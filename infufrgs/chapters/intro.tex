@@ -10,7 +10,7 @@
 % The year is 2026, humanity has made outstanding progress in the field of Artificial Intelligence, AI, but it is arguably in the infancy of its journey to general intelligence.
 
 % There is an important distinction between AI systems and AI learning models.% 
-Attention-based neural networks (e.g., Transformers and related architectures) currently achieve state-of-the-art performance across language, vision, and multimodal tasks. Despite their empirical success, we still lack reliable local explanations for why a given model produced a particular output, how internal mechanisms associated with ``reasoning-like'' behavior arise during training, and how we can steer models toward desired behaviors with minimal side-effects. 
+Attention-based neural networks (e.g., Transformers and related architectures) currently achieve state-of-the-art performance across language, vision, and multimodal tasks \cite{vaswani2017attention,brown2020gpt3,openai2023gpt4,dosovitskiy2021vit,radford2021clip}. Despite their empirical success, we still lack reliable local explanations for why a given model produced a particular output, how internal mechanisms associated with ``reasoning-like'' behavior arise during training, and how we can steer models toward desired behaviors with minimal side-effects. 
 
 Following the Kautz taxonomy \cite{kautz2022thirdaisummer} we are able to build systems that leverage trained models and chain their processing to achieve impressive goals. Those systems mitigate the various shortcomings of current language models, for instance.
 
@@ -47,7 +47,7 @@ To make the proposal directly testable, we organize the core claims into three r
     \item \textbf{H1:} In controlled settings for grokking, late test improvements are preceded or accompanied by increases in the consistency of cross-seed/cross-layer features, as suggested by previous results on induced grokking under distribution shift \cite{carvalho2025inducing_grokking_distribution_shifts}.
 
     \item \textbf{RQ2 (Steering locality):} Can logic-guided steering change targeted behavior while keeping collateral regressions bounded?
-    \item \textbf{H2:} Logic-based constraints applied over sparse/interpretable internal features can improve rule satisfaction with an explicit and acceptable quality trade-off, measurable through task quality versus constraint-adherence curves.
+    \item \textbf{H2:} Logic-based constraints applied over sparse/interpretable internal features can improve rule satisfaction with an explicit and acceptable quality trade-off, measurable through task quality versus constraint-adherence curves \cite{Garcez2009,serafini2016ltn}.
 
     \item \textbf{RQ3 (Diagnostics):} Are internal sparse-feature signatures more reliable for perturbation/shift detection than output-only heuristics?
     \item \textbf{H3:} Sparse latent signatures provide competitive or better detection stability (ROC-AUC/PR-AUC and calibration) than output-only baselines, consistent with prior ViT/CLIP evidence on stego and FGSM/PGD perturbations \cite{carvalho2026interpretable_stego_detection_sae}.
@@ -81,7 +81,7 @@ Ultimately, this work aims to support safer and more predictable deployment of a
 %How we do
 
 \section{Intrinsic limitation of interpretability methods}
-Most interpretability methods face a tension between plausibility and faithfulness: explanations that are intuitive (e.g., natural-language rationales) may not be causally grounded, while mechanistic methods  (e.g., probing, attribution, feature discovery) may be difficult to summarize.
+Most interpretability methods face a tension between plausibility and faithfulness: explanations that are intuitive (e.g., natural-language rationales) may not be causally grounded, while mechanistic methods  (e.g., probing, attribution, feature discovery) may be difficult to summarize \cite{jacovi2020faithfulness}.
 %Additionally, many methods are sensitive to model scale, prompt distribution, and representation drift across layers.
 In addition, modern models are highly distributed: internal variables are often polysemantic, drift across layers, and change across training regimes and prompts. 
 These limitations motivate local, \emph{testable criteria and evaluation protocols that link internal measurements to externally verifiable behavioral effects}.

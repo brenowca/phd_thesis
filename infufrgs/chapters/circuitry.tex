@@ -17,7 +17,7 @@ The key methodological claim is that local behavior is better diagnosed when fea
 
 \section{Implementation Strategy}
 \textbf{Stage 1: Reproducible data and model setup.}
-We instantiate three families of experiments: (a) synthetic class/subclass datasets that induce measurable distribution shifts and grokking-like transitions; (b) language-generation tasks for steering; and (c) robustness tasks with adversarial/corruption perturbations. This follows the principle validated in previous work: stress-test the mechanism in controlled environments first, then transfer to more realistic benchmarks.
+We instantiate three families of experiments: (a) synthetic class/subclass datasets that induce measurable distribution shifts and grokking-like transitions; (b) language-generation tasks for steering; and (c) robustness tasks with adversarial/corruption perturbations. This follows the principle validated in previous work \cite{carvalho2025inducing_grokking_distribution_shifts,carvalho2026interpretable_stego_detection_sae}: stress-test the mechanism in controlled environments first, then transfer to more realistic benchmarks.
 
 \textbf{Stage 2: Layerwise sparse feature learning.}
 For each selected layer $\ell$, we train an SAE with reconstruction and sparsity objectives. We track reconstruction error, activation sparsity, dead-feature rate, and feature stability across seeds/epochs. This stage provides the canonical latent representation used downstream.
