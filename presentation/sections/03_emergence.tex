@@ -1,0 +1,54 @@
+\section{G1: Emergence and Grokking}
+
+\begin{frame}{Grokking as Delayed Generalization}
+    \begin{columns}[T,onlytextwidth]
+        \column{0.56\textwidth}
+        \begin{itemize}
+            \item Grokking: test performance improves after training performance has already converged.
+            \item Proposal claim: controlled train/test distribution shift is a strong inducer of this transition.
+            \item Focus metric: transition delay and post-transition stability.
+        \end{itemize}
+        \footnotesize
+        Key reference: \cite{carvalho2025inducing_grokking_distribution_shifts}
+        \column{0.44\textwidth}
+        \begin{figure}
+            \centering
+            \includegraphics[width=\linewidth]{grokking_definition.pdf}
+            \caption{Definition and phase regions used in this proposal.}
+        \end{figure}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Synthetic Datasets Used for Controlled Shift}
+    \begin{columns}[T,onlytextwidth]
+        \column{0.49\textwidth}
+        \centering
+        \includegraphics[width=0.8\linewidth]{group_eqdist.pdf}
+        
+        {\scriptsize Equidistant subclasses}
+        \column{0.49\textwidth}
+        \centering
+        \includegraphics[width=0.64\linewidth]{group_eqvariant.png}
+        
+        {\scriptsize Equivariant subclasses}
+    \end{columns}
+    \small
+    These datasets are designed to manipulate class/subclass coverage and isolate how shift structure impacts late generalization.
+\end{frame}
+
+\begin{frame}{Representative G1 Results}
+    \begin{columns}[T,onlytextwidth]
+        \column{0.49\textwidth}
+        \begin{figure}
+            \centering
+            \includegraphics[width=\linewidth]{result_small.pdf}
+            \caption{Small imbalance can induce late generalization.}
+        \end{figure}
+        \column{0.49\textwidth}
+        \begin{figure}
+            \centering
+            \includegraphics[width=\linewidth]{result_large.pdf}
+            \caption{Shift-driven behavior remains visible at larger scale with strong imbalance.}
+        \end{figure}
+    \end{columns}
+\end{frame}

@@ -1,0 +1,62 @@
+\section{Methodology (G1-G3)}
+
+\begin{frame}{LTN Cross-Layer Transcoder Pipeline}
+    \begin{enumerate}
+        \item Collect layerwise residual activations $h_\ell$.
+        \item Train SAEs to obtain sparse codes $s_\ell$.
+        \item Learn cross-layer mappings $T_{\ell\to k}$.
+        \item Define LTN predicates/rules over sparse features.
+        \item Use satisfaction scores for diagnostics and inference steering.
+    \end{enumerate}
+    % \vspace{0.6em}
+    % \conceptplaceholder
+    %     {Pipeline block diagram}
+    %     {Figure to add: sequential pipeline from activations to sparse features to cross-layer alignment and logic scoring, with separate outputs for analysis metrics and decoding-time control.}
+\end{frame}
+
+\begin{frame}{Implementation Stages}
+    \small
+    \begin{table}
+        \centering
+        \begin{tabular}{p{0.18\linewidth}p{0.75\linewidth}}
+            \toprule
+            \textbf{Stage} & \textbf{Objective} \\
+            \midrule
+            1 & Reproducible setup: synthetic shift tasks, steering tasks, and perturbation suites. \\
+            2 & Layerwise sparse feature learning with reconstruction/sparsity monitoring. \\
+            3 & Cross-layer alignment with numeric and semantic consistency checks. \\
+            4 & Logic-guided evaluation and steering with module ablations. \\
+            5 & Multi-seed analysis, confidence intervals, reproducibility packaging. \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+\end{frame}
+
+\begin{frame}{Evaluation Matrix}
+    \tiny
+    \begin{table}
+        \centering
+        \setlength{\tabcolsep}{2pt}
+        \begin{tabular}{@{}p{0.15\linewidth}p{0.24\linewidth}p{0.29\linewidth}p{0.24\linewidth}@{}}
+            \toprule
+            \textbf{Goal} & \textbf{Tasks} & \textbf{Primary metrics} & \textbf{Baselines} \\
+            \midrule
+            G1 Emergence &
+            Synthetic class/subclass shift settings &
+            Delay-to-generalization, feature stability, cross-layer alignment &
+            No-shift controls, dense probes \\
+            \addlinespace[0.25em]
+            G2 Steering locality &
+            Single-rule and multi-rule constrained generation &
+            Constraint satisfaction, quality, collateral regressions &
+            Unconstrained, logit-bias only, rerank-only \\
+            \addlinespace[0.25em]
+            G3 Diagnostics &
+            Clean vs stego and FGSM/PGD perturbations &
+            ROC-AUC, PR-AUC, calibration, early-warning lead time &
+            Output confidence or margin, dense detectors \\
+            \bottomrule
+        \end{tabular}
+        \setlength{\tabcolsep}{6pt}
+    \end{table}
+\end{frame}
