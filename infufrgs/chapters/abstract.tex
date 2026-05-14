@@ -24,9 +24,15 @@
 \begin{abstract}
 Modern attention-based neural models exhibit abrupt changes in behavior during training  and under distribution shifts (e.g., late generalization/grokking), yet the internal mechanisms driving these transitions remain poorly understood. This thesis investigates how interpretable structure emerges and reorganizes inside attention-based networks, and how such structure can be leveraged for local, instance-level understanding and control.
 
-We propose an interpretability pipeline that combines (i) sparse feature discovery (via sparse autoencoders), (ii) cross-layer transcoders to map internal activations into a consistent feature space across layers, and (iii) logic-based validators inspired by Logic Tensor Networks (LTNs) to express and test human-interpretable constraints on model representations and outputs.
+We propose an interpretability pipeline that combines
+(i) sparse feature discovery (via sparse autoencoders),
+(ii) cross-layer transcoders to map internal activations into a consistent feature space across layers, and
+(iii) logic-based validators inspired by Logic Tensor Networks (LTNs) to express and test human-interpretable constraints on model representations and outputs.
 
-The research is organized around three goals: (1) characterize representational phase transitions during training (with emphasis on grokking and late generalization) by tracking sparse features and their stability; (2) study how internal signals change under steering and constraint-based decoding, testing whether models exhibit detectable ``awareness'' of external steering mechanisms; and (3) detect distribution shifts and adversarial perturbations by identifying consistent activation/attention signatures that precede output degradation.
+The research is organized around three goals:
+(1) characterize representational phase transitions during training (with emphasis on grokking and late generalization) by tracking sparse features and their stability;
+(2) study how internal signals change under steering and constraint-based decoding, testing whether models exhibit detectable ``awareness'' of external steering mechanisms; and
+(3) detect distribution shifts and adversarial perturbations by identifying consistent activation/attention signatures that precede output degradation.
 
 Evaluation will use controlled algorithmic tasks (for grokking), natural language generation benchmarks (for steering), and adversarial or corruption suites (for robustness), reporting both mechanistic metrics (feature sparsity, stability, cross-layer consistency, logical constraint satisfaction) and behavioral metrics (generalization accuracy, constraint adherence, quality trade-offs).
 
@@ -37,9 +43,15 @@ The expected contributions include: a unified local-interpretability framework f
 \begin{translatedabstract}
 Modelos neurais baseados em atenção (como Transformers) exibem mudanças abruptas de comportamento ao longo do treinamento, por exemplo, generalização tardia (grokking), e também sob mudanças de distribuição ou perturbações adversariais. Apesar do sucesso prático desses modelos, ainda faltam explicações locais e mecanísticas sobre o que muda internamente quando a performance ``vira a chave''.
 
-Esta tese investiga como estruturas interpretáveis emergem e se reorganizam dentro desses modelos e como tais estruturas podem ser usadas para interpretação local (por instância) e diagnóstico de comportamento. Propomos um pipeline de interpretabilidade que combina: (i) descoberta de características esparsas (via sparse autoencoders), (ii) cross-layer transcoders para mapear ativações de múltiplas camadas em um espaço de características consistente, e (iii) validadores baseados em lógica suave inspirados em Logic Tensor Networks (LTNs) para expressar e testar restrições interpretáveis sobre representações e saídas.
+Esta tese investiga como estruturas interpretáveis emergem e se reorganizam dentro desses modelos e como tais estruturas podem ser usadas para interpretação local (por instância) e diagnóstico de comportamento. Propomos um pipeline de interpretabilidade que combina:
+(i) descoberta de características esparsas (via sparse autoencoders),
+(ii) cross-layer transcoders para mapear ativações de múltiplas camadas em um espaço de características consistente, e
+(iii) validadores baseados em lógica suave inspirados em Logic Tensor Networks (LTNs) para expressar e testar restrições interpretáveis sobre representações e saídas.
 
-O trabalho é organizado em três objetivos: (1) caracterizar transições de representação ao longo do treinamento (com foco em grokking), rastreando estabilidade e composição de características esparsas; (2) estudar sinais internos associados a procedimentos de steering e decodificação com restrições, avaliando se existem assinaturas detectáveis do processo de controle; e (3) detectar mudanças de distribuição e ataques adversariais identificando padrões consistentes em ativações/atenção que antecedem degradação de saída.
+O trabalho é organizado em três objetivos:
+(1) caracterizar transições de representação ao longo do treinamento (com foco em grokking), rastreando estabilidade e composição de características esparsas;
+(2) estudar sinais internos associados a procedimentos de steering e decodificação com restrições, avaliando se existem assinaturas detectáveis do processo de controle; e
+(3) detectar mudanças de distribuição e ataques adversariais identificando padrões consistentes em ativações/atenção que antecedem degradação de saída.
 
 A avaliação utilizará tarefas controladas (grokking), benchmarks de geração de linguagem (steering) e conjuntos de corrupção/adversarial (robustez), reportando métricas mecanísticas (esparsidade, estabilidade, consistência entre camadas, satisfação lógica) e comportamentais (acurácia, aderência a restrições, trade-offs de qualidade).
 % \emph{O texto do resumo não deve conter mais do que 500 palavras.}
