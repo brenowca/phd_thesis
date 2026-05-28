@@ -1,0 +1,95 @@
+\section{Background and Objects}
+
+\begin{frame}{Notation and Core Objects}
+    \small
+    \begin{itemize}
+        \item Input sequence: $x_{1:T}$ and residual activations $h_{\ell}\in\mathbb{R}^{T\times d}$.
+        \item Sparse representation at each layer: $s_{\ell}=E_{\ell}(h_{\ell})$, with decoder reconstruction $\hat{h}_{\ell}=D_{\ell}(s_{\ell})$.
+        \item Cross-layer mapping: $T_{\ell\to k}(s_{\ell})\approx s_k$.
+        \item Logic validators (LTN predicates/rules) output soft satisfaction scores in $[0,1]$.
+    \end{itemize}
+    \vspace{0.4em}
+    \[
+        S(Y_t)=\log P_{\mathrm{LM}}(Y_t)+w_{\mathrm{logic}}\cdot \mathrm{Sat}_{\mathrm{LTN}}(Y_t)
+    \]
+    \footnotesize
+    This same object set is reused in G1 (emergence), G2 (steering), and G3 (diagnostics).
+\end{frame}
+
+\begin{frame}{Core Concepts Used in This Thesis}
+    \small
+    \begin{itemize}
+        \item \textbf{Distributed representation:} useful concepts are encoded across multiple directions, so feature identity must be tested for stability.
+        \item \textbf{Generalization dynamics:} delayed test gains require phase-aware analysis, not only endpoint metrics.
+        \item \textbf{Optimization phases:} memorization and later reorganization can co-exist in the same run.
+        \item \textbf{Practical implication:} C1/C2/C3 claims require paired behavioral + mechanistic evidence.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Transformer Internals Relevant to Interpretation}
+    \small
+    \begin{itemize}
+        \item Attention acts as content-based routing:
+        \[
+            \mathrm{Attn}(Q,K,V)=\mathrm{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right)V
+        \]
+        \item Residual stream is the main substrate for feature measurement:
+        \[
+            h_{\ell+1}=h_{\ell}+\Delta^{\text{attn}}_{\ell}(h_{\ell})+\Delta^{\text{mlp}}_{\ell}(h_{\ell})
+        \]
+        \item SAEs and transcoders operate over this layerwise residual interface.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Decoder Variants and Invariant Measurement Interface}
+    \scriptsize
+    \begin{table}
+        \centering
+        \setlength{\tabcolsep}{3pt}
+        \begin{tabular}{@{}p{0.22\linewidth}p{0.26\linewidth}p{0.24\linewidth}p{0.23\linewidth}@{}}
+            \toprule
+            \textbf{Variant} & \textbf{Main change} & \textbf{Invariant object} & \textbf{Transfer risk} \\
+            \midrule
+            GPT-style dense decoder & Scale, data, recipe & $h_{\ell}$ and $s_{\ell}$ & Feature drift across checkpoints \\
+            \addlinespace[0.2em]
+            MoE decoder & Expert routing in FFN path & Residual hooks + validators & Route-dependent instability \\
+            \addlinespace[0.2em]
+            Long-context decoder & Context handling/efficiency & Same layerwise readout & Shifted activation statistics \\
+            \addlinespace[0.2em]
+            Instruction-aligned decoder & Objective / preference optimization & Same transcoder interface & Behavior shifts without clear internal causality \\
+            \bottomrule
+        \end{tabular}
+        \setlength{\tabcolsep}{6pt}
+    \end{table}
+\end{frame}
+
+\begin{frame}{Criteria for Actionable Mechanistic Interpretability}
+    \small
+    \begin{columns}[T,onlytextwidth]
+        \column{0.49\textwidth}
+        \begin{block}{Faithfulness and Stability}
+            \begin{itemize}
+                \item Internal measurements must track causal structure.
+                \item Features should persist across seeds/checkpoints.
+            \end{itemize}
+        \end{block}
+        \column{0.49\textwidth}
+        \begin{block}{Transferability and Actionability}
+            \begin{itemize}
+                \item Features/validators should remain meaningful across layers.
+                \item Explanations must support controllable interventions.
+            \end{itemize}
+        \end{block}
+    \end{columns}
+    \vspace{0.3em}
+    \footnotesize
+    In this proposal, these criteria are operationalized with reconstruction, sparsity, alignment, validator consistency, and steering-locality metrics.
+\end{frame}
+
+% \begin{frame}{Visual Concept Map}
+%     \conceptplaceholder
+%         {Unified architecture overview}
+%         {Diagram to be added: token flow through model layers, SAE hooks per layer, cross-layer transcoder edges, and LTN validator heads feeding both analysis metrics and inference-time steering signals.}
+%     \vspace{0.4em}
+%     \footnotesize Placeholder created because this specific integrated diagram does not yet exist in \texttt{infufrgs/figures}.
+% \end{frame}

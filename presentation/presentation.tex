@@ -1,0 +1,68 @@
+\documentclass[aspectratio=169]{beamer}
+
+\usetheme{Madrid}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{booktabs}
+\usepackage{array}
+
+\definecolor{ufrgsBlue}{RGB}{0,70,140}
+\definecolor{ufrgsTeal}{RGB}{0,120,120}
+\definecolor{ufrgsOrange}{RGB}{210,95,30}
+\setbeamercolor{structure}{fg=ufrgsBlue}
+\setbeamercolor{title}{fg=ufrgsBlue}
+\setbeamercolor{frametitle}{fg=ufrgsBlue,bg=ufrgsBlue!8}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+
+\graphicspath{{../infufrgs/figures/}{../infufrgs/figures/equidistant/}}
+
+\newcommand{\conceptplaceholder}[2]{%
+    \begin{center}
+    \setlength{\fboxsep}{10pt}%
+    \fcolorbox{ufrgsOrange}{ufrgsOrange!8}{%
+        \parbox{0.92\linewidth}{%
+            \centering
+            \textbf{Placeholder figure: #1}\\[0.4em]
+            \small #2
+        }%
+    }%
+    \end{center}
+}
+
+\title[Towards Local Interpretation]{Towards a Local Interpretation of Attention Based Neural Models}
+\subtitle{PhD Thesis Proposal Presentation}
+\author[B. W. S. R. Carvalho]{Breno W. Carvalho}
+\institute[UFRGS]{Programa de Pos-Graduação em Computação \\ Universidade Federal do Rio Grande do Sul}
+\date{March 2026}
+
+\AtBeginSection[]{
+    \begin{frame}{Roadmap}
+        \tableofcontents[currentsection]
+    \end{frame}
+}
+
+\begin{document}
+
+\begin{frame}
+    \titlepage
+\end{frame}
+
+\begin{frame}{Roadmap}
+    \tableofcontents
+\end{frame}
+
+\input{sections/01_overview}
+\input{sections/02_background}
+\input{sections/03_emergence}
+\input{sections/04_methodology}
+\input{sections/05_current_results}
+\input{sections/06_timetable}
+\input{sections/07_closing}
+\input{sections/08_references}
+
+\end{document}

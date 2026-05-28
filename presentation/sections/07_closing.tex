@@ -1,0 +1,54 @@
+\section{Conclusion and Future Work}
+
+\begin{frame}{Conclusion}
+    \begin{itemize}
+        \item The proposal unifies emergence analysis, neuro-symbolic steering, and perturbation diagnostics in one local-interpretability program.
+        \item The methodology jointly measures sparse feature geometry, cross-layer consistency, and logic satisfaction.
+        \item Current evidence already supports feasibility for G1 and G3; G2 is positioned for final protocol-level validation.
+    \end{itemize}
+    \vspace{0.5em}
+    \small
+    Expected outcome: a practical, testable local analysis and intervention framework with explicit trade-offs and uncertainty reporting.
+\end{frame}
+
+\begin{frame}{Expected Contributions and Future Work}
+    \small
+    \begin{enumerate}
+        \item Unified local-interpretability pipeline (SAE + $T_{\ell\to k}$ + LTN validators).
+        \item Empirical evidence on emergence dynamics under controlled shifts.
+        \item Measurable steering-locality framework with quality-vs-satisfaction curves.
+        \item Transferable sparse diagnostics for perturbation/shift detection.
+    \end{enumerate}
+    \vspace{0.4em}
+    \begin{block}{Immediate future work}
+        Finalize frozen G2 runs, complete ablations and transfer tests, integrate results in final manuscript, and prepare defense-ready reproducibility artifacts.
+    \end{block}
+\end{frame}
+
+\begin{frame}{Main Risks and Mitigations}
+    \small
+    \begin{table}
+        \centering
+        \begin{tabular}{@{}p{0.16\linewidth}p{0.34\linewidth}p{0.42\linewidth}@{}}
+            \toprule
+            \textbf{Risk} & \textbf{Impact} & \textbf{Mitigation} \\
+            \midrule
+            R1: Sparse feature instability &
+            Weak reproducibility of local explanations &
+            Multi-seed protocols, feature matching across runs, confidence intervals. \\
+            \addlinespace[0.25em]
+            R2: Weak semantic alignment across layers &
+            Numeric fit without meaningful transfer &
+            Validator-consistency checks and identity/baseline ablations. \\
+            \addlinespace[0.25em]
+            R3: Constraint gains with excessive quality loss &
+            Steering not practical for deployment &
+            Rule-weight calibration, Pareto reporting, unconstrained fallback baseline. \\
+            \addlinespace[0.25em]
+            R5: Time pressure near defense &
+            Reduced ablation coverage &
+            Freeze minimum publishable matrix and defer non-critical extensions. \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+\end{frame}

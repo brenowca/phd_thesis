@@ -1,0 +1,140 @@
+\section{Motivation and Questions}
+
+\begin{frame}{Motivation}
+    \begin{itemize}
+        \item Attention-based models dominate language, vision, and multimodal benchmarks, but we still lack reliable local explanations for specific outputs.
+        \item This proposal focuses on three connected fronts:
+        \begin{itemize}
+            \item emergence during training (grokking-like transitions),
+            \item controllable neuro-symbolic steering,
+            \item shift/attack diagnostics from internal features.
+        \end{itemize}
+        \item Core question: can we connect internal mechanisms to measurable, controllable behavior with explicit trade-offs?
+    \end{itemize}
+    \vspace{0.3em}
+    \footnotesize References: \cite{vaswani2017attention,brown2020gpt3,openai2023gpt4,kautz2022thirdaisummer}
+\end{frame}
+
+\begin{frame}{Motivation: Why Local Explanations Matter}
+    \small
+    \begin{itemize}
+        \item Current models perform well, but output quality alone does not explain \textit{why} a specific decision was produced.
+        \item Without local explanations, we cannot reliably separate:
+        \begin{itemize}
+            \item real reasoning from spurious shortcuts,
+            \item robust behavior from fragile behavior under shift,
+            \item targeted control from collateral regressions.
+        \end{itemize}
+        \item The proposal therefore prioritizes measurable internal evidence, not only end-task scores.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Motivation: Emergence (G1)}
+    \small
+    \begin{block}{Question}
+        How do useful internal structures emerge during training, especially around delayed generalization (grokking-like transitions)?
+    \end{block}
+    
+    \begin{itemize}
+        \item Analyze phase transitions in train/test behavior.
+        \item Measure feature stability and cross-layer consistency around transition windows.
+        \item Use controlled distribution shifts to stress-test emergence conditions.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Motivation: Neuro-symbolic Steering (G2)}
+    \small
+    \begin{block}{Question}
+        Can we steer targeted behavior with logic constraints while keeping quality loss and collateral effects bounded?
+    \end{block}
+    \begin{itemize}
+        \item Use sparse features and LTN validators as control signals.
+        \item Compare constrained decoding against unconstrained and lightweight baselines.
+        \item Report explicit quality-versus-satisfaction trade-offs.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Motivation: Diagnostics (G3)}
+    \small
+    \begin{block}{Question}
+        Are internal sparse signatures better early-warning signals for shift/attacks than output-only heuristics?
+    \end{block}
+    \begin{itemize}
+        \item Evaluate clean vs perturbed separation in latent space.
+        \item Measure ROC-AUC, PR-AUC, calibration, and lead-time.
+        \item Test transfer to settings where output confidence can be misleading.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Motivation Detail: Core Question in Operational Form}
+    \small
+    \begin{block}{Core question}
+        Can we connect internal mechanisms to controllable behavior with explicit and reproducible trade-offs?
+    \end{block}
+    \vspace{0.4em}
+    \begin{table}
+        \centering
+        \begin{tabular}{p{0.28\linewidth}p{0.62\linewidth}}
+            \toprule
+            \textbf{If yes, we should observe} & \textbf{How we verify} \\
+            \midrule
+            Stable local features & Cross-seed/epoch stability and reconstruction fidelity \\
+            Targeted control & Constraint gain with bounded quality/regression cost \\
+            Reliable diagnostics & Internal-signal performance at least matching output-only baselines \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+\end{frame}
+
+\begin{frame}{Core Claims and Research Questions}
+    \small
+    \begin{table}
+        \centering
+        \begin{tabular}{p{0.18\linewidth}p{0.35\linewidth}p{0.38\linewidth}}
+            \toprule
+            \textbf{Claim} & \textbf{Research question} & \textbf{Hypothesis summary} \\
+            \midrule
+            C1: Emergence &
+            Can controlled shifts induce delayed generalization with stable internal changes? &
+            Late test gains align with increased cross-seed/cross-layer feature consistency. \\
+            \addlinespace[0.3em]
+            C2: Steering locality &
+            Can logic constraints change targeted behavior with bounded regressions? &
+            LTN-guided constraints improve rule satisfaction with acceptable quality loss. \\
+            \addlinespace[0.3em]
+            C3: Diagnostics &
+            Are sparse internal signatures stronger than output-only heuristics for perturbation detection? &
+            Sparse latent signatures improve or match detection/calibration stability. \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+\end{frame}
+
+\begin{frame}{Proposal Positioning}
+    \begin{columns}[T,onlytextwidth]
+        \column{0.33\textwidth}
+        \begin{block}{Completed}
+            \footnotesize
+            \begin{itemize}
+                \item Controlled grokking evidence under distribution shift.
+                \item Sparse SAE diagnostics for clean-vs-perturbed separation.
+            \end{itemize}
+        \end{block}
+        \column{0.33\textwidth}
+        \begin{block}{In Progress}
+            \footnotesize
+            \begin{itemize}
+                \item Frozen steering protocol calibration.
+                \item Final baseline and ablation matrix definition.
+            \end{itemize}
+        \end{block}
+        \column{0.33\textwidth}
+        \begin{block}{Pending}
+            \footnotesize
+            \begin{itemize}
+                \item Final multi-seed runs and transfer/failure analysis.
+                \item Thesis integration and defense-ready narrative.
+            \end{itemize}
+        \end{block}
+    \end{columns}
+\end{frame}
