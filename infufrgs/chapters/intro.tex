@@ -10,22 +10,22 @@
 % The year is 2026, humanity has made outstanding progress in the field of Artificial Intelligence, AI, but it is arguably in the infancy of its journey to general intelligence.
 
 % There is an important distinction between AI systems and AI learning models.% 
-Attention-based neural networks (e.g., Transformers and related architectures) currently achieve state-of-the-art performance across language, vision, and multimodal tasks \cite{vaswani2017attention,brown2020gpt3,openai2023gpt4,dosovitskiy2021vit,radford2021clip}. Despite their empirical success, we still lack reliable local explanations for why a given model produced a particular output, how internal mechanisms associated with ``reasoning-like'' behavior arise during training, and how we can steer models toward desired behaviors with minimal side-effects. 
+Attention-based neural networks (e.g., Transformers and related architectures) currently achieve state-of-the-art performance across language, vision, and multimodal tasks \cite{vaswani2017attention,brown2020gpt3,openai2023gpt4,dosovitskiy2021vit,radford2021clip}. Despite their empirical success, we still lack reliable local explanations for why a given model produced a particular output, how internal mechanisms associated with ``reasoning-like'' behavior arise during training, and how interpretability-based tools function as diagnostic signals under perturbation and distribution shift.
 
 Following the Kautz taxonomy \cite{kautz2022thirdaisummer} we are able to build systems that leverage trained models and chain their processing to achieve impressive goals. Those systems mitigate the various shortcomings of current language models, for instance.
 
-This thesis studies local interpretability in attention-based models through three interconnected lenses: (i) training dynamics, with emphasis on abrupt transitions such as late generalization (grokking-like phenomena); (ii) behavioral control, focusing on neuro-symbolic steering methods that enforce human-interpretable constraints; and (iii) robustness diagnostics, investigating whether internal activation/attention signatures can reveal distribution shifts or adversarial perturbations before output quality visibly degrades. 
+This thesis studies local interpretability in attention-based models through three interconnected studies, evaluated under explicit criteria: (i) training dynamics, with published evidence of induced late generalization (grokking-like phenomena) under distribution shifts; (ii) the limits of behavioral control via neuro-symbolic steering methods at decoding time, reported as a documented negative-evidence track; and (iii) robustness diagnostics, investigating under pre-registered tests when internal sparse-feature signatures isolate adversarial or perturbation-specific structure beyond input magnitude.
 
-The core hypothesis is that high-level behaviors emerge from partially identifiable internal structures (features/circuits) that can be tracked across training and inference. Building on this hypothesis, we test whether logic-inspired constraints can target and modulate such structures in a controllable way, and whether the same internal signals can serve as early-warning indicators for shifts and attacks. 
+The core hypothesis is that high-level behaviors emerge from partially identifiable internal structures (features/circuits) that can be tracked across training and inference, and that the boundaries of identifiability under rigorous evaluation are themselves informative. Building on this, we examine (a) where logic-inspired constraints could target and modulate such structures --- and the methodological reasons why the engineering examined here does not yield publishable signal; and (b) under what pre-registered criteria internal sparse-feature signatures function as diagnostic indicators for perturbations, with both positive (steganographic overlays) and falsified (FGSM/PGD) cases.
 
-Concretely, the thesis will
-(1) characterize representational changes around grokking-like transitions using mechanistic probes;
-(2) implement and evaluate a constraint-based steering pipeline (neuro-symbolic validators and reranking/decoding integration) and measure locality/regressions; and
-(3) design detection criteria for shifts/attacks based on internal patterns rather than outputs alone.
-The expected outcome is a coherent framework and empirical evidence connecting training-phase emergence, controllable steering, and diagnostic signals under distribution shift. 
+Concretely, the thesis will:
+(1) present empirical evidence of late-generalization transitions under distribution shifts via controlled algorithmic tasks at the behavioral level \cite{carvalho2025inducing_grokking_distribution_shifts}, with mechanistic extensions reported within the scope of currently available evidence;
+(2) report the engineering and limits of a constraint-based steering pipeline, providing negative evidence and methodological reasoning for not pursuing this track as a positive contribution; and
+(3) characterize SAE-based diagnostic signals under pre-registered hypotheses of magnitude-invariance (H1) and adversarial-specificity (H2), reporting a positive case (steganographic detection, 0.90 ROC-AUC \cite{carvalho2026interpretable_stego_detection_sae}) and a negative case (FGSM/PGD detection, gates falsified under matched-L2 controls).
+The expected outcome is a methodologically rigorous account, supported by an accepted A3+ publication and pre-registered evidence, of where local interpretability via sparse features functions in current attention-based models and where it does not.
 
 % What we do
-How do internal mechanisms that produce ``reasoning-like'' behavior arise, how can we inspect them faithfully, and how can we steer them with minimal side-effects across text and non-verbal domains?
+How do internal mechanisms underlying late generalization arise, how can we inspect them faithfully under pre-registration, and what are the limits of steering and diagnostic approaches built on sparse-feature interpretability?
 
 Core claims (to argue \& test):
 
@@ -35,31 +35,31 @@ Core claims (to argue \& test):
     % \item CoT-style ``reasoning'' in LLMs has measurable faithfulness and causal structure that can be inspected and stress-tested.
     % \item Similar interpretability/steerability principles hold for non-verbal models (PDE/physics), if we adopt domain-appropriate probes and invariance/residual tests.
     % \item Current visual models can not only extract concepts from its inputs but also how those concepts were provided to them and one can use this activation pattern as a method to detect attacks.
-    \item \textbf{C1 (Emergence):} identifiable representational changes precede/track late generalization, measurable via mechanistic metrics (feature stability, consistency across layers).
-    \item \textbf{C2 (Steering locality):} neuro-symbolic constraints can shift behavior with quantifiable trade-offs (constraint satisfaction vs. quality; regressions on control tasks).
-    \item \textbf{C3 (Shift/attack diagnostics):} internal signals provide earlier/more stable indicators of shift/adversarial perturbation than output-only heuristics.
+    \item \textbf{C1 (Emergence):} controlled distribution shifts can induce late-generalization transitions that are measurable behaviorally; mechanistic extensions (sparse-feature signatures around such transitions) are reported within the scope of available evidence.
+    \item \textbf{C2 (Steering limits):} logic-guided steering of attention-based generation via beam-search-time constraints does not yield publishable signal under the implementation regime examined here; this is reported as documented negative evidence with methodological reasoning, contributing a null result that informs future steering approaches.
+    \item \textbf{C3 (Diagnostics, scope and limits):} SAE-based diagnostic signals isolate structurally specific perturbations under pre-registered hypotheses --- confirmed for steganographic overlays (0.90 ROC-AUC) and falsified for FGSM/PGD under matched-L2 benign controls. The pre-registration protocol and matched-L2 control design are offered as methodological contributions.
 \end{itemize}
 
 \section{Research questions and hypotheses}
 To make the proposal directly testable, we organize the core claims into three research questions and paired hypotheses:
 \begin{itemize}
-    \item \textbf{RQ1 (Emergence):} Can distribution shifts induce measurable late-generalization transitions that coincide with stable changes in internal sparse representations?
-    \item \textbf{H1:} In controlled settings for grokking, late test improvements are preceded or accompanied by increases in the consistency of cross-seed/cross-layer features, as suggested by previous results on induced grokking under distribution shift \cite{carvalho2025inducing_grokking_distribution_shifts}.
+    \item \textbf{RQ1 (Emergence):} Can distribution shifts induce measurable late-generalization transitions with reproducible behavioral signatures, and to what extent can these transitions be tracked mechanistically?
+    \item \textbf{H1:} In controlled settings, distribution shifts induce late-generalization transitions whose behavioral profile is reproducible across seeds \cite{carvalho2025inducing_grokking_distribution_shifts}; mechanistic extensions (sparse-feature signatures) are reported within the scope of available evidence.
 
-    \item \textbf{RQ2 (Steering locality):} Can logic-guided steering change targeted behavior while keeping collateral regressions bounded?
-    \item \textbf{H2:} Logic-based constraints applied over sparse/interpretable internal features can improve rule satisfaction with an explicit and acceptable quality trade-off, measurable through task quality versus constraint-adherence curves \cite{Garcez2009,serafini2016ltn}.
+    \item \textbf{RQ2 (Steering limits):} What does it take for logic-guided steering at beam-search time to yield publishable signal against current decoding baselines, and where does the pipeline implemented here fail to meet that bar?
+    \item \textbf{H2 (negative-evidence track):} The neuro-symbolic steering pipeline implemented in this thesis --- soft logical constraints over beam-search reranking inspired by Logic Tensor Networks \cite{Garcez2009,serafini2016ltn} --- does not meet a publishable bar against contemporary decoding baselines under the experimental regime evaluated; the documented null result, together with its methodological reasoning, is reported as a contribution informing future steering approaches.
 
-    \item \textbf{RQ3 (Diagnostics):} Are internal sparse-feature signatures more reliable for perturbation/shift detection than output-only heuristics?
-    \item \textbf{H3:} Sparse latent signatures provide competitive or better detection stability (ROC-AUC/PR-AUC and calibration) than output-only baselines, consistent with prior ViT/CLIP evidence on stego and FGSM/PGD perturbations \cite{carvalho2026interpretable_stego_detection_sae}.
+    \item \textbf{RQ3 (Diagnostics):} Under pre-registered tests of magnitude-invariance and adversarial-specificity, when do SAE-derived sparse-feature signatures isolate structurally specific perturbation, and when do they collapse into change detection?
+    \item \textbf{H3 (pre-registered, two cases):} SAE-derived sparse-feature signatures yield publishable detection performance for steganographic overlays (positive case, 0.90 ROC-AUC \cite{carvalho2026interpretable_stego_detection_sae}); under matched-L2 benign controls, the same approach does not meet pre-registered gates of magnitude-invariance and adversarial-specificity for FGSM/PGD adversarial detection (negative case, gates falsified). The contrast between the two cases characterizes the operational envelope of SAE-based diagnostics under realistic confound controls.
 \end{itemize}
 
 \section{Proposal positioning}
 \label{sec:proposal-positioning}
-\textbf{Thesis statement.} This proposal argues that local interpretability for attention-based models can be made operationally useful when sparse feature representations, cross-layer alignment, and logic-based validators are evaluated jointly under explicit behavioral and mechanistic criteria.
+\textbf{Thesis statement.} This thesis argues that local interpretability for attention-based models, anchored on sparse feature representations and evaluated under pre-registered criteria, has a delineable operational envelope: it functions in specific regimes (e.g., steganographic perturbation detection) and fails under others (e.g., FGSM/PGD adversarial detection when controlled by matched-L2 benign baselines). Mapping this envelope rigorously is a methodological contribution distinct from chasing maximal performance on any single benchmark.
 
-\textbf{Novelty beyond prior publications.} The accepted grokking work and the SAE-based perturbation diagnostics establish feasibility in two isolated tracks. The thesis contribution is to integrate these tracks with a steering-locality program in one unified protocol, so that emergence, controllability, and robustness diagnostics are analyzed with shared objects ($h_\ell$, $s_\ell$, $T_{\ell\to k}$), common evaluation logic, and explicit cross-track ablations.
+\textbf{Novelty beyond prior publications.} The accepted grokking work \cite{carvalho2025inducing_grokking_distribution_shifts} and the SAE-based steganographic perturbation diagnostics \cite{carvalho2026interpretable_stego_detection_sae} establish feasibility in two isolated tracks. The thesis contributions beyond these publications are: (i) extending the diagnostics track with pre-registered hypotheses on magnitude-invariance and adversarial-specificity under matched-L2 controls, reporting a documented falsification of the original H1/H2 gates as informative negative evidence; (ii) examining and documenting the limits of logic-guided steering under contemporary attention-based decoding as a negative-evidence track; and (iii) integrating the resulting positive, negative, and methodological findings into a coherent account of where local interpretability via sparse features currently works and where it does not.
 
-\textbf{Evidence status.} \emph{Completed:} controlled late-generalization evidence and initial sparse-feature diagnostics. \emph{Partial:} steering-controller implementation and preliminary logic-guided experiments. \emph{Pending:} finalized steering protocol, full baseline/ablation matrix across all goals, and transfer/failure characterization under the frozen evaluation plan.
+\textbf{Evidence status.} \emph{Completed and published:} controlled late-generalization evidence (Carvalho et al., ICTAI 2025, Qualis A3+) and SAE-based steganographic perturbation diagnostics (preprint Carvalho et al. 2026, targeted for journal A3+ submission within this thesis window). \emph{Completed under pre-registration:} H1 and H2 gates for FGSM/PGD adversarial detection (both falsified), with discovery and documentation of a methodological bug in attack-space normalization as a corresponding case study. \emph{Documented as negative evidence:} logic-guided steering pipeline (implementation completed; decision against pursuing as positive contribution recorded with methodological reasoning). \emph{Pending:} journal submission, paper-length integrated reporting of pre-registered diagnostic results together with the steganographic case, and final thesis reconciliation.
 
 
 % This thesis encapsulates several attempts to better understand state-of-the-art neural models. At the time of writing, the best performing models in a wide range of multi-modal tasks are attention-based neural networks\cite{}.
@@ -70,33 +70,31 @@ To make the proposal directly testable, we organize the core claims into three r
 % our analysis of different learning phenomena such as grokking (late generalization),
 % and also exercises on model steering \cite{}. 
 % Those exercises led us to demonstrate how LLMs rationalize their answers when they contradict their chain of thoughts.
-This thesis consolidates a set of empirical and mechanistic studies aimed at improving local interpretability for attention-based models. We review the current landscape of interpretability for large-scale attention architectures, then introduce the main thesis contribution: an analysis of learning phenomena (with emphasis on late generalization/grokking), and a constraint-based steering pipeline grounded in soft logic.
+This thesis consolidates a set of empirical and methodological studies aimed at characterizing the operational envelope of local interpretability for attention-based models. We review the current landscape of interpretability for large-scale attention architectures, then introduce the main thesis contributions: an analysis of learning phenomena with emphasis on late generalization/grokking; documented negative evidence on logic-guided steering; and pre-registered evidence on the scope and limits of SAE-based perturbation diagnostics.
 
-Throughout the thesis, we connect behavioral evidence (task performance, constraint adherence, quality trade-offs) with mechanistic evidence (sparse features, cross-layer consistency, and logical constraint satisfaction), aiming to provide explanations that are both locally actionable and empirically testable.
+Throughout the thesis, we connect behavioral evidence (task performance, detector performance under confound controls) with mechanistic evidence (sparse-feature sparsity, reconstruction fidelity, magnitude-invariance under epsilon sweeps), aiming to provide explanations that are both locally actionable and empirically testable.
 
-Ultimately, this work aims to support safer and more predictable deployment of attention-based models by providing tools for diagnosis under distribution shift and controllable, interpretable steering.
+Ultimately, this work aims to support more rigorous evaluation of interpretability-based diagnostics for attention-based models by providing tools and protocols that distinguish genuine structural signal from confounds, including matched-L2 benign controls and pre-registered hypotheses.
 
 % Why we do
 
 %How we do
 
 \section{Intrinsic limitation of interpretability methods}
-Most interpretability methods face a tension between plausibility and faithfulness: explanations that are intuitive (e.g., natural-language rationales) may not be causally grounded, while mechanistic methods  (e.g., probing, attribution, feature discovery) may be difficult to summarize \cite{jacovi2020faithfulness}.
+Most interpretability methods face a tension between plausibility and faithfulness: explanations that are intuitive (e.g., natural-language rationales) may not be causally grounded, while mechanistic methods (e.g., probing, attribution, feature discovery) may be difficult to summarize \cite{jacovi2020faithfulness}.
 %Additionally, many methods are sensitive to model scale, prompt distribution, and representation drift across layers.
-In addition, modern models are highly distributed: internal variables are often polysemantic, drift across layers, and change across training regimes and prompts. 
-These limitations motivate local, \emph{testable criteria and evaluation protocols that link internal measurements to externally verifiable behavioral effects}.
+In addition, modern models are highly distributed: internal variables are often polysemantic, drift across layers, and change across training regimes and prompts.
+These limitations motivate local, \emph{testable criteria and evaluation protocols that link internal measurements to externally verifiable behavioral effects, and that admit pre-registered falsification of their own claims}.
 
 \section{Analogy to biology}
 Neural networks resemble biological systems in the sense that complex organization emerges from simple learning rules, and the resulting structure is not explicitly designed.
-Like biological systems, neural models exhibit emergent organization that is not explicitly programmed by designers. 
+Like biological systems, neural models exhibit emergent organization that is not explicitly programmed by designers.
 This analogy is useful as a methodological stance: progress comes from proposing falsifiable hypotheses about internal organization (e.g., stable features or circuits) and testing them through interventions and controlled evaluations, rather than relying solely on post-hoc narratives.
-We adopt the stance that progress comes from measurable, falsifiable hypotheses about internal structure, e.g., tracking stable features/circuits---rather than relying solely on post-hoc narratives.
 
 \section{Alignment}
-Alignment is ultimately constrained by our ability to understand and predict model behavior under distribution shift and intervention. By developing local diagnostics and controllable steering with explicit constraints, this thesis contributes tools that support safer deployment without assuming perfect global interpretability.
-Alignment in practice depends on our ability to predict and control model behavior under interventions and distribution shift. Local interpretability and constraint-based steering provide complementary tools: interpretability offers diagnosis and early warning signals, while steering offers controllable behavior change with measurable trade-offs. This thesis contributes methods and evaluation designs that connect these aspects in a single empirical framework.
+Alignment is ultimately constrained by our ability to understand and predict model behavior under distribution shift and intervention. Local interpretability and rigorous diagnostic evaluation contribute to this by providing tools, protocols, and documented operational envelopes --- including documented negative cases --- that support safer evaluation of attention-based models. This thesis offers methods and evaluation designs that delineate where these tools function and where they do not, in a single coherent empirical and methodological framework.
 
-This work is made in the hope of being useful to the community to better understand the AI we currently achieved and ease its integration into humanity social, political, and daily lives. 
+This work is made in the hope of being useful to the community to better understand the AI we currently achieved and ease its integration into human social, political, and daily lives.
 \end{document}
 
 

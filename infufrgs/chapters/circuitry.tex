@@ -160,6 +160,51 @@ Rerank-only, unconstrained decoding, CCN+-style neuro-symbolic baseline \\
 \label{sec:g2-limitations}
 LSNC evidence is currently treated as preliminary because three limitations remain active until final frozen runs: (i) \textbf{latency scaling}, where inference cost grows with beam size, predicate count, and reranking frequency; (ii) \textbf{predicate error propagation}, where grounding errors can be amplified by logical composition; and (iii) \textbf{conflicting/impossible constraints}, where the controller may trade fluency for unsatisfiable targets. Final G2 claims are accepted only if these failure modes are bounded by the frozen acceptance criteria in this chapter.
 
+\section{G3 SAE-based detection protocol (April 2026 freeze)}
+\label{sec:g3-protocol}
+This section specifies the frozen G3 protocol for SAE-based adversarial detection in vision transformers. The protocol was finalized on 2026-04-21 after a methodological refactor; the canonical execution documents (\texttt{PLAN.md}, \texttt{DESIGN\_CHOICES.md}, \texttt{RELATED\_WORK.md}) live alongside the codebase \cite{carvalho2026interpretable_stego_detection_sae} and are kept in lockstep with the experimental plan declared here.
+
+\subsection{Pre-registered hypotheses}
+The detector is evaluated against two adversarial hypotheses, each with numeric acceptance criteria declared before any sweep is executed.
+
+\textbf{H1 --- Magnitude invariance.} A detector trained on SAE latents from clean and FGSM-attacked activations achieves AUC approximately constant across an FGSM $\epsilon$ sweep concentrated in the small-perturbation regime. Acceptance criteria, evaluated on $\epsilon \in \{0.001, 0.002, 0.004, 0.008, 0.012\}$: $|\mathrm{Pearson}\,r(\epsilon, \mathrm{AUC})| < 0.3$ \textbf{and} $\mathrm{var}(\mathrm{AUC}) < 0.001$ \textbf{and} $\mathrm{mean}(\mathrm{AUC}) > 0.95$. Larger $\epsilon \in \{0.1, 0.2, 0.3\}$ are kept only as ceiling sanity checks; a high AUC at $\epsilon=0.3$ proves nothing about H1 because the image itself is visibly destroyed.
+
+\textbf{H2 --- Adversarial specificity.} A \emph{single} detector trained on \{clean, fgsm\} latents, evaluated on \{clean, benign\_$*$\} latents (gaussian noise, blur, JPEG compression, random dropout), exhibits a separation gap. Acceptance criteria: $\mathrm{AUC}_{\mathrm{fgsm}} - \max_b \mathrm{AUC}_{\mathrm{benign}_b} > 0.3$ \textbf{and} $\max_b \mathrm{AUC}_{\mathrm{benign}_b} < 0.7$. Critical condition: the benign perturbation parameters are calibrated to match the FGSM mean L2 perturbation per image within $\pm 20\%$ at $\epsilon = 0.012$. Without L2 matching, gaussian noise at $\sigma = 0.1$ has roughly an order of magnitude greater pixel-space perturbation than FGSM at $\epsilon = 0.012$, which inverts the test.
+
+Both criteria are pre-registered: thresholds are not adjusted after observing sweep results. A negative result for either hypothesis is reported as such and does not trigger threshold relaxation.
+
+\subsection{Phase plan and exit tests}
+The protocol unfolds in four phases. Each phase has objective exit tests (exit-code-0 commands or asserted Python checks); a phase is considered complete only when all of its tests pass and their raw outputs are recorded.
+
+\textbf{Phase 1 --- SAE leakage isolation.} The sparse autoencoder is trained \emph{exclusively} on clean activations; its encoder is then frozen and used to produce latents for clean, adversarial, and benign inputs. The detector is logistic-regression on top. Health metrics are reported in \texttt{sae\_health.json}: reconstruction MSE (compared against an identity baseline), $L_0$ activation count (sparsity), and dead-feature fraction. A CLI flag \texttt{--train-on \{clean\_only, all\}} with default \texttt{clean\_only} makes the training population explicit and verifiable from logs.
+
+\textbf{Phase 2 --- H1 sweep.} FGSM attacks are generated at the dense small-$\epsilon$ grid above. The sweep CSV reports both detector AUC and \emph{attack success rate} (ASR) per $\epsilon$; without ASR, AUC is not interpretable, since high AUC at near-zero ASR means the ``attack'' is not an attack. The decision rule for H1 is computed in a notebook that prints one of \texttt{GENUINE ADVERSARIAL DETECTION}, \texttt{MIXED SIGNAL}, or \texttt{TRIVIAL MAGNITUDE DETECTION}.
+
+\textbf{Phase 3 --- H2 cross-validation.} A new CLI (\texttt{cross\_eval\_detector}) trains one detector on \{clean, fgsm\} latents and evaluates it on each \{clean, benign\_$*$\} pair. Magnitude calibration is automated: a separate report (\texttt{perturbation\_l2\_report.json}) records the mean L2 per image of each perturbation type and is checked against the $\pm 20\%$ window before evaluation runs.
+
+\textbf{Phase 4 --- Feature analysis.} Conditional on H1 and H2 passing. Top-$k$ SAE features are ranked by detector weight times mean activation, and their per-population activation rates (clean / fgsm / benign) are reported. A visual gallery of max-activating patches and a layer-wise AUC sweep determine whether the discriminative signal is concentrated in interpretable mid/late features (consistent with semantic ``something is wrong'' processing) or spread uniformly across layers (consistent with low-level pixel-space signal).
+
+A pre-execution Phase~0 (pipeline unblocking, methodology-neutral) was completed on 2026-04-21: a bug in which the ViT classification head was reinitialized randomly at load time --- causing FGSM gradients to be computed against a random head, invalidating any H1/H2 result derived from that pipeline --- was fixed via a CIFAR-10 linear-probe head trained over the frozen IN-1k backbone. This is recorded as design decision D1 below.
+
+\subsection{Key design decisions}
+Seven decisions are pre-registered in \texttt{DESIGN\_CHOICES.md} with motivation, alternatives considered, trade-offs, and revision triggers. The decisions load-bearing for G3 are summarized here.
+
+\begin{itemize}
+    \item \textbf{D1 --- Linear probe as base classifier.} A frozen ViT-B/16 IN-1k backbone with a linear head (\texttt{nn.Linear(768,10)}) trained on CIFAR-10 to $\geq 90\%$ validation accuracy. Adopted to ensure FGSM gradients flow against meaningful semantic features, not a random head.
+    \item \textbf{D2 --- SAE trained on clean activations only.} Eliminates leakage by construction: the detector cannot exploit ``opportunistic'' SAE dimensions allocated to attacks seen in training. Trade-off accepted: SAE may reconstruct adversarial activations poorly, which is itself reported as a signal.
+    \item \textbf{D3 --- Small-$\epsilon$ FGSM grid.} $\epsilon \in \{0.001, 0.002, 0.004, 0.008, 0.012, 0.016, 0.024, 0.032\}$ as the H1 core, with $\{0.1, 0.2, 0.3\}$ as ceiling sanity. The non-trivial regime for H1 is precisely small $\epsilon$, where attack success rate varies and the image remains perceptually indistinguishable.
+    \item \textbf{D4 --- Single-detector cross-validation for H2.} One detector, multiple test distributions. Avoids the confound of comparing AUCs across detectors that each trained on different binary tasks (which tests solvability per task, not specificity).
+    \item \textbf{D5 --- L2-matched benign perturbations.} Gaussian noise $\sigma$, blur kernel and intensity, JPEG quality, and dropout $p$ are all calibrated by binary search to produce mean L2 per image within $\pm 20\%$ of FGSM at $\epsilon = 0.012$. Without this matching, the H2 test is inverted by magnitude.
+    \item \textbf{D6 --- Pre-registered decision criteria.} Numeric thresholds for H1 and H2 are declared in \texttt{PLAN.md} and in the analysis notebooks before the sweep is run. Thresholds may be relaxed \emph{before} a sweep with documented justification but never \emph{after} observing sweep results from the current campaign.
+    \item \textbf{D7 --- CIFAR-10 as primary dataset.} Already cached locally; extensive adversarial-detection literature for direct baseline comparison; ten-class structure facilitates per-feature interpretability inspection. ImageNet-10 retained as an optional secondary validation.
+\end{itemize}
+
+\subsection{Publication gate}
+G3 claims are accepted for publication only if all of the following hold simultaneously: (i) Phase~0 sanity check passes; (ii) Phase~1 SAE health metrics within thresholds (reconstruction MSE below half of identity baseline, $L_0 \ll$ latent dimension, dead-feature fraction $< 30\%$); (iii) Phase~2 mean AUC $> 0.95$ in the small-$\epsilon$ regime with $|\mathrm{Pearson}\,r| < 0.3$; (iv) Phase~3 max-benign AUC $< 0.7$ and gap $> 0.3$ for all four benign perturbation types; (v) Phase~4 top-$k$ features show distinctly higher activation in FGSM than in matched benign. Failure of any gate downgrades the corresponding claim to a documented limitation, not an undisclosed weakness; partial passes are reported with the remaining claims explicitly weakened.
+
+\subsection{Out of current scope}
+Three extensions are deferred until after the publication gate: (a) alternative SAE architectures (TopK, JumpReLU) are tried only if linear+L1 fails Phase~1 health checks; (b) scaling to ViT-L, CLIP, and vision-language models is deferred until G3 has produced its first reported result; (c) adaptive attacks against the SAE-based detector and inter-model attack transfer are explicit non-goals of the current campaign, in line with the project's declared posture --- recorded in \texttt{DESIGN\_CHOICES.md} and \texttt{RELATED\_WORK.md} --- against framing the detector as a defense.
+
 \section{Evaluation matrix}
 Before presenting final experiments, table~\ref{tab:evaluation-matrix} gives the reader a compact map of how each thesis goal is operationalized. I.e., which tasks are used to test it, which behavioral/mechanistic metrics will determine success, and which baselines are needed to make causal claims and distinguish strong prior evidence from still-open validation.
 \begin{table}[ht]
