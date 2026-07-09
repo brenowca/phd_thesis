@@ -90,6 +90,16 @@ Internal signatures do not outperform or match output-only baselines under trans
 \label{tab:claim-evidence-falsification}
 \end{table}
 
+Of the three claims, C3 (diagnostics) has now been executed in full. The completed
+study of Chapter~\ref{chpt:adv-detection} confirms that internal signatures detect
+perturbations, but shows the signal is driven by displacement magnitude and that
+sparse-feature detectors \emph{match rather than surpass} dense-activation baselines.
+C3 is therefore retained in a scoped form --- detection is real, but it is not an
+interpretable-feature advantage --- and its pre-registered falsification condition
+(internal signatures failing to match the baselines) is not met. C1 rests on the
+prior-work evidence developed in Chapter~\ref{chpt:learning_phenomena}; C2 remains on
+the preliminary-evidence track specified later in this chapter.
+
 \section{Reproducible experimental settings}
 This section consolidates concrete settings extracted from prior work so the methodology can be replicated with minimal ambiguity.
 
@@ -104,12 +114,12 @@ This section consolidates concrete settings extracted from prior work so the met
 
 \textbf{G3 (shift/attack diagnostics), grounded in prior work \cite{carvalho2026interpretable_stego_detection_sae}.}
 \begin{itemize}
-    \item \textbf{Backbones/datasets:} pretrained ViT-B/16 (primary) and CLIP ViT-B/32 (transfer check);
-    CIFAR-10 and an ImageNet-10 subset.
-    \item \textbf{Input protocol:} resize to $224\times224$ and normalize with ImageNet statistics; create clean/adversarial/stego variants from training splits and evaluate on held-out validation/test splits.
-    \item \textbf{Attack settings:} FGSM with $\epsilon=0.012$; PGD with $\epsilon=0.05$, 20 iterations, step size $0.005$, random initialization in the $L_\infty$ ball; plus low-opacity text-overlay steganographic perturbations.
-    \item \textbf{SAE settings:} hooks at encoder layers 1/2/5/10/11; latent size 1024; objective $\|h-\hat h\|_2^2+\lambda\|z\|_1$ with $\lambda=10^{-3}$; Adam, learning rate $10^{-3}$, batch size 256, 10 epochs.
-    \item \textbf{Detector protocol:} train logistic/MLP detectors on latent codes with binary cross-entropy and Adam; report ROC-AUC and PR-AUC.
+    \item \textbf{Backbones/datasets:} pretrained ViT-B/16 (primary) with ViT-L/16 as a scale check;
+    CIFAR-10 (ImageNet-10 retained as an optional secondary validation).
+    \item \textbf{Input protocol:} upsample to $224\times224$ and normalize with ImageNet statistics; create clean/adversarial/stego variants from training splits and evaluate on held-out validation/test splits.
+    \item \textbf{Attack settings:} FGSM with an $L_\infty$ budget swept over $\epsilon\in\{0.001,\dots,0.032\}$ (canonical $\epsilon=0.012$); PGD with $\epsilon=0.05$, 20 iterations, random initialization in the $L_\infty$ ball; plus low-opacity text-overlay steganographic perturbations.
+    \item \textbf{SAE settings:} MLP-output activations at blocks $\{0,3,6,9,10,11\}$, mean-pooled over the 197 tokens; input dimension 768, overcomplete dictionary of 1024 latents; objective $\|h-\hat h\|_2^2+\lambda\|z\|_1$ with $L_1$ penalty $\lambda=0.1$; Adam, learning rate $10^{-3}$, batch size 256, 10 epochs; trained on clean activations only.
+    \item \textbf{Detector protocol:} logistic-regression (and, as a non-linearity check, small-MLP) detectors on latent codes, evaluated under grouped $k$-fold cross-validation keyed to the source image; report ROC-AUC and PR-AUC.
 \end{itemize}
 
 \textbf{G2 (steering locality), protocol freeze and minimum evidence criteria.}
@@ -167,9 +177,9 @@ This section specifies the frozen G3 protocol for SAE-based adversarial detectio
 \subsection{Pre-registered hypotheses}
 The detector is evaluated against two adversarial hypotheses, each with numeric acceptance criteria declared before any sweep is executed.
 
-\textbf{H1 --- Magnitude invariance.} A detector trained on SAE latents from clean and FGSM-attacked activations achieves AUC approximately constant across an FGSM $\epsilon$ sweep concentrated in the small-perturbation regime. Acceptance criteria, evaluated on $\epsilon \in \{0.001, 0.002, 0.004, 0.008, 0.012\}$: $|\mathrm{Pearson}\,r(\epsilon, \mathrm{AUC})| < 0.3$ \textbf{and} $\mathrm{var}(\mathrm{AUC}) < 0.001$ \textbf{and} $\mathrm{mean}(\mathrm{AUC}) > 0.95$. Larger $\epsilon \in \{0.1, 0.2, 0.3\}$ are kept only as ceiling sanity checks; a high AUC at $\epsilon=0.3$ proves nothing about H1 because the image itself is visibly destroyed.
+\textbf{H1 --- Magnitude invariance.} A detector trained on SAE latents from clean and FGSM-attacked activations is hypothesized to achieve an AUC approximately constant across an FGSM $\epsilon$ sweep concentrated in the small-perturbation regime. Acceptance criteria, evaluated on $\epsilon \in \{0.001, 0.002, 0.004, 0.008, 0.012\}$: $|\mathrm{Pearson}\,r(\epsilon, \mathrm{AUC})| < 0.3$ \textbf{and} $\mathrm{var}(\mathrm{AUC}) < 0.001$ \textbf{and} $\mathrm{mean}(\mathrm{AUC}) > 0.95$. Larger $\epsilon \in \{0.1, 0.2, 0.3\}$ are kept only as ceiling sanity checks; a high AUC at $\epsilon=0.3$ proves nothing about H1 because the image itself is visibly destroyed.
 
-\textbf{H2 --- Adversarial specificity.} A \emph{single} detector trained on \{clean, fgsm\} latents, evaluated on \{clean, benign\_$*$\} latents (gaussian noise, blur, JPEG compression, random dropout), exhibits a separation gap. Acceptance criteria: $\mathrm{AUC}_{\mathrm{fgsm}} - \max_b \mathrm{AUC}_{\mathrm{benign}_b} > 0.3$ \textbf{and} $\max_b \mathrm{AUC}_{\mathrm{benign}_b} < 0.7$. Critical condition: the benign perturbation parameters are calibrated to match the FGSM mean L2 perturbation per image within $\pm 20\%$ at $\epsilon = 0.012$. Without L2 matching, gaussian noise at $\sigma = 0.1$ has roughly an order of magnitude greater pixel-space perturbation than FGSM at $\epsilon = 0.012$, which inverts the test.
+\textbf{H2 --- Adversarial specificity.} A \emph{single} detector trained on \{clean, fgsm\} latents, evaluated on \{clean, benign\_$*$\} latents (gaussian noise, blur, JPEG compression, random dropout), is hypothesized to exhibit a separation gap. Acceptance criteria: $\mathrm{AUC}_{\mathrm{fgsm}} - \max_b \mathrm{AUC}_{\mathrm{benign}_b} > 0.3$ \textbf{and} $\max_b \mathrm{AUC}_{\mathrm{benign}_b} < 0.7$. Critical condition: the benign perturbation parameters are calibrated to match the FGSM mean L2 perturbation per image within $\pm 20\%$ at $\epsilon = 0.012$. Without L2 matching, gaussian noise at $\sigma = 0.1$ has roughly an order of magnitude greater pixel-space perturbation than FGSM at $\epsilon = 0.012$, which inverts the test.
 
 Both criteria are pre-registered: thresholds are not adjusted after observing sweep results. A negative result for either hypothesis is reported as such and does not trigger threshold relaxation.
 
@@ -202,8 +212,22 @@ Seven decisions are pre-registered in \texttt{DESIGN\_CHOICES.md} with motivatio
 \subsection{Publication gate}
 G3 claims are accepted for publication only if all of the following hold simultaneously: (i) Phase~0 sanity check passes; (ii) Phase~1 SAE health metrics within thresholds (reconstruction MSE below half of identity baseline, $L_0 \ll$ latent dimension, dead-feature fraction $< 30\%$); (iii) Phase~2 mean AUC $> 0.95$ in the small-$\epsilon$ regime with $|\mathrm{Pearson}\,r| < 0.3$; (iv) Phase~3 max-benign AUC $< 0.7$ and gap $> 0.3$ for all four benign perturbation types; (v) Phase~4 top-$k$ features show distinctly higher activation in FGSM than in matched benign. Failure of any gate downgrades the corresponding claim to a documented limitation, not an undisclosed weakness; partial passes are reported with the remaining claims explicitly weakened.
 
+\subsection{Executed outcome}
+The protocol was executed, and the pre-registered gates \emph{fail} by design:
+detection AUC rises monotonically with the FGSM budget (H1 fails all three invariance
+criteria) and matched-magnitude benign perturbations are nearly as detectable as the
+attack (the H2 specificity gap is $\approx0.06$, far below the $0.3$ threshold).
+Per the gate policy above, the corresponding claims are reported in their downgraded,
+scoped form: the detector is characterized as a displacement-magnitude detector
+rather than an interpretable-feature one, and the SAE is not load-bearing for the
+detection. The Phase~4 feature analysis, gated on H1/H2 passing, therefore does not
+run as a positive-result step; the layer-wise analysis instead corroborates the
+low-level, magnitude-driven reading. The full results, tables, and their scoping ---
+including the two flanks left to a planned re-run --- are reported in
+Chapter~\ref{chpt:adv-detection}.
+
 \subsection{Out of current scope}
-Three extensions are deferred until after the publication gate: (a) alternative SAE architectures (TopK, JumpReLU) are tried only if linear+L1 fails Phase~1 health checks; (b) scaling to ViT-L, CLIP, and vision-language models is deferred until G3 has produced its first reported result; (c) adaptive attacks against the SAE-based detector and inter-model attack transfer are explicit non-goals of the current campaign, in line with the project's declared posture --- recorded in \texttt{DESIGN\_CHOICES.md} and \texttt{RELATED\_WORK.md} --- against framing the detector as a defense.
+Three extensions are deferred: (a) alternative SAE architectures beyond the linear-$L_1$ default and the sparsity-matched TopK check are tried only if the default fails Phase~1 health checks; (b) scaling to CLIP and vision--language models is deferred (ViT-L/16 is already included as a scale check in Chapter~\ref{chpt:adv-detection}); (c) adaptive attacks against the SAE-based detector and inter-model attack transfer are explicit non-goals of the current campaign, in line with the project's declared posture --- recorded in \texttt{DESIGN\_CHOICES.md} and \texttt{RELATED\_WORK.md} --- against framing the detector as a defense.
 
 \section{Evaluation matrix}
 Before presenting final experiments, table~\ref{tab:evaluation-matrix} gives the reader a compact map of how each thesis goal is operationalized. I.e., which tasks are used to test it, which behavioral/mechanistic metrics will determine success, and which baselines are needed to make causal claims and distinguish strong prior evidence from still-open validation.
@@ -225,7 +249,7 @@ Constraint satisfaction, task quality, collateral regression rate &
 Unconstrained decoding, logit-bias only, rerank-only \\
 
 G3: Shift/attack diagnostics &
-ViT/CLIP clean vs stego and FGSM/PGD perturbations; transfer to additional perturbation suites &
+ViT-B/16 (ViT-L/16 scale check) clean vs.\ stego and FGSM perturbations; PGD and additional suites planned &
 ROC-AUC, PR-AUC, calibration, early-warning lead time &
 Output confidence/margin, dense-feature detectors \\
 \hline
@@ -234,13 +258,38 @@ Output confidence/margin, dense-feature detectors \\
 \label{tab:evaluation-matrix}
 \end{table}
 
+The three goals sit at different evidence levels as of this writing. G3 is
+\emph{executed and reported} in Chapter~\ref{chpt:adv-detection}, with a completed,
+deflationary result; G1 is \emph{grounded in prior work}
+(Chapter~\ref{chpt:learning_phenomena}); and G2 remains on the
+\emph{preliminary-evidence track} specified in the frozen protocol above.
+
 \section{Observed Effects}
-The completed work already supports feasibility of the methodology:
+The completed work supports the methodology in a more nuanced way than a
+naive ``sparse features detect attacks'' reading would suggest, and the nuance is
+itself a load-bearing finding:
 \begin{itemize}
-    \item Distribution shifts can reliably induce late generalization in controlled datasets, supporting G1 experimental design.
-    \item Sparse latent representations in vision models show clear clean-vs-perturbed separation with interpretable features, supporting G3 diagnostics design.
-    \item Detection with a compact subset of sparse features can remain competitive with dense baselines, suggesting practical value of sparse local representations.
+    \item Distribution shifts can reliably induce late generalization in controlled
+    datasets, supporting the G1 experimental design.
+    \item Sparse latent representations in vision models separate clean from
+    perturbed inputs, but the completed characterization study
+    (Chapter~\ref{chpt:adv-detection}) shows this separation is driven by
+    off-manifold \emph{displacement magnitude} rather than adversarial-specific
+    semantic structure: a high-$L_2$ attack (FGSM) is separated at AUC $1.0$ at
+    \emph{every} layer including the first, while a near-zero-$L_2$ attack
+    (steganography) is undetectable throughout.
+    \item Critically for the G3 design, the SAE is \emph{not load-bearing} for this
+    detection --- the sparse latents never exceed the raw activation, so
+    interpretable features carry no detection signal that the raw activation lacks.
+    That a compact detector matches a dense-activation baseline therefore
+    corroborates, rather than contradicts, this reading: both read the same
+    low-level displacement.
 \end{itemize}
 
-These observations motivate the final thesis experiments: extending sparse-feature diagnostics from vision and synthetic settings to attention-based steering and cross-layer logical validation in a single framework.
+These observations sharpen, rather than merely motivate, the final thesis
+experiments. The G3 study establishes what an activation-space detector actually
+measures and where its instrument-level limits lie; the remaining work extends
+sparse-feature diagnostics from this vision setting to attention-based steering and
+cross-layer logical validation in a single framework, carrying the same discipline
+of pre-registered gates and matched controls.
 \end{document}

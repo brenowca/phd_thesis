@@ -25,8 +25,33 @@
 
 \usepackage[alf,abnt-emphasize=bf]{abntex2cite}	% pacote para usar citações abnt
 
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{multirow}
 \usepackage{subfiles} % Best loaded last in the preamble
 \usepackage[inline]{enumitem}
+
+% For theorems and such
+\usepackage{mathtools}
+\usepackage{amssymb}
+\usepackage{xcolor}
+\usepackage{cite}
+\usepackage{mathrsfs}
+\usepackage{algorithmic}
+\usepackage{textcomp}
+
+\newcommand{\repourl}{https://github.com/brenowca/grokking_explained}
+
+% Drafting marker: a claim written in its strong (v2) form whose clinching evidence
+% (matched-L2 measured + non-saturated epsilon) is pending the v2 re-run. Remove the
+% marker once the v2 numbers land. See Chapter on activation-space detection.
+\newcommand{\pendingvtwo}[1]{\textcolor{orange}{\textbf{[PENDING-V2:}~#1\textbf{]}}}
+
+\newtheorem{definition}{Definition}
+
+\DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
+\DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
+\newcommand{\centroid}[1]{\mathscr{C}({#1})}
 
 
 %
@@ -154,6 +179,10 @@
 \chapter{Neuro-symbolic approach to dissect model circuitry}
     \label{chpt:circuitry}
     \subfile{chapters/circuitry}
+
+\chapter{What activation-space adversarial detection measures: magnitude, not meaning}
+    \label{chpt:adv-detection}
+    \subfile{chapters/sae_adversarial_detection}
 
 \chapter{Neuro-symbolic approach to constrain generation distribution}
     \label{chpt:constrained_generation}

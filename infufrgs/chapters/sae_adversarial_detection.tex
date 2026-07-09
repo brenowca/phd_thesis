@@ -1,0 +1,341 @@
+\documentclass[../infufrgs/ppgc-tese.tex]{subfiles}
+\begin{document}
+
+This chapter reports the completed G3 study of the thesis: an empirical
+characterization of what an activation-space adversarial detector, built on the
+sparse-feature pipeline of Chapter~\ref{chpt:circuitry}, actually measures in a
+Vision Transformer classifier. The pre-registered protocol, hypotheses, and gates
+were declared in Chapter~\ref{chpt:circuitry}; here we execute them and read the
+result. That result is deflationary, and deliberately so: to the resolution of a
+magnitude-sensitive linear probe, the detector reads off-manifold displacement
+\emph{magnitude}, not adversarial-specific semantic structure, and the sparse
+autoencoder (SAE) is not load-bearing for the detection. We summarize this as
+\emph{magnitude, not meaning}.
+
+\section{The confound: adversarial versus perturbed}
+\label{sec:adv-confound}
+A recurring hope in interpretability is that a model's own internal
+representations betray an attack --- that somewhere in activation space there is a
+signal for ``this input is adversarial'' --- and that SAEs, by decomposing
+activations into interpretable features, can expose it. On this reading,
+adversarial detection becomes a form of introspection: the model, read through its
+features, ``knows'' it is under attack.
+
+This hope rests on a confound that is rarely isolated. Every adversarial example is
+two things at once: it is \emph{adversarial} (crafted to change the output) and it
+is a \emph{perturbation} (the activation has moved off its clean location). A
+detector that fires on adversarial inputs may be reading either property --- the
+adversarial structure, or merely the displacement. The two are entangled in any
+standard evaluation, because the only negatives are clean inputs, which differ from
+adversarial ones in both respects at once. Disentangling them requires a control
+that standard detection setups omit: a benign perturbation of the \emph{same
+magnitude} as the attack.
+
+Our question is therefore one of characterization, not deployment. We do not ask
+whether an activation-space detector can be built --- it plainly can --- but what
+such a detector measures. We study a ViT classifier (ViT-B/16, with ViT-L/16 as a
+scale check), not a vision--language model, and probe its MLP activations with a
+linear detector under the leakage-free, grouped cross-validation protocol of
+Chapter~\ref{chpt:circuitry}.
+
+\section{Instrument: the residual decomposition and its controls}
+\label{sec:adv-setup}
+The full protocol --- models, pre-registered hypotheses, phase plan, and design
+decisions --- is specified in Chapter~\ref{chpt:circuitry}; we recall here only what
+is needed to read the results. Every activation is the MLP output of a transformer
+block, mean-pooled over the $197$ tokens, at blocks $\{0,3,6,9,10,11\}$ of ViT-B/16.
+We decompose each activation into an SAE reconstruction and a residual,
+\begin{equation}
+  x \;\approx\; \hat{x} + r,
+  \qquad \hat{x} = \mathrm{dec}(z), \quad z = \mathrm{ReLU}(\mathrm{enc}(x)),
+  \qquad r = x - \hat{x},
+  \label{eq:adv-decomp}
+\end{equation}
+where $x$ is the raw activation, $z$ the sparse latents, $\hat{x}$ the
+reconstruction, and $r$ the residual. Critically, the SAE is trained on \emph{clean
+activations only}, so $\hat{x}$ is a projection onto the clean-data manifold and $r$
+is, by construction, the off-manifold component the clean dictionary cannot explain.
+Across the six layers the SAE explains between $0.752$ and $0.948$ of activation
+variance.
+
+The logic of the decomposition is a competition. We evaluate detection AUC
+separately for the four vector representations $x$, $z$, $\hat{x}$, $r$ and for the
+scalar residual norm $\lVert r\rVert_2$. If interpretable SAE features carried the
+adversarial signal, the latents $z$ should win; if instead the signal is mere
+off-manifold displacement, the scalar $\lVert r\rVert_2$ --- a pure magnitude ---
+should already capture most of it. The residual-norm row is thus the decisive
+control.
+
+We contrast two attacks that differ chiefly in magnitude. Our high-$L_2$ attack is
+untargeted FGSM with an $L_\infty$ budget \cite{goodfellow2015fgsm}, canonical
+setting $\varepsilon{=}0.012$ (swept over
+$\varepsilon\in\{0.001,\dots,0.032\}$ for the magnitude test). Our low-$L_2$ anchor
+is a steganographic text watermark at opacity $0.03$, which carries a near-zero
+$L_2$ payload. To separate ``adversarial'' from merely ``perturbed'', we add four
+benign perturbation families calibrated to the same $L_2$ as FGSM at
+$\varepsilon{=}0.012$: Gaussian noise, Gaussian blur, JPEG compression, and random
+pixel dropout. Every detection AUC is computed by grouped $5$-fold
+cross-validation keyed to the \emph{source image} --- all perturbations of an image
+share a fold, so the detector is never tested on a near-duplicate of a training
+example --- with standardized features and a converged logistic regression; each
+binary task has $n{=}3200$ examples ($1600$ clean, $1600$ perturbed).
+
+\section{What the detector reads: the decomposition}
+\label{sec:adv-decomp-results}
+Table~\ref{tab:adv-decomp} reports the decomposition AUCs and reads as a four-link
+chain.
+
+\begin{table}[ht]
+  \centering
+  \caption{Detection AUC (grouped 5-fold CV, $n{=}3200$) by representation and
+  layer. Raw activation $x$ saturates for FGSM at \emph{every} layer; the SAE
+  latents $z$ never improve on $x$; steganography is near chance throughout.}
+  \label{tab:adv-decomp}
+  \begin{tabular}{llcccc}
+    \toprule
+    Layer & Task & $x$ & $z$ & $\hat{x}$ & $r$ \\
+    \midrule
+    \multirow{2}{*}{mlp\_0}  & FGSM  & 1.000 & 0.996 & 1.000 & 1.000 \\
+                             & stego & 0.675 & 0.539 & 0.541 & 0.677 \\
+    \multirow{2}{*}{mlp\_3}  & FGSM  & 1.000 & 1.000 & 1.000 & 1.000 \\
+                             & stego & 0.685 & 0.604 & 0.604 & 0.664 \\
+    \multirow{2}{*}{mlp\_6}  & FGSM  & 1.000 & 1.000 & 1.000 & 1.000 \\
+                             & stego & 0.549 & 0.531 & 0.537 & 0.542 \\
+    \multirow{2}{*}{mlp\_9}  & FGSM  & 1.000 & 0.999 & 0.998 & 1.000 \\
+                             & stego & 0.530 & 0.513 & 0.524 & 0.530 \\
+    \multirow{2}{*}{mlp\_10} & FGSM  & 1.000 & 1.000 & 1.000 & 1.000 \\
+                             & stego & 0.543 & 0.519 & 0.532 & 0.540 \\
+    \multirow{2}{*}{mlp\_11} & FGSM  & 1.000 & 0.997 & 1.000 & 1.000 \\
+                             & stego & 0.544 & 0.513 & 0.524 & 0.542 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\emph{First, raw activations already detect FGSM perfectly.} The raw representation
+$x$ reaches AUC $1.000$ at \emph{every} layer, including the first MLP block
+(\texttt{mlp\_0}).
+
+\emph{Second, the SAE is not load-bearing.} The latent representation $z$ never
+exceeds $x$, and is strictly below it at four of six layers ($z{=}0.996$ at
+\texttt{mlp\_0}, $0.999$ at \texttt{mlp\_9}, $0.997$ at \texttt{mlp\_11}); the
+reconstruction $\hat{x}$ behaves the same. Because the SAE is a lossy bottleneck it
+can only discard detection information, never manufacture it --- so the interpretable
+features carry no detection signal that the raw activation lacks.
+
+\emph{Third, the signal is low-level, not late-semantic.} A perfect AUC at
+\texttt{mlp\_0}, before nearly any transformer computation, refutes the hypothesis
+that the detector reads a late ``I am under attack'' representation. This layer-0
+outcome was pre-registered as an anti-condition in Chapter~\ref{chpt:circuitry}.
+
+\emph{Fourth, the low-$L_2$ attack is invisible.} Steganography separates from clean
+only weakly at the shallowest layer ($x{=}0.675$ at \texttt{mlp\_0}) and decays
+toward chance with depth ($\approx0.54$ by \texttt{mlp\_11}); on every SAE
+representation it sits at chance throughout. Steganography is the low-$L_2$ anchor of
+the magnitude argument, not an incidental weak result.
+
+The scalar residual norm $\lVert r\rVert_2$ --- the pure-magnitude control ---
+sharpens the reading. For FGSM it alone reaches AUC $0.984$, $1.000$, $0.929$ at
+\texttt{mlp\_0/3/6}, essentially matching the full vector residual $r$ ($=1.000$),
+but falls to $0.660$ and $0.586$ at \texttt{mlp\_9} and \texttt{mlp\_10} while $r$
+stays at $1.000$. So at shallow layers detection is well described as pure
+off-manifold displacement magnitude, whereas at deep layers the displacement
+\emph{direction} carries information beyond its scalar norm --- though still not
+through interpretable SAE features, since $z$ never beats $x$.
+
+\section{Magnitude drives detection: H1 and H2}
+\label{sec:adv-h1h2}
+
+\subsection{H1 --- detectability scales with perturbation magnitude}
+Table~\ref{tab:adv-h1} shows detection AUC rising monotonically with the
+perturbation budget, from $0.670$ at $\varepsilon{=}0.001$ to $1.000$, saturating
+for $\varepsilon\geq0.012$. This dependence is the signature of a magnitude detector,
+and it fails the pre-registered H1 invariance gate on all three of its criteria: the
+gate requires a near-zero $\varepsilon$--AUC correlation ($|r|<0.3$), low AUC
+variance ($<10^{-3}$), and mean AUC $>0.95$ over $\varepsilon\leq0.012$; the sweep
+violates each, its mean over the five budgets $\varepsilon\leq0.012$ being
+$\approx0.88$, below the floor.
+
+\begin{table}[ht]
+  \centering
+  \caption{H1: FGSM detection AUC versus perturbation budget $\varepsilon$ under the
+  corrected protocol. AUC rises with $\varepsilon$ and saturates by
+  $\varepsilon\geq0.012$; the pre-registered H1 invariance gate fails on all three
+  criteria.}
+  \label{tab:adv-h1}
+  \begin{tabular}{lcccccccc}
+    \toprule
+    $\varepsilon$ & 0.001 & 0.002 & 0.004 & 0.008 & 0.012 & 0.016 & 0.024 & 0.032 \\
+    \midrule
+    AUC & 0.670 & 0.785 & 0.932 & 0.996 & 1.000 & 1.000 & 1.000 & 1.000 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+This failure must be read in the right direction. Saturation for
+$\varepsilon\geq0.012$ \emph{removes} discriminative power from the gate rather than
+adding it: once AUC is pinned at the ceiling, the gate can no longer separate a
+magnitude detector from a structure detector in that regime. We therefore do not
+claim the corrected protocol ``strengthens'' the negative result; it locates the
+informative, sub-saturation regime ($\varepsilon\approx0.004$, AUC $0.932$) that a
+clinching test should use.
+
+\subsection{H2 --- the signal is not adversarial-specific}
+Table~\ref{tab:adv-h2} pits FGSM against four benign perturbation families of
+comparable magnitude. FGSM is detected at AUC $0.9999$ --- but so are the benign
+families: JPEG at $0.939$, random dropout $0.921$, Gaussian blur $0.910$, and
+Gaussian noise $0.847$. The FGSM--benign gap is only $0.0605$, far short of the
+pre-registered $0.3$ threshold, and the strongest benign family ($0.939$) far
+exceeds the $0.7$ ceiling; the H2 specificity gate fails on both criteria.
+
+\begin{table}[ht]
+  \centering
+  \caption{H2: detection AUC for FGSM versus matched-magnitude benign perturbations.
+  The FGSM--benign gap is small ($\approx0.06$) and the specificity gate fails.}
+  \label{tab:adv-h2}
+  \begin{tabular}{lc}
+    \toprule
+    Family & AUC \\
+    \midrule
+    FGSM (adversarial)       & 0.9999 \\
+    JPEG (benign)            & 0.939 \\
+    random\_dropout (benign) & 0.921 \\
+    gaussian\_blur (benign)  & 0.910 \\
+    gaussian\_noise (benign) & 0.847 \\
+    \midrule
+    FGSM\,$-$\,max(benign) gap & 0.0605 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The reading is that the detector is not reading ``adversarial'' but ``displaced'': a
+benign perturbation of similar magnitude is nearly as detectable. Two flanks of this
+run still restrict the strongest form of the claim. First, this run does not emit the
+realized per-family $L_2$, so ``matched-$L_2$'' is here the design intent written
+into the perturbation configs rather than a verified measurement
+\pendingvtwo{the v2 re-run emits per-family $L_2$ within $\pm20\%$, verifying the
+match}. Second, FGSM is saturated at $\approx1.0$, so the gap is measured against a
+ceiling rather than in the informative sub-saturation regime
+\pendingvtwo{v2 re-runs H2 at $\varepsilon\approx0.004$ so the FGSM--benign gap has
+headroom}. Both flanks are closed by the planned v2 re-run; the direction of the
+present evidence already supports non-specificity, and the clinching, fully
+magnitude-controlled version follows once v2 lands.
+
+\section{Analysis: the specificity ladder and a reconciliation with SAEgis}
+\label{sec:adv-analysis}
+It helps to organize ``how specific is the detected signal?'' as a ladder.
+\emph{Degree~1} is specificity to the \emph{attack method} (features for one attack
+family differ from another). \emph{Degree~2} is specificity to the \emph{adversarial
+class} (adversarial features differ from a benign perturbation of equal magnitude).
+\emph{Degree~3} is \emph{generic displacement} (the detector fires for anything
+off-manifold, attack or not). A matched-$L_2$ benign control is precisely the
+instrument that separates Degree~2 from Degree~3; without it, an evaluation cannot
+distinguish an adversarial-specific detector from a displacement detector.
+
+This framing positions our study relative to SAEgis \cite{wang2026saegis}, a
+contemporaneous SAE ``firewall'' for adversarial detection in vision--language
+models. SAEgis is a \emph{deployment} paper --- can a firewall be built and made to
+generalize? --- whereas ours is a \emph{characterization} paper --- what does the
+detector read? We contradict none of their measurements; where the two overlap, their
+results corroborate ours. Their dense (no-SAE) baseline ties their SAE in-domain,
+independent support that the SAE is not load-bearing for in-distribution detection of
+the perturbation; their reconstruction-error anomaly score shows a negligible
+clean-versus-adversarial difference, consistent with our finding that the scalar
+residual norm is a weak signal relative to the residual \emph{vector}; and their
+earliest-layer detector is their most robust across attacks, corroborating that the
+cue is low-level rather than late-semantic. SAEgis's own cross-attack analysis
+already descends from Degree~1; the matched-$L_2$ benign control we add is the
+experiment that extends the descent toward Degree~3. Their cross-domain
+generalization benefit is real and orthogonal; we do not claim SAEs are useless, only
+that the SAE adds nothing to in-distribution detection of the perturbation, and that
+the detection is magnitude-driven. The contradiction we do raise is aimed narrowly at
+the \emph{strong} reading of ``attack-relevant'' (semantic specificity to the
+adversarial class); the \emph{weak} reading (useful for detection) stands.
+
+\section{Methodological case studies}
+\label{sec:adv-bugs}
+Two implementation bugs, caught and fixed during this work, are instructive enough to
+report: each would have produced a confident but false positive, and each maps to a
+cheap sanity check that activation-based detection studies should adopt. We present
+them as such, not as confessions.
+
+\paragraph{The clip bug: an out-of-distribution artifact masquerading as
+magnitude-invariant detection.} Our FGSM routine originally applied
+$\mathrm{clamp}(x+\varepsilon\,\mathrm{sign}(\nabla),0,1)$ directly to
+ImageNet-\emph{normalized} images, whose values span roughly $[-2.2,2.6]$. Clipping
+to $[0,1]$ in that space squashes most pixels, so the ``attack'' was dominated by
+clip distortion rather than the $\varepsilon$ perturbation: at $\varepsilon{=}0.012$
+the measured per-image $L_2$ was $\approx284$, versus the $\approx20$ expected from
+the $\varepsilon$ arithmetic. The clipped image left the normalized manifold entirely
+--- a synthetic, $\varepsilon$-independent OOD signal that the detector simply read
+off, producing a \emph{flat} pre-fix $\varepsilon$-sweep (a false confirmation of a
+magnitude-invariant detector). The fix clips where it is physically meaningful ---
+denormalize, clip in $[0,1]$, renormalize --- after which the per-image $L_2$ at
+$\varepsilon{=}0.012$ is $20.51$, consistent with theory, and the sweep recovers the
+monotone curve of Table~\ref{tab:adv-h1}. The transferable lesson: measure the
+perturbation $L_2$ and compare it to the $\varepsilon$ arithmetic \emph{before}
+reporting any detection AUC.
+
+\paragraph{The first-key bug: a layer-provenance error in SAE training.} The SAE
+trainer selected its target activations as the first non-label key of the saved
+activation file. With forward hooks registered in the order
+$[\texttt{layer\_10},\texttt{layer\_11}]$, that first key was always
+\texttt{layer\_10}, while the \texttt{target\_layer} configuration field was dead
+code with no effect. The project's ``canonical'' detection number was thus computed
+on \texttt{mlp\_10} alone, not the \texttt{mlp\_11} the documentation claimed --- a
+provenance error, not an invalidation of the underlying measurement. We fixed it by
+plumbing an explicit target-layer argument through SAE training and latent encoding,
+which also removes the silent dependence on hook registration order. The transferable
+lesson: never let an analysis target be selected implicitly by container ordering;
+make it an explicit, logged argument.
+
+\section{Limitations}
+\label{sec:adv-limitations}
+Our claims are bounded by our instrument, and we state the boundaries plainly.
+
+\paragraph{A null is a null of this probe.} Detection here is a \emph{linear}
+classifier on \emph{mean-pooled} activations. Both choices limit what a null can
+mean. On the same SAE latents at \texttt{mlp\_11}, replacing the linear detector with
+a small MLP raised AUC from $0.547$ to $0.685$ --- roughly $0.14$ of AUC that the
+linear probe could not see --- and mean-pooling over the $197$ tokens erases any
+token-localized structure. We therefore cannot claim that fine-grained adversarial
+structure is \emph{absent}; only that it is invisible to a magnitude-sensitive
+linear, mean-pooled probe under matched conditions. A non-linear, non-pooled probe
+would be needed to move ``we do not see it'' toward ``it is not there.''
+
+\paragraph{Saturation weakens the gates.} FGSM detection is pinned at AUC
+$\approx1.0$ for $\varepsilon\geq0.012$. This ceiling removes discriminative power
+from both pre-registered gates: H1 cannot distinguish magnitude- from
+structure-dependence once saturated, and the H2 FGSM--benign gap is measured against
+the ceiling rather than in the informative sub-saturation regime.
+
+\paragraph{Matched-$L_2$ measurement and attack coverage.} The strong,
+adversarial-specificity-controlled form of the claim rests on emitting the realized
+per-family $L_2$ and measuring the FGSM--benign gap at a non-saturated
+$\varepsilon\approx0.004$ \pendingvtwo{the v2 re-run supplies both}. Beyond FGSM and
+steganography, PGD \cite{madry2018pgd} (pre-registered as the most rigorous H1 test)
+and a Mahalanobis-on-raw-activations baseline \cite{lee2018mahalanobis} are planned
+but not yet run. The H1/H2 results rest on a single seed, the single canonical layer
+(\texttt{mlp\_10}), and one SAE architecture.
+
+\paragraph{Scope of the system.} We study a ViT classifier and make no claim about
+vision--language models, which we do not test.
+
+\section{Summary}
+\label{sec:adv-summary}
+Under an SAE residual decomposition, raw activations detect a high-$L_2$ attack
+perfectly at every layer, the SAE latents add nothing, the signal is already present
+at layer~0, and a near-zero-$L_2$ attack is undetectable; benign perturbations of
+comparable magnitude are nearly as detectable as the attack. To the resolution of a
+magnitude-sensitive linear probe, activation-space adversarial detection in this ViT
+classifier is a displacement-magnitude detector, and the interpretable features are
+not load-bearing for it. This is the sense in which detection here is
+\emph{magnitude, not meaning}. The deflation of ``meaning'' --- the SAE is not
+load-bearing, and the cue is low-level rather than late-semantic --- is established
+now; the fully magnitude-controlled form of ``magnitude'' is clinched by the v2
+re-run that verifies the $L_2$ match and measures the gap at a non-saturated budget.
+This characterization directly informs the thesis-level claim on shift/attack
+diagnostics (G3, Chapter~\ref{chpt:circuitry}): internal sparse-feature signatures
+match, rather than surpass, dense-activation baselines, because both read the same
+low-level displacement.
+
+\end{document}
