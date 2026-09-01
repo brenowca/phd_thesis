@@ -1,6 +1,6 @@
 \documentclass[../ppgc-tese.tex]{subfiles}
 \begin{document}
-\section*{Notation and model setup}
+\section{Notation and model setup}
 This chapter establishes the minimum notation and model setup used throughout the thesis to discuss sparse auto-encoders (SAEs), cross-layer transcoders, and logic-guided steering. We avoid a tutorial treatment of Transformers and focus instead on the representational objects we measure and manipulate.
 
 We denote a tokenized input sequence by $x_{1:T}$ and the model dimension by $d$. A Transformer with $L$ layers produces a residual stream $h_\ell \in R^{T\times d}$ after each layer $\ell\in\{1,\dots,L\}$. Each layer applies attention and an MLP that write updates into the residual stream; we do not require head-level detail beyond noting that attention heads operate position-wise and share the residual pathway.
@@ -15,29 +15,29 @@ To compare or transfer representations across depth, we define a cross-layer tra
 \label{sec:core-dl-concepts}
 This section summarizes only the deep learning concepts directly required by the proposal claims on emergence, steering locality, and diagnostics. We avoid broad historical coverage and focus on concepts that define measurable quantities used later in the methodology and ablation design.
 
-\subsection{Representation learning and distributed features}
-In high-capacity neural models, useful concepts are usually encoded in distributed form rather than in one-neuron-one-concept form. A single latent concept can span multiple directions, and one coordinate can carry multiple overlapping factors. For interpretability, this means we should model feature geometry explicitly and evaluate whether discovered features are stable and reusable across runs and layers, instead of assuming semantic atomicity from raw coordinates.
+    \subsection{Representation learning and distributed features}
+    In high-capacity neural models, useful concepts are usually encoded in distributed form rather than in one-neuron-one-concept form. A single latent concept can span multiple directions, and one coordinate can carry multiple overlapping factors. For interpretability, this means we should model feature geometry explicitly and evaluate whether discovered features are stable and reusable across runs and layers, instead of assuming semantic atomicity from raw coordinates.
 
-Superposition and polysemanticity are therefore expected behaviors at scale, not pathologies that disappear by default \cite{anthropic2022superposition,anthropic2023monosemanticity}. In this proposal, sparse dictionaries are used as an operational tool to reparameterize activations into a more analysis-friendly basis, not as a claim that the model is ``truly sparse'' in an ontological sense.
+    Superposition and polysemanticity are therefore expected behaviors at scale, not pathologies that disappear by default \cite{anthropic2022superposition,anthropic2023monosemanticity}. In this proposal, sparse dictionaries are used as an operational tool to reparameterize activations into a more analysis-friendly basis, not as a claim that the model is ``truly sparse'' in an ontological sense.
 
-A thesis-native example is the case where two checkpoints show similar task behavior but yield different raw activation bases; if a sparse dictionary and matching protocol recover corresponding features, we treat this as evidence of underlying representational continuity rather than mere coordinate coincidence. \textit{Takeaway for this thesis:} evidence supporting C1/C2/C3 from this concept is based on reconstruction fidelity, sparsity level, and cross-seed/epoch feature correspondence.
+    A thesis-native example is the case where two checkpoints show similar task behavior but yield different raw activation bases; if a sparse dictionary and matching protocol recover corresponding features, we treat this as evidence of underlying representational continuity rather than mere coordinate coincidence. \textit{Takeaway for this thesis:} evidence supporting C1/C2/C3 from this concept is based on reconstruction fidelity, sparsity level, and cross-seed/epoch feature correspondence.
 
-\subsection{Generalization, overfitting, implicit regularization}
-We model training as minimization of empirical risk under regularization:
-\[
-\min_{\theta}\; \frac{1}{N}\sum_{i=1}^{N}\mathcal{L}(f_{\theta}(x_i), y_i) + \lambda\Omega(\theta).
-\]
-In modern overparameterized settings, good generalization can emerge despite near-zero training error due to optimization bias, data structure, and architecture priors. This is central for interpreting delayed generalization phenomena and for avoiding output-only explanations of behavior shifts \cite{kaplan2020scalinglaws,hoffmann2022chinchilla}.
+    \subsection{Generalization, overfitting, implicit regularization}
+    We model training as minimization of empirical risk under regularization:
+    \[
+    \min_{\theta}\; \frac{1}{N}\sum_{i=1}^{N}\mathcal{L}(f_{\theta}(x_i), y_i) + \lambda\Omega(\theta).
+    \]
+    In modern overparameterized settings, good generalization can emerge despite near-zero training error due to optimization bias, data structure, and architecture priors. This is central for interpreting delayed generalization phenomena and for avoiding output-only explanations of behavior shifts \cite{kaplan2020scalinglaws,hoffmann2022chinchilla}.
 
-Operationally, we track train/test behavior jointly over time windows (pre-transition, transition, post-transition), rather than using a single endpoint score. A compact statistic used throughout this thesis is the time-indexed generalization gap:
-\[
-\mathrm{gap}(t)=\mathcal{L}_{\mathrm{test}}(t)-\mathcal{L}_{\mathrm{train}}(t).
-\]
-In grokking-like settings, delayed improvement corresponds to a late contraction of this gap after training performance has already saturated.
+    Operationally, we track train/test behavior jointly over time windows (pre-transition, transition, post-transition), rather than using a single endpoint score. A compact statistic used throughout this thesis is the time-indexed generalization gap:
+    \[
+    \mathrm{gap}(t)=\mathcal{L}_{\mathrm{test}}(t)-\mathcal{L}_{\mathrm{train}}(t).
+    \]
+    In grokking-like settings, delayed improvement corresponds to a late contraction of this gap after training performance has already saturated.
 
-A thesis-native example is a run where training loss is nearly flat while test accuracy improves later; this is interpreted as representational reorganization only if internal measurements (e.g., feature stability/alignment) change coherently in the same phase window. \textit{Takeaway for this thesis:} C1 claims require joint behavioral-mechanistic evidence, and C3 diagnostics must beat output-only heuristics that rely only on post-hoc performance signals.
+    A thesis-native example is a run where training loss is nearly flat while test accuracy improves later; this is interpreted as representational reorganization only if internal measurements (e.g., feature stability/alignment) change coherently in the same phase window. \textit{Takeaway for this thesis:} C1 claims require joint behavioral-mechanistic evidence, and C3 diagnostics must beat output-only heuristics that rely only on post-hoc performance signals.
 
-\subsection{Optimization dynamics and phase transitions}
+    \subsection{Optimization dynamics and phase transitions}
 Training can exhibit phase-like behavior: fast fitting of easy patterns, slower reorganization of internal representations, and delayed behavioral transitions. This perspective motivates phase-aware checkpoints and multi-metric reporting, especially in grokking-like settings where test behavior changes long after training metrics appear saturated.
 
 For mechanistic interpretation, the key risk is false positives from curve-only narratives: an apparent transition in accuracy may reflect evaluation noise, calibration effects, or metric saturation rather than a meaningful internal change. Therefore, phase boundaries are treated as analysis windows where both behavioral and representational diagnostics must be examined.
@@ -52,27 +52,27 @@ C2 (\emph{Steering locality}) is tested through constrained interventions where 
 C3 (\emph{Diagnostics}) is tested by internal-signal detectors that must outperform or match output-only baselines under calibration and transfer checks.
 
 \section{Attention-based model internals relevant to interpretation}
-\label{sec:attention-internals}
-\subsection{Self-attention as content-based routing}
-Self-attention computes token-to-token mixing weights from query-key compatibility and applies them to values:
-\[
-\mathrm{Attn}(Q,K,V)=\mathrm{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right)V.
-\]
-For interpretation, attention is treated as a routing mechanism that redistributes information across positions; its relevance is not only in attribution maps but in how it modifies downstream residual activations where features are measured \cite{vaswani2017attention,olsson2022inductionheads}. \textit{Takeaway for this thesis:} attention is analyzed through its effect on $h_\ell$ and derived sparse features, not as a standalone explanation artifact.
+    \label{sec:attention-internals}
+    \subsection{Self-attention as content-based routing}
+    Self-attention computes token-to-token mixing weights from query-key compatibility and applies them to values:
+    \[
+    \mathrm{Attn}(Q,K,V)=\mathrm{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right)V.
+    \]
+    For interpretation, attention is treated as a routing mechanism that redistributes information across positions; its relevance is not only in attribution maps but in how it modifies downstream residual activations where features are measured \cite{vaswani2017attention,olsson2022inductionheads}. \textit{Takeaway for this thesis:} attention is analyzed through its effect on $h_\ell$ and derived sparse features, not as a standalone explanation artifact.
 
-\subsection{Residual stream as computation substrate}
-At layer $\ell$, we use a residual-style update view:
-\[
-h_{\ell+1} = h_{\ell} + \Delta^{\text{attn}}_{\ell}(h_{\ell}) + \Delta^{\text{mlp}}_{\ell}(h_{\ell}).
-\]
-This representation makes cross-layer analysis operational: SAEs are trained on $h_\ell$, and transcoders map between sparse bases inferred from these layerwise states.
-\textit{Takeaway for this thesis:} the residual stream is the primary substrate linking mechanistic analysis and controllable intervention.
+    \subsection{Residual stream as computation substrate}
+    At layer $\ell$, we use a residual-style update view:
+    \[
+    h_{\ell+1} = h_{\ell} + \Delta^{\text{attn}}_{\ell}(h_{\ell}) + \Delta^{\text{mlp}}_{\ell}(h_{\ell}).
+    \]
+    This representation makes cross-layer analysis operational: SAEs are trained on $h_\ell$, and transcoders map between sparse bases inferred from these layerwise states.
+    \textit{Takeaway for this thesis:} the residual stream is the primary substrate linking mechanistic analysis and controllable intervention.
 
-\subsection{MLP blocks, feature superposition, and polysemanticity}
-MLP blocks can be interpreted as content-dependent transformations over residual features; in practice they often exhibit superposition, where multiple latent factors share coordinates \cite{geva2021ffn,anthropic2022superposition}. This motivates sparse dictionary methods and explicit stability tests across seeds/epochs.
-\textit{Takeaway for this thesis:} polysemanticity is treated as a measurable risk and SAE training/ablation is the primary mitigation mechanism.
+    \subsection{MLP blocks, feature superposition, and polysemanticity}
+    MLP blocks can be interpreted as content-dependent transformations over residual features; in practice they often exhibit superposition, where multiple latent factors share coordinates \cite{geva2021ffn,anthropic2022superposition}. This motivates sparse dictionary methods and explicit stability tests across seeds/epochs.
+    \textit{Takeaway for this thesis:} polysemanticity is treated as a measurable risk and SAE training/ablation is the primary mitigation mechanism.
 
-\subsection{LayerNorm and training stability (why it matters for feature comparability)}
+    \subsection{LayerNorm and training stability (why it matters for feature comparability)}
 Normalization layers affect activation scale and distribution, which can change apparent feature sparsity and cross-run comparability even when task behavior is similar. Therefore, normalization-aware reporting (e.g., consistent hook points and scale-sensitive diagnostics) is necessary when comparing features across checkpoints, layers, or architectures.
 \textit{Takeaway for this thesis:} feature-level conclusions are accepted only under controlled activation collection and comparable normalization conditions.
 
@@ -111,7 +111,7 @@ Instruction/aligned decoder & Objective and preference optimization stage & Same
 \label{tab:variant-invariant-map}
 \end{table}
 
-\section{Architecture lineage from ChatGPT and why mechanistic interpretability still transfers}
+\section{Architectural lineage of mainstream LLMs: from ChatGPT 2 and why mechanistic interpretability still matters}
 \label{sec:arch-lineage-chatgpt}
 From a systems perspective, ChatGPT can be read as a product layer built on top of decoder-only Transformer language models, instruction tuning, and preference optimization procedures such as RLHF \cite{vaswani2017attention,ouyang2022instructgpt,christiano2017rlhf,openai2023gpt4}. In this sense, the practical jump from base next-token predictors to useful assistants reflects training and alignment choices over a stable architectural backbone rather than a complete departure from Transformer internals.
 
@@ -185,10 +185,10 @@ Validators serve two roles: as training-time regularizers to favor representatio
 
 \textbf{Implications for this thesis:} We adopt soft logic validators (LTN-style) as both losses and metrics. They provide portable semantic checks across layers and yield signals for steering. We will report satisfaction rates and penalty magnitudes alongside reconstruction/alignment metrics to assess whether aligned features remain semantically meaningful.
 
-\section*{Interpretability}
+\section{Interpretability}
 Interpretability goals vary along two axes: local vs.~global and mechanistic vs.~post-hoc. Local methods explain particular inputs or activations; global methods summarize model behavior or circuits. Mechanistic approaches aim to uncover causal or algorithmic structure (e.g., feature-level circuits), while post-hoc methods provide approximate explanations without claiming faithful mechanism \cite{doshi2017rigorous,jacovi2020faithfulness}.
 
-Polysemanticity---multiple unrelated features entangled within a single dimension of the residual stream---motivates SAEs: by promoting sparsity and overcomplete bases, SAEs aim to separate conflated concepts into more interpretable features. However, SAEs must be evaluated for fidelity (reconstruction), usefulness (downstream control), and stability (consistency across seeds and epochs).
+Polysemanticity, i.e. multiple unrelated features entangled within a single dimension of the residual stream, motivates SAEs: by promoting sparsity and overcomplete bases, SAEs aim to separate conflated concepts into more interpretable features. However, SAEs must be evaluated for fidelity (reconstruction), usefulness (downstream control), and stability (consistency across seeds and epochs).
 
 In this thesis, we use SAEs to obtain sparse features $s_\ell$ per layer, transcoders to align features across layers, and validators to attach semantic meaning to features. This triad supports both mechanistic inspection (feature alignment and validator transfer) and practical steering.
 
@@ -198,12 +198,15 @@ We evaluate interpretability by four criteria connected to downstream decisions.
 \textbf{Implications for this thesis:} interpretability claims are accepted only when faithfulness, stability, transferability, and actionability are jointly supported by reproducible metrics in Chapter~\ref{chpt:circuitry}.
 We prioritize mechanistic interpretability with practical utility: features should reconstruct well, be sparse and stable, align across layers, and satisfy reusable validators. These criteria drive the metrics and ablations used later.
 
+\subsection{Linear Probes and Feature Attribution}
+Linear probes are linear classifiers trained on frozen representations to predict labels or properties of interest. They provide a simple measure of whether information is linearly decodable from a representation, but they do not guarantee that the representation is used by the model for its predictions. Feature attribution methods assign importance scores to input features or internal activations, often using gradients or perturbations. While useful for understanding model behavior, they can be sensitive to noise and may not reflect causal influence. Both methods are complementary to SAEs and transcoders, which aim to uncover structured, sparse representations that can be aligned and validated across layers.
+
 \subsection{Sparse Auto-encoders}
 A sparse auto-encoder on layer $\ell$ learns an encoder $E_\ell: h_\ell\mapsto s_\ell$ and a decoder $D_\ell: s_\ell\mapsto \hat h_\ell$ that reconstruct the residual stream from a sparse code. Sparsity encourages features that fire selectively, which can reduce polysemanticity and improve interpretability. Training typically minimizes reconstruction error with a sparsity-promoting penalty or target activation rate.
 
 We report three primary metrics: (i) sparsity of $s_\ell$ (e.g., average activation rate), (ii) reconstruction error $\|h_\ell-\hat h_\ell\|$, and (iii) stability across seeds and epochs (feature correspondence and drift). Practical considerations include normalization of $h_\ell$, preventing dead features, and calibrating sparsity targets to balance fidelity and disentanglement.
 
-\textbf{Implications for this thesis:} SAE outputs $s_\ell$ constitute the feature space for alignment and validation. Stability protocols (cross-seed/epoch matching) and sparsity/reconstruction trade-offs are part of all SAE reports and ablations.
+\textbf{Implications for this thesis:} SAE outputs $s_\ell$ constitute the feature space for alignment and validation. Stability protocols (cross-seed/epoch matching) and sparsity\slash reconstruction trade-offs are part of all SAE reports and ablations.
 
 \subsection{Cross-layer Transcoder}
 As depth composes functions, semantically related signals can appear at multiple layers in transformed bases. We introduce a cross-layer transcoder $T_{\ell\to k}$ to map $s_\ell$ into the basis of layer $k$, yielding $\hat s_k$. Training objectives include alignment to $s_k$ (when available), semantic consistency under validators, and regularization to prevent degenerate solutions.
@@ -218,6 +221,6 @@ The LTN Cross-layer Transcoder combines layerwise SAEs, cross-layer mapping, and
 At a high level, the method aims to improve interpretability that is useful for control: aligned sparse features that reconstruct well, transfer across depth, and respect declarative constraints. Detailed objectives, training schedules, and steering surfaces are specified in Chapter~4; here we motivate the combination and its expected benefits.
 The concrete LSNC protocol (predicate grounding with LoRA, composite scoring, and guided beam-search failure policies) is intentionally deferred to the methodology chapter to keep this background section conceptual.
 
-\textbf{Implications for this thesis:} This section bridges Background to Methodology. We will (i) train SAEs per layer and report sparsity/reconstruction/stability, (ii) train $T_{\ell\to k}$ and report alignment and semantic transfer, and (iii) use LTN validators both as regularizers and evaluation metrics, ultimately yielding signals for steering.
+\textbf{Implications for this thesis:} This section bridges Background to Methodology. We will (i) train SAEs per layer and report sparsity\slash reconstruction\slash stability, (ii) train $T_{\ell\to k}$ and report alignment and semantic transfer, and (iii) use LTN validators both as regularizers and evaluation metrics, ultimately yielding signals for steering.
 
 \end{document}

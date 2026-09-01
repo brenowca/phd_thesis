@@ -13,7 +13,7 @@ We highlight a few interesting learning phenomena. Also report different visuali
 
 
 
-\section{Grokking --- Late Generalization}
+\section{Grokking: Late Generalization}
 \label{sec:grokking}
 The grokking phenomenon is a sudden improvement in model performance on unseen data after a period of seemingly stagnant learning, also known as late or delayed generalization. It was first detected in 2021, in the work of \cite{Grokking}. The subsequent literature attributed the phenomenon mostly to three main factors: data sparsity, large initialization values, and high regularization rates. Although the combination of these factors may indeed cause grokking in some situations, they cannot be said to be the cause or to provide a complete explanation of grokking.
 
@@ -103,80 +103,88 @@ In order to confirm or reject our hypothesis, we created two synthetic datasets 
 
 \section{New Synthetic Datasets for Grokking}\label{sec:artificial-datasets}
 
-The two synthetic datasets introduced in this chapter enable the induction of grokking with minimal tuning of model parameters, avoiding an extensive search of the parameter space. These datasets enable the creation of a shift between training and test set distributions, allowing for user control over how much information each subclass carries, as detailed below. The datasets are available in the supplementary material accompanying this thesis.
+The two synthetic datasets introduced in this chapter enable the induction of grokking with minimal tuning of model parameters, avoiding an extensive search of the parameter space. They allow us to create a controlled shift between the training and test distributions and to decide how much information each subclass carries, as detailed below. Both datasets are released with the code accompanying this thesis\footnote{\url{\repourl}}, and Appendix~\ref{app:dataset-creation} documents their construction step by step.
 
-The primary goal of the datasets is to be linearly separable when considering all sample dimensions $d$, while also being non-trivial to solve even with the addition of noise or extreme down-sampling. Data can be created with an arbitrary number of dimensions $d$. The datasets are defined by projecting classes onto this $d$-dimensional space using multivariate normal distributions, ensuring control over both class definitions and their distances in the $d$-dimensional space.
+The primary goal of the datasets is to be linearly separable when considering all sample dimensions $d$, while also being non-trivial to solve under noise or extreme down-sampling. The datasets are defined by projecting classes onto a $d$-dimensional space using multivariate normal distributions, ensuring control over both class definitions and their distances in that space.
 
-We define classes $C_1, \dots, C_n$, where each class $C_i$, $1 \leq i \leq n$, is the union of the samples in the disjoint subclasses $C_{i,1}, \dots, C_{i,m}$. We say that $C_i = \bigcup_{j=1}^{m} C_{i,j}$, and $C_{i,p} \cap C_{i,k} = \emptyset$ for all $k \neq p$.
+We define classes $C_1, \dots, C_n$, where each class $C_i$, $1 \leq i \leq n$, is the union of the samples in the disjoint subclasses $C_{i,1}, \dots, C_{i,m}$. We say that $C_i = \bigcup_{j=1}^{m} C_{i,j}$, and $C_{i,p} \cap C_{i,k} = \emptyset$ for all $k \neq p$. The classification target is always the class $C_i$; subclasses are never shown to the model and exist only to define the geometry of the data and to control the sampling. The above structure of classes and subclasses mimics the organization of some real-world datasets, such as COCO \cite{lin2014COCO}, which is used in image segmentation where objects can be part of a larger scene or other objects. More importantly, it provides a straightforward and effective method to induce distribution shifts on demand by down-sampling specific subclasses while preserving the original proportions of the other classes.
 
+\noindent\textbf{Design rationale.}
+Our hypothesis (Section~\ref{sec:grokking}) states that a faint training signal may interact with related data \emph{within a class or across nearby classes} to sustain a decision boundary that the loss alone no longer rewards. This statement has two separable ingredients: (i) the existence of a small number of samples from the shifted region of the input space, which provides the faint signal itself; and (ii) the existence of retained training data that is \emph{related} to that region, which provides something for the faint signal to interact with. The two datasets are designed to isolate ingredient (ii) while keeping everything else fixed. They share the same generator, the same dimensionality $d = 117$, the same noise model, the same four-way classification target, and the same sub-sampling protocol; the only manipulated variable is the geometry of the subclasses relative to the classes. In the first dataset, every subclass is equidistant from every other subclass, so removing a subclass leaves its region of the input space without any preferential neighbor in the training set: the region can only be recovered from the samples of the removed subclass itself. In the second dataset, the subclasses of a class are strictly closer to each other than to the subclasses of any other class, so the retained subclasses of a class always \emph{cover} the region of a removed sibling. We refer to this second situation as \emph{proximity-mediated information transfer}, and define it operationally in Table~\ref{tab:removed-neighbors}: given a removed subclass, we compare the distance from its centroid to the nearest retained centroid of the same class with the distance to the nearest retained centroid of any other class. Transfer is possible when the former is strictly smaller; it is absent when the two are equal.
 
-As a concrete example, consider four classes with two subclasses each. When one subclass per class is strongly under-sampled, the model still receives weak relational signals from neighboring subclasses. This controlled imbalance is sufficient to induce delayed generalization in our setting, and motivates the full formal definition below.
-
-The above structure of classes and subclasses mimics the organization of some real-world datasets, such as COCO \cite{lin2014COCO}, which is used in image segmentation where objects can be part of a larger scene or other objects. More importantly, it provides a straightforward and effective method to induce distribution shifts on demand by down-sampling specific subclasses while preserving the original proportions of the other classes. We also define the dimensionality, $d$, of the dataset.
-
-In the creation of the datasets, we ensure that each subclass $C_{i,j}$ samples a normal multivariate distribution projected onto a $d$-dimensional space for a given $d$. By doing this, we ensure that the dataset is linearly separable in the $d$-dimensional space. Thus, the datasets require a simple classification task solvable with a few optimization steps, but are not so trivial that noise or missing samples would not change model performance.
-
-We cause arbitrary distribution shifts in the datasets by selecting a specific set of subclasses to contain fewer samples than the other subclasses. Without loss of generality, we create all subclasses with the same number of samples in every dataset that we study, i.e. $|C_{i,j}| = s$, for all $i,j$. For example, to create a dataset $D$ with 4,000 samples and four classes, $C_{1}, C_{2}, C_{3}, C_{4}$, each with two subclasses, $C_{i,1}, C_{i,2}, 1 \leq i \leq 4$, each subclass will have 500 samples. To downsample any given subclass, we define $f \in [0, 1]$ such that if $f = 0$ then every sample of that subclass is removed; if $f = 1$ no change is made to the number of samples in the subclass. Given a choice of value for $f$, let $\mathcal{\gamma}_{s}$ denote the number of subclasses to subsample and $\mathcal{\gamma}_{r}$ the number of remaining subclasses. Then, we sample $s_{s}$ examples from each subclass to subsample, and we sample $s_{r}$ examples from the remaining subclasses, as defined in Equation \ref{eq:num_samples_unbalanced}, where $\gamma_D < |D|$ is the total number of samples we want to keep.
-
-\begin{equation}\label{eq:num_samples_unbalanced}
-    s_{s} = \ceil[\bigg]{\frac{f\gamma_D}{f\gamma_s + \gamma_r}}
-    \quad \text{and} \quad
-    s_{r} = \floor[\bigg]{\frac{\gamma_D}{f\gamma_s + \gamma_r}}
+\noindent\textbf{Common construction.}
+Both datasets are produced by the same generator, which we summarize here and detail in Appendix~\ref{app:dataset-creation}. Let $p = 9$ be the number of \emph{dimension groups} and $r = 13$ the number of dimensions per group, so that $d = pr = 117$. A subclass is identified with a binary code $c \in \{0,1\}^p$, and we write $b_\ell(c)$ for its $\ell$-th bit. For every group $\ell$ we draw, once, two centers $\mu_\ell^0 \sim \mathcal{U}[-1,1]^r$ and $\mu_\ell^1 = \mu_\ell^0 + u_\ell$ with $\|u_\ell\| = 1$, and a single covariance $\Sigma_\ell = R_\ell^\top S_\ell^2 R_\ell$, where $S_\ell$ is diagonal with entries $0.125\,(1 \pm 0.25\,\xi)$, $\xi \sim \mathcal{U}[0,1]$, and $R_\ell$ is a product of random Givens rotations with angles in $\pm[\pi/6, \pi/3]$. A sample of subclass $c$ is the concatenation $x = (x_1, \dots, x_p)$ of $p$ independent blocks,
+\begin{equation}\label{eq:generator}
+    x_\ell = \mu_\ell^{\,b_\ell(c)} + z_\ell S_\ell R_\ell,
+    \qquad z_\ell \sim \mathcal{N}(0, I_r),
+    \qquad \ell = 1, \dots, p.
 \end{equation}
+Because the two centers of a group share the same covariance and $\|\mu_\ell^1 - \mu_\ell^0\| = 1$ for every group, the Euclidean distance between the centroids of two subclasses is determined by the Hamming distance $H(\cdot,\cdot)$ between their codes:
+\begin{equation}\label{eq:centroid-distance}
+    \|\centroid{C_a} - \centroid{C_b}\| = \sqrt{H(a, b)}.
+\end{equation}
+This is the property that lets us specify the geometry of a dataset by choosing codes. Choosing a set of codes at constant mutual Hamming distance yields equidistant subclasses; choosing a code together with its Hamming-1 neighbors yields a tight cluster of subclasses. The within-subclass noise is small relative to the unit separation between centers (per-axis standard deviations range between $0.10$ and $0.16$ in the released files), so each pair of subclasses is separable by a hyperplane with negligible overlap, and so are the classes defined below. The task is therefore easy when the training set is representative, but sensitive to which subclasses are present in it.
 
-%Where $\gamma_s$ means the cardinality of $\mathcal{C}_{s}$, $\gamma_r$ means the cardinality of $\mathcal{C}_{r}$. 
+\noindent\textbf{Sub-sampling protocol.}
+We cause arbitrary distribution shifts in the datasets by selecting a specific set of subclasses to contain fewer samples than the other subclasses. Without loss of generality, we create all subclasses with the same number of samples in every dataset that we study, i.e. $|C_{i,j}| = s$, for all $i,j$. To down-sample a subclass we define $f \in [0, 1]$ such that if $f = 0$ then every sample of that subclass is removed and if $f = 1$ no change is made to its proportion. Let $\gamma_D$ denote the total number of training samples to draw, $\gamma_s$ the number of subclasses to sub-sample, and $\gamma_r$ the number of remaining subclasses. Each sub-sampled subclass receives weight $f$ and each remaining subclass receives weight $1$, and the number of samples drawn from each is proportional to its weight:
+\begin{equation}\label{eq:num_samples_unbalanced}
+    s_{s} = \operatorname{round}\!\left(\frac{f\gamma_D}{f\gamma_s + \gamma_r}\right)
+    \quad \text{and} \quad
+    s_{r} = \operatorname{round}\!\left(\frac{\gamma_D}{f\gamma_s + \gamma_r}\right).
+\end{equation}
+Whenever rounding leaves a residual $\gamma_D - (\gamma_s s_s + \gamma_r s_r) \neq 0$, it is distributed one sample at a time to the subclasses with the largest (or smallest) rounding remainders, so that exactly $\gamma_D$ samples are drawn. For example, with four classes of two subclasses each, $\gamma_D = 2000$, $f = 0.2$, and one sub-sampled subclass per class ($\gamma_s = \gamma_r = 4$), we obtain $s_{s} = \operatorname{round}(0.2 \cdot 2000 / 4.8) = 83$ and $s_{r} = \operatorname{round}(2000 / 4.8) = 417$ samples, which sum to exactly $2000$.
 
-Returning to our example of four classes with two subclasses each, if $\gamma_D = 2000$, $f = 0.2$ and we want to subsample one subclass per class then $s_{s} = \ceil[\bigg]{\frac{0.2 \cdot 2000}{0.2 \cdot 4 + 4}} = 84$ examples and $s_{r} = \floor[\bigg]{\frac{2000}{0.2 \cdot 4 + 4}} = 416$ examples. 
-%
-In what follows, we will subsample the subclasses using different values for $f$ up to the point of removing them from the training set altogether. We will study equidistant subclasses (dataset 1) and equivariant subclasses (dataset 2), as described next.  
+In every experiment reported in this chapter, the sub-sampled subclasses are half of the subclasses of \emph{each} class, chosen once at random with a fixed seed and kept fixed across runs, so that $\gamma_s = \gamma_r$. Training sets of size $\gamma_D$ are drawn from a held-out training pool according to Equation~\ref{eq:num_samples_unbalanced}, whereas the test set is a balanced sample of $10{,}000$ examples in which every subclass is equally represented. The distribution shift is therefore entirely on the training side, and $f$ controls its severity: $f = 1$ is the balanced case and $f = 0$ removes the sub-sampled subclasses altogether. We study equidistant subclasses (Dataset~1) and equivariant subclasses (Dataset~2), as described next.
 
-\noindent \textbf{Dataset 1 (equidistant subclasses)}\label{sec:eqdist-dataset}: to investigate the impact of shifting the training distribution away from the test set distribution in a systematic way, we created a dataset with 4 classes, 
-        $C_1,\dots, C_4$, such that each class $C_i$ is composed of two disjoint subclasses $C_{i,1}$ and $C_{i,2}$, $C_i = C_{i,1} \cup C_{i,2}$,
-        $C_{i,1} \cap C_{i,2} = \varnothing$.
 \begin{figure*}[t]
     \centering
 
     \begin{subfigure}[t]{0.475\textwidth}
          \centering
          \includegraphics[width=0.3\textwidth]{figures/group_eqdist.pdf}
-         \caption{A schematic of the equidistant dataset. Each subclass is equidistant from all others, creating a challenging scenario for generalization.}
+         \caption{A schematic of the equidistant dataset. Each subclass is equidistant from all others, including its sibling in the same class, so a removed subclass has no preferential neighbor in the training set.}
          \label{fig:group_eqdist}
     \end{subfigure}
     \hfill
     \begin{subfigure}[t]{0.475\textwidth}
          \centering
          \includegraphics[width=0.4\textwidth]{figures/group_eqvariant.png}
-         \caption{A schematic of the equivariant dataset. Subclasses are grouped by similarity into larger classes, providing a relational structure for the model to learn.}
+         \caption{A schematic of the equivariant dataset. Subclasses are grouped by proximity into larger classes, so the retained subclasses of a class always cover the region of a removed sibling.}
          \label{fig:group_eqvariant}
     \end{subfigure}
     \caption{Schematic representations of the (a) equidistant and (b) equivariant synthetic datasets developed for this study.}
     \label{fig:synthetic_dataset}
 \end{figure*}
 
-All the subclasses (no matter which class they belong to) have equidistant centroids. This means that each subclass is a multivariate normal distribution whose central value is equidistant to the central values of every other distribution. Also, if we consider the centroids of each class they will be equidistant to each other. This concept is illustrated in figure~\ref{fig:group_eqdist}.
-Although we can generate an unbound number of samples, we use a test set consisting of 10,000 samples.
-More detail about the properties of the dataset can be found in the project's git repository.% Appendix~\ref{app:equidistant_dataset}.
+\noindent \textbf{Dataset 1 (equidistant subclasses)}\label{sec:eqdist-dataset}: this dataset is the control regime, in which no proximity-mediated transfer is possible. It has $4$ classes, $C_1,\dots, C_4$, each composed of two disjoint subclasses, $C_i = C_{i,1} \cup C_{i,2}$. The eight subclasses are the codes of a maximum clique of the graph that connects codes at Hamming distance exactly $2$, so by Equation~\ref{eq:centroid-distance} the centroids of all subclasses --- no matter which class they belong to --- are at the same distance $\sqrt{2}$ from one another. The classes are formed by pairing these codes, and the resulting class centroids are also equidistant, at distance $1$ from one another. This concept is illustrated in Figure~\ref{fig:group_eqdist}. As a consequence, when one subclass per class is removed from the training set, the nearest retained centroid is at distance $\sqrt{2}$ both within the same class and in every other class (Table~\ref{tab:removed-neighbors}). Nothing in the retained data indicates to which class the removed region belongs, and its assignment is left entirely to the inductive bias of the model and the optimizer. This dataset therefore tests whether late generalization requires at least a faint signal from the shifted region itself: if it does, we expect $f = 0$ to leave the model on a plateau and small $f > 0$ to produce grokking. The released files contain $2{,}500$ samples per subclass ($20{,}000$ per split).
 
-\noindent \textbf{Dataset 2 (equivariant subclasses)}:\label{sec:similar-dataset}
-We created a dataset with 4 classes, each class is composed of 10 subclasses.
-
-All the subclasses of a given class have equidistant centroids, calculated as the mean point in the $d$-dimensional space of the samples. The centroids of subclasses from different classes are more distant from each other than they are from the centroids of subclasses of the same class. This means that if $\centroid{C_{i,j}}$ is the centroid of subclass $j$ of class $i$, then:
+\noindent \textbf{Dataset 2 (equivariant subclasses)}\label{sec:similar-dataset}: this dataset is the transfer regime. It has $4$ classes, each composed of $10$ subclasses. The four classes are built around four \emph{seed} codes at mutual Hamming distance $6$; each class consists of its seed together with the nine codes at Hamming distance $1$ from it. By Equation~\ref{eq:centroid-distance}, within a class the seed subclass is at distance $1$ from each of the other nine, which are at distance $\sqrt{2}$ from one another; across classes, subclass centroids are at distance at least $2$ (Hamming distance at least $4$). That is, if $\centroid{C_{i,j}}$ is the centroid of subclass $j$ of class $i$, then
 \[
-|\centroid{C_{i,j}} - \centroid{C_{i,l}}| > |\centroid{C_{i,j}} - \centroid{C_{k,l}}|
-, i \neq k.
+\|\centroid{C_{i,j}} - \centroid{C_{i,l}}\| \leq \sqrt{2} < 2 \leq \|\centroid{C_{i,j}} - \centroid{C_{k,l}}\|
+, \quad i \neq k,
 \]
+for all $j, l$. Subclasses within a class are thus closer to each other than to any subclass of another class, but, unlike in Dataset~1, they are not all equidistant: each class has a hub-and-spoke structure, illustrated in Figure~\ref{fig:group_eqvariant}. When half of the subclasses of a class are removed, the nearest retained centroid is always in the same class --- at distance $1$ if the seed is retained (or if the removed subclass is the seed itself) and $\sqrt{2}$ otherwise --- while the nearest retained centroid of any other class is at distance at least $2$ (Table~\ref{tab:removed-neighbors}). In the sub-sampling used in our experiments the seed is among the removed subclasses in two of the four classes, so both strengths of coverage occur. This dataset therefore tests whether the retained relational structure can substitute for the missing samples: if it can, we expect generalization, and possibly late generalization, even at $f = 0$. The released files contain $500$ samples per subclass ($20{,}000$ per split).
 
-As mentioned previously, with respect to the equidistant dataset, we utilize a test set consisting of 10,000 samples, even though we could generate an unlimited number of samples. This same dataset is employed to examine whether the absence of samples from specific subclasses can be compensated for by the similarity of these subclasses to other classes within the dataset, thereby providing sufficient information for us to test whether grokking takes place as a result of this characteristic.
+\begin{table}[t]
+    \centering
+    \caption{Distance from the centroid of each removed subclass to the nearest retained centroid of the same class and of any other class, for the sub-sampling used in the experiments (half of the subclasses of every class). ``Removed'' lists which subclasses of the class are removed; ``others'' are non-seed subclasses. Values follow from Equation~\ref{eq:centroid-distance} and match the released files to two decimal places. Proximity-mediated transfer is possible when the same-class distance is strictly smaller.}
+    \label{tab:removed-neighbors}
+    \small
+    \begin{tabular}{llcccl}
+        \toprule
+        Dataset & Class & Removed & Same class & Other class & Transfer \\
+        \midrule
+        Equidistant & each of $C_1$--$C_4$ & 1 of 2 & $\sqrt{2}$ & $\sqrt{2}$ & no \\
+        \midrule
+        \multirow{3}{*}{Equivariant} & \multirow{2}{*}{$C_1$, $C_2$ (seed removed)} & seed & $1$ & $\sqrt{5}$ & yes \\
+         & & 4 others & $\sqrt{2}$ & $2$ & yes \\
+         & $C_3$, $C_4$ (seed retained) & 5 others & $1$ & $2$ & yes \\
+        \bottomrule
+    \end{tabular}
+\end{table}
 
-% \begin{itemize}
-%     \item Dataset characteristics
-%     \begin{itemize}
-%         \item number of classes, total number of samples (potentially infinite).
-%         \item Distance between classes (equivariant subclasses)
-%     \end{itemize}
-% \end{itemize}
-
-Further information about the datasets can be found in the git repository. %Appendix~\ref{app:dataset-creation}.
+\noindent\textbf{Limitations of the comparison.}
+The two datasets differ not only in geometry but also in the number of subclasses per class ($2$ versus $10$) and, consequently, in the number of retained subclasses per class after sub-sampling ($1$ versus $5$). A model trained on Dataset~2 therefore sees a more diverse support for each class, and part of the difference in behavior at $f = 0$ could in principle be attributed to this diversity rather than to proximity alone. The geometry of Dataset~1 rules out proximity-mediated transfer regardless of how many subclasses are retained, so the control is sound; disentangling diversity from proximity in the transfer regime would require an equivariant variant with two subclasses per class, which we leave for future work.
 
 \section{Experimental Results}\label{sec:results}
 
@@ -211,10 +219,10 @@ When we increase the training data size, as mentioned, we see a diminishing effe
 
 % -----------------
 \subsection{Distribution-shift impact on equivariant subclasses}
-We investigate the effects of sampling strategies on the grokking phenomenon by examining unbalanced sampling of classes. Firstly, we analyze balanced sampling of classes, as illustrated in Figure~\ref{fig:shift-equifariant}. Next, we explore the impact of unbalanced sampling, depicted in Figure~\ref{fig:equivariant-few-samples}. Our findings reveal some form of information leakage among subclasses due to their proximity, which is evidenced by the comparison between the similar graphs with and without sampling (Figures~\ref{fig:equivariant-no-sample} and \ref{fig:equivariant-few-samples}).
+We investigate the effects of sampling strategies on the grokking phenomenon by examining unbalanced sampling of classes. Firstly, we analyze balanced sampling of classes, as illustrated in Figure~\ref{fig:shift-equifariant}. Next, we explore the impact of unbalanced sampling, depicted in Figure~\ref{fig:equivariant-few-samples}. Our findings reveal proximity-mediated information transfer among the subclasses of a class, in the sense defined in Section~\ref{sec:artificial-datasets} and Table~\ref{tab:removed-neighbors}, which is evidenced by the comparison between the similar graphs with and without sampling (Figures~\ref{fig:equivariant-no-sample} and \ref{fig:equivariant-few-samples}).
 
 \textbf{Distribution-shift caused by unbalanced equivariant subclass sampling}
-The other setting evaluated in our experiments consisted of inducing different imbalances, using different values of $f$ as described in Section~\ref{fig:equivariant-no-sample}. The first noteworthy result here is that we were able to detect grokking even in the cases where samples were removed completely from specific subclasses, as depicted in Figure~\ref{fig:equivariant-few-samples}. This surprising behavior contrasts with the results obtained for the equidistant dataset. It is attributed to the fact that in the equivariant case, subclasses of a given class are closer to each other than to subclasses of other classes, thus carrying information that may result in grokking.
+The other setting evaluated in our experiments consisted of inducing different imbalances, using different values of $f$ as described in Section~\ref{sec:artificial-datasets}. The first noteworthy result here is that we were able to detect grokking even in the cases where samples were removed completely from specific subclasses, as depicted in Figure~\ref{fig:equivariant-few-samples}. This surprising behavior contrasts with the results obtained for the equidistant dataset. It is attributed to the fact that in the equivariant case, subclasses of a given class are closer to each other than to subclasses of other classes (Table~\ref{tab:removed-neighbors}): the retained subclasses of a class cover the region of a removed sibling and thus carry information that may result in grokking, whereas in the equidistant case the removed region is equally close to every class.
 
 \begin{figure*}[t]
     \centering

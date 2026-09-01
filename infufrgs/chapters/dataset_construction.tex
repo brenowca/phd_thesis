@@ -1,0 +1,192 @@
+\documentclass[../ppgc-tese.tex]{subfiles}
+\begin{document}
+
+This appendix documents the construction of the two synthetic datasets introduced in Section~\ref{sec:artificial-datasets}, the post-processing applied to the generated samples, the sub-sampling protocol used in the experiments, and the resulting distance structure. The notation follows Section~\ref{sec:artificial-datasets}. The generation and sampling code is available in the repository \url{\repourl}; Table~\ref{tab:terminology} maps the terminology used in the thesis to the identifiers used in the code, which were fixed before the present terminology was adopted.
+
+\begin{table}[ht]
+    \centering
+    \caption{Correspondence between the terminology of this thesis and the identifiers used in the released code and data files.}
+    \label{tab:terminology}
+    \small
+    \begin{tabular}{lll}
+        \toprule
+        Thesis & Code / data files & Role \\
+        \midrule
+        class $C_i$ & \texttt{super\_class} & target (4 values) \\
+        subclass $C_{i,j}$ & \texttt{class} & sampling unit (hidden from the model) \\
+        dimension $x^{(k)}$ & \texttt{d0} \dots\ \texttt{d116} & input features \\
+        equidistant dataset (Dataset~1) & \texttt{V1eq\_*} & control regime \\
+        equivariant dataset (Dataset~2) & \texttt{V0\_*} & transfer regime \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\section{Generative model}\label{app:generator}
+
+\noindent\textbf{Idea.}
+Every subclass is a single Gaussian cloud in $\mathbb{R}^d$, and the generator constrains where the clouds are placed. The $d$ coordinates are split into $p$ \emph{dimension groups} of $r$ coordinates each. Within a group there are only two possible clouds, $\mathcal{N}(\mu_\ell^0, \Sigma_\ell)$ and $\mathcal{N}(\mu_\ell^1, \Sigma_\ell)$: they have the same shape, and their centers are exactly one unit apart. A subclass is a binary code $c \in \{0,1\}^p$ with one bit per group, and its $\ell$-th bit, $b_\ell(c)$, selects which of the two clouds of group $\ell$ the subclass uses. A sample is the concatenation of $p$ independent draws, one per group (Figure~\ref{fig:generator}). Two subclasses therefore differ only in the groups where their bits differ, and in each such group only by a displacement of length one; in every other respect they are identical. This is what makes the geometry of a dataset a function of its codes alone (Equation~\ref{eq:centroid-distance}), and it is the reason the two datasets can share one generator and differ only in the codes they use (Section~\ref{app:codes}).
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=\textwidth]{figures/generator_illustration.pdf}
+    \caption{The generative model. (a)~One dimension group of Dataset~1 (group $\ell = 0$ of the released file), projected onto the direction $u_\ell$ between its two centers and onto the leading noise direction orthogonal to it. Points are samples, ellipses are $2\sigma$ contours of the shared covariance $\Sigma_\ell$, and the seven subclasses with $b_\ell(c) = 0$ are indistinguishable in this group. (b)~Concatenation for the code $c = 192$: each bit selects one of the two clouds of its group, and the sample is the concatenation of nine independent draws. Bits are shown from $b_0$ to $b_8$; the binary string is written with the most significant bit first.}
+    \label{fig:generator}
+\end{figure}
+
+\noindent\textbf{Model.}
+Let $p$ be the number of groups, $r$ the number of coordinates per group, $d = pr$, and write $b_\ell(c) \in \{0,1\}$ for the $\ell$-th bit of a code $c$. For every group $\ell = 1, \dots, p$ the generator draws, once, a base center $\mu_\ell^0 \in \mathbb{R}^r$, a unit displacement $u_\ell \in \mathbb{R}^r$ with $\|u_\ell\| = 1$, and a covariance $\Sigma_\ell \in \mathbb{R}^{r \times r}$, and sets $\mu_\ell^1 = \mu_\ell^0 + u_\ell$. The distribution of subclass $c$ is then the single Gaussian
+\begin{equation}\label{eq:model}
+    x \sim \mathcal{N}\big(\mu(c), \Sigma\big),
+    \qquad
+    \mu(c) = \big(\mu_1^{\,b_1(c)}, \dots, \mu_p^{\,b_p(c)}\big),
+    \qquad
+    \Sigma = \operatorname{diag}(\Sigma_1, \dots, \Sigma_p),
+\end{equation}
+whose block-diagonal covariance does not depend on $c$. Since $\mu(a)$ and $\mu(b)$ differ exactly in the blocks where the codes differ, and in each of them by $\pm u_\ell$,
+\[
+\|\mu(a) - \mu(b)\|^2 = \sum_{\ell : b_\ell(a) \neq b_\ell(b)} \|u_\ell\|^2 = H(a, b),
+\]
+which is Equation~\ref{eq:centroid-distance}. The covariance of a group is parameterized as $\Sigma_\ell = A_\ell^\top A_\ell$ with $A_\ell = S_\ell R_\ell$, where $S_\ell$ is a diagonal scale and $R_\ell$ a rotation, so that a draw from group $\ell$ is $x_\ell = \mu_\ell^{\,b_\ell(c)} + z A_\ell$ with $z \sim \mathcal{N}(0, I_r)$ a row vector, as in Equation~\ref{eq:generator}. Table~\ref{tab:design-choices} lists every choice made by the generator, its value in the released datasets, and its role.
+
+\begin{table}[ht]
+    \centering
+    \caption{Design choices of the generator, their values in the released datasets, and their roles.}
+    \label{tab:design-choices}
+    \small
+    \begin{tabular}{>{\raggedright\arraybackslash}p{0.22\textwidth}>{\raggedright\arraybackslash}p{0.25\textwidth}>{\raggedright\arraybackslash}p{0.45\textwidth}}
+        \toprule
+        Choice & Value & Role \\
+        \midrule
+        Number of groups $p$ (code length) & $9$ & Must admit the code sets of Section~\ref{app:codes}: eight codes at mutual Hamming distance $2$ (Dataset~1) and four codes at mutual distance $p - 3 = 6$ whose Hamming-1 neighborhoods are disjoint (Dataset~2). \\
+        Coordinates per group $r$ & $13$ ($d = 117$) & Found by trial and error so that the resulting datasets are separable yet sensitive to sub-sampling; the value is not otherwise special. \\
+        Base center $\mu_\ell^0$ & $\sim \mathcal{U}[-1,1]^r$ & Places each group at a random position, so that no coordinate is centered by construction. \\
+        Displacement $u_\ell$ & random direction, $\|u_\ell\| = 1$ & Fixes the unit of distance: centroid distances become $\sqrt{H}$ and the geometry is specified by the codes alone. A random direction keeps $u_\ell$ unaligned with the coordinate axes. \\
+        Covariance shared by $\mu_\ell^0$ and $\mu_\ell^1$ & $\Sigma_\ell$, same for both bits & The two clouds of a group differ only in position, so the whole difference between two subclasses is captured by the distance between their centroids. \\
+        Scale $S_\ell$ & diagonal entries $0.125\,(1 \pm 0.25\,\xi)$, $\xi \sim \mathcal{U}[0,1]$ & Sets the noise level, $\sigma \in [0.094, 0.156]$ along the principal axes, hence the signal-to-noise ratio (see \emph{Properties}); the $\pm 25\%$ jitter makes the noise anisotropic. \\
+        Rotation $R_\ell$ & product of Givens rotations with $|\theta| \in [\pi/6, \pi/3]$ & Correlates the noise across the $r$ coordinates, so that $u_\ell$ coincides neither with a coordinate axis nor with a principal axis of the noise: no single coordinate resolves a bit on its own. The angle range excludes near-identity rotations. \\
+        Samples per subclass $s$; seed & $10{,}000$; $10101$ & Size of the generated pool (Section~\ref{app:postprocessing}); reproducibility. \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\noindent\textbf{Sampling procedure.}
+Algorithm~\ref{alg:generate} gives the exact procedure. Lines 2--15 draw the parameters of each group once: the two centers, the diagonal scale $S_\ell$ with entries $0.125\,(1 + 0.25\,\epsilon\,\xi)$ for independent random signs $\epsilon \in \{-1, +1\}$ and $\xi \sim \mathcal{U}[0,1]$, and the rotation $R_\ell$ as the product, over all coordinate pairs $k < k'$, of Givens rotations $G(k, k', \theta)$ by independent angles $\theta = \epsilon\,(1 + \xi)\,\pi/6$, i.e.\ $|\theta| \in [\pi/6, \pi/3]$. These parameters are shared by all subclasses. Lines 16--24 then draw, for every code $c \in \mathcal{S}$ and every group, $s$ standard normal vectors, map them through $S_\ell R_\ell$, and shift them to the center selected by $b_\ell(c)$; the released implementation draws the $s$ vectors of a group at once, which is equivalent. Each sample is stored with its subclass code $c$ and its class $\pi(c)$; only the class is used as a training target.
+
+\begin{algorithm}[ht]
+    \caption{Sample generation shared by both datasets.}
+    \label{alg:generate}
+    \begin{algorithmic}[1]
+        \REQUIRE code set $\mathcal{S} \subseteq \{0,1\}^p$; class map $\pi$; dimensions per group $r$; samples per subclass $s$; seed
+        \ENSURE labeled dataset $\mathcal{D}$ with $|\mathcal{S}| \cdot s$ samples in $\mathbb{R}^{pr}$
+        \STATE initialize the pseudo-random generator with seed
+        \FOR[group parameters, shared by all subclasses]{$\ell = 1$ \TO $p$}
+            \STATE $\mu_\ell^0 \sim \mathcal{U}[-1,1]^r$;\quad $v \sim \mathcal{U}[-1,1]^r$;\quad $u_\ell \gets v/\|v\|$;\quad $\mu_\ell^1 \gets \mu_\ell^0 + u_\ell$
+            \STATE $S_\ell \gets I_r$
+            \FOR{$k = 1$ \TO $r$}
+                \STATE draw sign $\epsilon \in \{-1,+1\}$ and $\xi \sim \mathcal{U}[0,1]$;\quad $(S_\ell)_{kk} \gets 0.125\,(1 + 0.25\,\epsilon\,\xi)$
+            \ENDFOR
+            \STATE $R_\ell \gets I_r$
+            \FOR{$k = 1$ \TO $r$}
+                \FOR{$k' = k+1$ \TO $r$}
+                    \STATE draw sign $\epsilon \in \{-1,+1\}$ and $\xi \sim \mathcal{U}[0,1]$;\quad $\theta \gets \epsilon\,(1 + \xi)\,\pi/6$
+                    \STATE $R_\ell \gets R_\ell \, G(k, k', \theta)$ \COMMENT{Givens rotation in the $(k,k')$ plane}
+                \ENDFOR
+            \ENDFOR
+        \ENDFOR
+        \STATE $\mathcal{D} \gets \emptyset$
+        \FOR{each code $c \in \mathcal{S}$}
+            \FOR{$j = 1$ \TO $s$}
+                \FOR{$\ell = 1$ \TO $p$}
+                    \STATE $z \sim \mathcal{N}(0, I_r)$;\quad $x_\ell \gets \mu_\ell^{\,b_\ell(c)} + z\,S_\ell\,R_\ell$
+                \ENDFOR
+                \STATE $\mathcal{D} \gets \mathcal{D} \cup \{\,((x_1, \dots, x_p),\ c,\ \pi(c))\,\}$
+            \ENDFOR
+        \ENDFOR
+        \RETURN $\mathcal{D}$
+    \end{algorithmic}
+\end{algorithm}
+
+\noindent\textbf{Properties.}
+\emph{Centroid distances.} By Equation~\ref{eq:centroid-distance}, subclass centroids are at distance $\sqrt{H}$ for codes at Hamming distance $H$; the resulting distance structure of each dataset is given in Section~\ref{app:codes}.
+\emph{Signal-to-noise ratio.} The standard deviation of the noise along any unit direction lies between the smallest and the largest entry of $S_\ell$, i.e.\ in $[0.094, 0.156]$. Along $u_\ell$ the two clouds of a group are therefore at least $1/0.156 \approx 6.4$ standard deviations apart, and the optimal hyperplane for a single bit misassigns at most $\Phi(-3.2) \approx 7 \times 10^{-4}$ of the samples of that group. In the released files the per-axis standard deviation within a subclass ranges between $0.10$ and $0.16$ (mean $0.128$), as expected.
+\emph{Linear separability.} The bits of a code are recoverable by linear projection: $\langle x_\ell - \mu_\ell^0, u_\ell \rangle$ has expectation $b_\ell(c)$ and standard deviation at most $0.156$. Any class that is a linear threshold function of the bits is therefore linearly separable from the others up to the Gaussian overlap above. In Dataset~2 the score $\sum_\ell (2 b_\ell(\sigma_i) - 1)(2 b_\ell(c) - 1)$, where $\sigma_i$ is the seed of class $C_i$, equals $p - 2H(\sigma_i, c)$ and is at least $7$ for members of $C_i$ and at most $1$ for members of any other class; in Dataset~1 an analogous one-versus-rest threshold exists for each pair of codes.
+
+\section{Choice of subclass codes}\label{app:codes}
+
+The codes are chosen from the $2^p = 512$ candidates with the help of the graph $G_h$ whose vertices are the codes and whose edges connect codes at Hamming distance exactly $h$. Algorithm~\ref{alg:codes} summarizes the selection for both datasets.
+
+\begin{algorithm}[ht]
+    \caption{Selection of subclass codes and class map.}
+    \label{alg:codes}
+    \begin{algorithmic}[1]
+        \REQUIRE number of groups $p$; dataset kind $\in \{\text{equidistant}, \text{equivariant}\}$
+        \ENSURE code set $\mathcal{S}$; class map $\pi: \mathcal{S} \to \{1, \dots, n\}$
+        \STATE $V \gets \{0,1\}^p$ \COMMENT{all $2^p$ candidate codes}
+        \IF{equidistant}
+            \STATE $h \gets 2$
+        \ELSE
+            \STATE $h \gets p - 3$
+        \ENDIF
+        \STATE $G_h \gets$ graph on $V$ with an edge $\{a, b\}$ iff $H(a, b) = h$
+        \STATE $Q \gets (q_1, \dots, q_m)$, the vertices of a maximum clique of $G_h$ in increasing order
+        \IF{equidistant}
+            \STATE $\mathcal{S} \gets Q$;\quad $n \gets m/2$ \COMMENT{$m = 8$ for $p = 9$}
+            \FOR{$i = 1$ \TO $n$}
+                \STATE $\pi(q_{2i-1}) \gets i$;\quad $\pi(q_{2i}) \gets i$ \COMMENT{pair consecutive codes}
+            \ENDFOR
+        \ELSE
+            \STATE $\mathcal{S} \gets \emptyset$;\quad $n \gets m$ \COMMENT{$m = 4$ for $p = 9$}
+            \FOR{$i = 1$ \TO $n$}
+                \STATE $N_i \gets \{\, c \in V : H(c, q_i) \leq 1 \,\}$ \COMMENT{seed $\sigma_i = q_i$ and its $p$ neighbors}
+                \STATE $\mathcal{S} \gets \mathcal{S} \cup N_i$;\quad $\pi(c) \gets i$ for all $c \in N_i$
+            \ENDFOR
+        \ENDIF
+        \RETURN $\mathcal{S}$, $\pi$
+    \end{algorithmic}
+\end{algorithm}
+
+
+\noindent\textbf{Dataset 1 (equidistant).}
+The subclasses are the vertices of a maximum clique of $G_2$, which has size $8$. In the released data these are the codes 192, 320, 384, 449, 450, 452, 456, and 464, i.e., in binary,
+\begin{gather*}
+011000000,\ 101000000,\ 110000000,\ 111000001,\\
+111000010,\ 111000100,\ 111001000,\ 111010000.
+\end{gather*}
+All $\binom{8}{2} = 28$ pairs are at Hamming distance $2$, hence all subclass centroids are at Euclidean distance $\sqrt{2}$ from one another. Note that bit $5$ is zero in all eight codes, so group $\ell = 5$ (13 of the 117 coordinates) is identically distributed across the subclasses of Dataset~1 and carries no information; in Dataset~2 every bit takes both values. The four classes are the pairs (192,\,320), (384,\,449), (450,\,452), and (456,\,464); each class centroid is the midpoint of its two subclass centroids, and the six pairwise distances between class centroids are all equal to $1$ (empirically $0.995$--$1.004$).
+
+\noindent\textbf{Dataset 2 (equivariant).}
+Four seed codes $\sigma_1, \dots, \sigma_4$ are taken from a maximum clique of $G_{p-3} = G_6$, so that the seeds are at mutual Hamming distance $6$. Class $C_i$ consists of $\sigma_i$ and its $p = 9$ neighbors at Hamming distance $1$, for a total of $10$ subclasses per class and $40$ subclasses. Within a class, the seed is at Hamming distance $1$ from each neighbor and the neighbors are at Hamming distance $2$ from one another. Across classes, the Hamming distance between two subclasses ranges from $4$ to $8$: for two seeds at distance $6$ that differ in the bit set $D$, $|D| = 6$, a neighbor of the first obtained by flipping a bit of $D$ and a neighbor of the second obtained by flipping a different bit of $D$ are at distance $4$, which is the minimum. Table~\ref{tab:distance-structure} lists the complete distribution of pairwise distances. In the released files the codes of Dataset~2 are relabeled to consecutive integers $0$--$39$ (subclasses) and $0$--$3$ (classes).
+
+\begin{table}[ht]
+    \centering
+    \caption{Distribution of pairwise Hamming distances between subclass codes, and the corresponding Euclidean distances between centroids, in the two datasets. Counts are numbers of unordered subclass pairs; they follow from the code structure and match the released files (empirical distances within $\pm 0.03$).}
+    \label{tab:distance-structure}
+    \begin{tabular}{llccr}
+        \toprule
+        Dataset & Pair type & Hamming & Euclidean & Pairs \\
+        \midrule
+        Equidistant & same class & 2 & $\sqrt{2} \approx 1.41$ & 4 \\
+                    & different classes & 2 & $\sqrt{2} \approx 1.41$ & 24 \\
+        \midrule
+        Equivariant & same class, seed--neighbor & 1 & $1.00$ & 36 \\
+                    & same class, neighbor--neighbor & 2 & $\sqrt{2} \approx 1.41$ & 144 \\
+                    & different classes & 4 & $2.00$ & 180 \\
+                    &  & 5 & $\sqrt{5} \approx 2.24$ & 72 \\
+                    &  & 6 & $\sqrt{6} \approx 2.45$ & 276 \\
+                    &  & 7 & $\sqrt{7} \approx 2.65$ & 36 \\
+                    &  & 8 & $\sqrt{8} \approx 2.83$ & 36 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\section{Post-processing and released files}\label{app:postprocessing}
+
+The generator produces $s = 10{,}000$ samples per subclass, i.e., $80{,}000$ samples for Dataset~1 and $400{,}000$ for Dataset~2. The generated samples are split into a training pool and a test pool with a stratified $60/40$ split on the (subclass, class) pair, using a fixed random state. The full set and both pools are then down-sampled, without replacement and with a fixed random state, to $20{,}000$ samples each with an equal number of samples per subclass: $2{,}500$ per subclass in Dataset~1 and $500$ per subclass in Dataset~2. These down-sampled files are the ones released with the code, and they are the only files read by the experiment scripts. The relabeling of codes to consecutive integers and, for Dataset~1, the pairing of subclasses into classes are applied to the labels of these files and do not affect the samples.
+
+\section{Sub-sampling protocol}\label{app:subsampling}
+
+At the start of an experiment the set of sub-sampled subclasses is fixed by drawing, for each class independently, half of its subclasses uniformly at random with a fixed seed. This yields $\gamma_s = \gamma_r = 4$ subclasses in Dataset~1 and $\gamma_s = \gamma_r = 20$ in Dataset~2. In Dataset~2 the draw removes the seed subclass of two of the four classes and retains it in the other two (Table~\ref{tab:removed-neighbors}).
+
+For each training-set size $\gamma_D$ and imbalance factor $f$, a training set is drawn from the training pool as follows. Every subclass receives a weight, $w = f$ if it is sub-sampled and $w = 1$ otherwise; its sample size is $\operatorname{round}(\gamma_D\, w / \sum w)$ (Equation~\ref{eq:num_samples_unbalanced}); and the residual between $\gamma_D$ and the sum of the rounded sizes, when non-zero, is corrected by adding (or removing) one sample to the subclasses with the largest (or smallest) fractional remainders. Samples are then drawn without replacement from each subclass, using the run seed. The test set used for evaluation is a balanced sample of $10{,}000$ examples from the test pool, with the same number of samples from every subclass, and is identical across values of $f$.
+
+\end{document}

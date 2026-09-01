@@ -26,6 +26,7 @@
 \usepackage[alf,abnt-emphasize=bf]{abntex2cite}	% pacote para usar citações abnt
 
 \usepackage{longtable}
+\usepackage{array}
 \usepackage{booktabs}
 \usepackage{multirow}
 \usepackage{subfiles} % Best loaded last in the preamble
@@ -37,6 +38,7 @@
 \usepackage{xcolor}
 \usepackage{cite}
 \usepackage{mathrsfs}
+\usepackage[chapter]{algorithm}
 \usepackage{algorithmic}
 \usepackage{textcomp}
 
@@ -168,7 +170,8 @@
 \chapter{Background}
     \label{chpt:background}
     \subfile{chapters/background}
-\part{Understanding}
+
+%\part{Understanding}
 \chapter{Dynamics of Emergence: Weird training phenomena}%: Using interpretability and statistical tools}
 % \chapter{Interesting learning phenomena}
     \label{chpt:learning_phenomena}
@@ -179,28 +182,29 @@
     \label{chpt:interp_adv}
     \subfile{chapters/interp_adv}
 
-\part{Steering}
-\chapter{Neuro-symbolic approach to dissect model circuitry}
-    \label{chpt:circuitry}
-    \subfile{chapters/circuitry}
+% \chapter{What activation-space adversarial detection measures: magnitude, not meaning}
+%     \label{chpt:adv-detection}
+%     \subfile{chapters/sae_adversarial_detection}
 
-\chapter{What activation-space adversarial detection measures: magnitude, not meaning}
-    \label{chpt:adv-detection}
-    \subfile{chapters/sae_adversarial_detection}
+% %\part{Steering}
+% \chapter{Neuro-symbolic approach to constrain generation distribution}
+%     \label{chpt:constrained_generation}
+%     \subfile{chapters/constrained_generation}
 
-\chapter{Neuro-symbolic approach to constrain generation distribution}
-    \label{chpt:constrained_generation}
-    \subfile{chapters/constrained_generation}
+% \chapter{Neuro-symbolic approach to dissect model circuitry}
+%     \label{chpt:circuitry}
+%     \subfile{chapters/circuitry}
 
-\part{Generality Across Modalities}
 
-\chapter{Reasoning in time: Thinking methods changed the landscape of interpretability}
-    \label{chpt:reasoning}
-    \subfile{chapters/reasoning}
+%\part{Generality Across Modalities}
 
-\chapter{Non-verbal (PDE/Physics) Models}
-    \label{chpt:physics}
-    \subfile{chapters/physics}
+% \chapter{Reasoning in time: Thinking methods changed the landscape of interpretability}
+%     \label{chpt:reasoning}
+%     \subfile{chapters/reasoning}
+
+% \chapter{Non-verbal (PDE/Physics) Models}
+%     \label{chpt:physics}
+%     \subfile{chapters/physics}
 
 
 \chapter{Final thoughts}
@@ -232,6 +236,10 @@
 \appendix
 
 \input{chapters/resumo-expandido}
+
+\chapter{Construction of the synthetic datasets}
+    \label{app:dataset-creation}
+    \subfile{chapters/dataset_construction}
 
 % \chapter{Final Remarks}
 
