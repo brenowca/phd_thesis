@@ -44,10 +44,8 @@
 
 \newcommand{\repourl}{https://github.com/brenowca/grokking_explained}
 
-% Drafting marker: a claim written in its strong (v2) form whose clinching evidence
-% (matched-L2 measured + non-saturated epsilon) is pending the v2 re-run. Remove the
-% marker once the v2 numbers land. See Chapter on activation-space detection.
-\newcommand{\pendingvtwo}[1]{\textcolor{orange}{\textbf{[PENDING-V2:}~#1\textbf{]}}}
+% Macro for the activation-displacement specificity gap used in the adversarial-detection chapter.
+\newcommand{\dauc}{\Delta_{\mathrm{AUC}}}
 
 \newtheorem{definition}{Definition}
 
@@ -177,14 +175,11 @@
     \label{chpt:learning_phenomena}
     \subfile{chapters/learning_phenomena}
 
-\chapter{Disturbances in meaning: }%: Examining impact of sitarbances in the representation space}
+\chapter{Disturbances in meaning: what activation-space adversarial detection measures}
 % \chapter{Interesting learning phenomena}
     \label{chpt:interp_adv}
     \subfile{chapters/interp_adv}
 
-% \chapter{What activation-space adversarial detection measures: magnitude, not meaning}
-%     \label{chpt:adv-detection}
-%     \subfile{chapters/sae_adversarial_detection}
 
 % %\part{Steering}
 % \chapter{Neuro-symbolic approach to constrain generation distribution}

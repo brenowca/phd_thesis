@@ -46,7 +46,7 @@ whose block-diagonal covariance does not depend on $c$. Since $\mu(a)$ and $\mu(
 \[
 \|\mu(a) - \mu(b)\|^2 = \sum_{\ell : b_\ell(a) \neq b_\ell(b)} \|u_\ell\|^2 = H(a, b),
 \]
-which is Equation~\ref{eq:centroid-distance}. The covariance of a group is parameterized as $\Sigma_\ell = A_\ell^\top A_\ell$ with $A_\ell = S_\ell R_\ell$, where $S_\ell$ is a diagonal scale and $R_\ell$ a rotation, so that a draw from group $\ell$ is $x_\ell = \mu_\ell^{\,b_\ell(c)} + z A_\ell$ with $z \sim \mathcal{N}(0, I_r)$ a row vector, as in Equation~\ref{eq:generator}. Table~\ref{tab:design-choices} lists every choice made by the generator, its value in the released datasets, and its role.
+which is Equation~\ref{eq:centroid-distance}. The covariance of a group is parameterized as $\Sigma_\ell = A_\ell^\top A_\ell$ with $A_\ell = S_\ell R_\ell$, where $S_\ell$ is a diagonal scale and $R_\ell$ a rotation, so that a draw from group $\ell$ is $x_\ell = \mu_\ell^{\,b_\ell(c)} + \eta A_\ell$ with $\eta \sim \mathcal{N}(0, I_r)$ a row vector, as in Equation~\ref{eq:generator}. Table~\ref{tab:design-choices} lists every choice made by the generator, its value in the released datasets, and its role.
 
 \begin{table}[ht]
     \centering
@@ -97,7 +97,7 @@ Algorithm~\ref{alg:generate} gives the exact procedure. Lines 2--15 draw the par
         \FOR{each code $c \in \mathcal{S}$}
             \FOR{$j = 1$ \TO $s$}
                 \FOR{$\ell = 1$ \TO $p$}
-                    \STATE $z \sim \mathcal{N}(0, I_r)$;\quad $x_\ell \gets \mu_\ell^{\,b_\ell(c)} + z\,S_\ell\,R_\ell$
+                    \STATE $\eta \sim \mathcal{N}(0, I_r)$;\quad $x_\ell \gets \mu_\ell^{\,b_\ell(c)} + \eta\,S_\ell\,R_\ell$
                 \ENDFOR
                 \STATE $\mathcal{D} \gets \mathcal{D} \cup \{\,((x_1, \dots, x_p),\ c,\ \pi(c))\,\}$
             \ENDFOR

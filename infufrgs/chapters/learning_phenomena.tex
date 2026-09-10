@@ -8,10 +8,7 @@
 --- \textsc{J.R.R.~Tolkien}
 \end{flushright}
 
-
 We highlight a few interesting learning phenomena. Also report different visualization methods that allow us to extract insights on important properties of those methods.
-
-
 
 \section{Grokking: Late Generalization}
 \label{sec:grokking}
@@ -19,13 +16,19 @@ The grokking phenomenon is a sudden improvement in model performance on unseen d
 
 As illustrated in Figure \ref{fig:grokking-def}, grokking can be characterized by the transitioning from a low-performing region to a high-performing region as measured on the test set (curve $T_E$ in Fig.\ref{fig:grokking-def}) after the training set performance has converged ($T_R$ in Fig.\ref{fig:grokking-def}). The interval between the inflection points $\alpha_0$ (end of memorization phase) and $\alpha_1$ (start of generalization phase) signifies the transition phase, during which the test set performance gradually improves and aligns with the performance on the training set. 
 
+Understanding intriguing learning phenomena such as grokking can provide valuable insights into the inner workings of deep neural networks. Late generalization challenges traditional stopping criteria, which rely on monitoring training and test set losses. While it remains difficult to predict when late generalization might occur, this chapter advances the discussion by elucidating how distribution shifts contribute to grokking. Specifically, we explore how modeling class relationships can increase the probability of generalization and guide the design of alternative stopping criteria. These findings help identify conditions under which models are more likely to generalize after training convergence.
+
 \begin{definition}
 [Grokking]\label{grokking-definition}    
 Let $\Delta_T$ denote an interval with lower bound $\sigma_E$ containing the limit value of a converging training set performance curve at time $\alpha_0$. Let $\sigma_S \ll \sigma_E$ denote an upper bound on the test set performance measured up to time point $\alpha_0$. We say that \textit{grokking} took place if at time point $\alpha_1$ > $\alpha_0$, the test set performance is within $\Delta_T$ and remains within $\Delta_T$ for an interval $S \gg (\alpha_1 - \alpha_0)$.
 \end{definition}
 
-
-Understanding intriguing learning phenomena such as grokking can provide valuable insights into the inner workings of deep neural networks. Late generalization challenges traditional stopping criteria, which rely on monitoring training and test set losses. While it remains difficult to predict when late generalization might occur, this chapter advances the discussion by elucidating how distribution shifts contribute to grokking. Specifically, we explore how modeling class relationships can increase the probability of generalization and guide the design of alternative stopping criteria. These findings help identify conditions under which models are more likely to generalize after training convergence.
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.7\linewidth]{figures/grokking_definition.pdf}
+    \caption{An illustration of the key terms used to define grokking. After training accuracy ($T_R$) converges, test accuracy ($T_E$) transitions from a low-performance plateau (ending at $\alpha_0$) to a high-performance one (starting at $\alpha_1$). We measure the grokking intensity by the performance gain, $\Delta_S$, and its stability by the support interval, $S$.}
+    \label{fig:grokking-def}
+\end{figure}
 
 \subsection{Grokking: Visualization and metrics}
 
@@ -34,18 +37,11 @@ Our study reveals that a specific type of distribution shift, caused by the samp
 The contributions of this chapter are as follows:
 \begin{enumerate*}[label=(\roman*)]
     \item We introduce two synthetic datasets based on class hierarchies, designed to serve as benchmarks for analyzing late generalization and grokking intensity; 
-    \item We replicate previous experiments and conduct new analyses, showing that grokking is more strongly associated with distribution shifts than with sparsity and regularization, as previously believed \footnote{\url{\repourl} scripts are provided for replication.};
-    \item We conduct experiments on the MNIST dataset, where we induce distribution shifts via clustering of latent representations, examining the limits of our findings and providing a case study on the challenges of reproducing the phenomenon on complex real-world data;
+    \item We replicate previous experiments and conduct new analyses, showing that grokking is more strongly associated with distribution shifts than with sparsity and regularization, as previously believed \footnote{The cripts are provided for replication in \url{\repourl}.};
+    %\item We conduct experiments on the MNIST dataset, where we induce distribution shifts via clustering of latent representations, examining the limits of our findings and providing a case study on the challenges of reproducing the phenomenon on complex real-world data;
     \item We report results using both multilayer perceptrons and transformers, concluding that late generalization is largely architecture-independent. 
 \end{enumerate*}
 
-
-\begin{figure}[t]
-    \centering
-    \includegraphics[width=0.7\linewidth]{figures/grokking_definition.pdf}
-    \caption{An illustration of the key terms used to define grokking. After training accuracy ($T_R$) converges, test accuracy ($T_E$) transitions from a low-performance plateau (ending at $\alpha_0$) to a high-performance one (starting at $\alpha_1$). We measure the grokking intensity by the performance gain, $\Delta_S$, and its stability by the support interval, $S$.}
-    \label{fig:grokking-def}
-\end{figure}
 
 However, if the evaluation loss decreases sharply at a later time, even after the training loss has approached zero, this indicates a capability to generalize, rather than memorization, given a very weak training signal that needs to be understood. 
 
@@ -82,7 +78,7 @@ However, if the evaluation loss decreases sharply at a later time, even after th
 
 %This phenomenon challenges conventional wisdom and underscores the importance of evaluating model performance not just on the training data but also on unseen data to ensure robust generalization capabilities.
 
-Our hypothesis is that grokking is a statistical phenomenon derived from a distribution shift between test data and training data, which can be reproduced systematically and which is amplified, not defined, by high regularization and use of specific parametrization and initialization values.
+Our hypothesis is that grokking is a statistical phenomenon derived from a distribution shift between test data and training data. This difference allows for the regularization to shift the network from purely a local minimum of the test loss surface to a minimum of the test loss as well which can be reproduced systematically.
 
 \textbf{Distribution shifts inducing grokking:}
 % \begin{itemize}
@@ -115,8 +111,8 @@ Our hypothesis (Section~\ref{sec:grokking}) states that a faint training signal 
 \noindent\textbf{Common construction.}
 Both datasets are produced by the same generator, which we summarize here and detail in Appendix~\ref{app:dataset-creation}. Let $p = 9$ be the number of \emph{dimension groups} and $r = 13$ the number of dimensions per group, so that $d = pr = 117$. A subclass is identified with a binary code $c \in \{0,1\}^p$, and we write $b_\ell(c)$ for its $\ell$-th bit. For every group $\ell$ we draw, once, two centers $\mu_\ell^0 \sim \mathcal{U}[-1,1]^r$ and $\mu_\ell^1 = \mu_\ell^0 + u_\ell$ with $\|u_\ell\| = 1$, and a single covariance $\Sigma_\ell = R_\ell^\top S_\ell^2 R_\ell$, where $S_\ell$ is diagonal with entries $0.125\,(1 \pm 0.25\,\xi)$, $\xi \sim \mathcal{U}[0,1]$, and $R_\ell$ is a product of random Givens rotations with angles in $\pm[\pi/6, \pi/3]$. A sample of subclass $c$ is the concatenation $x = (x_1, \dots, x_p)$ of $p$ independent blocks,
 \begin{equation}\label{eq:generator}
-    x_\ell = \mu_\ell^{\,b_\ell(c)} + z_\ell S_\ell R_\ell,
-    \qquad z_\ell \sim \mathcal{N}(0, I_r),
+    x_\ell = \mu_\ell^{\,b_\ell(c)} + \eta_\ell S_\ell R_\ell,
+    \qquad \eta_\ell \sim \mathcal{N}(0, I_r),
     \qquad \ell = 1, \dots, p.
 \end{equation}
 Because the two centers of a group share the same covariance and $\|\mu_\ell^1 - \mu_\ell^0\| = 1$ for every group, the Euclidean distance between the centroids of two subclasses is determined by the Hamming distance $H(\cdot,\cdot)$ between their codes:
