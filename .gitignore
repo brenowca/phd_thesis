@@ -11,4 +11,8 @@
 **/*.snm
 **/*.fls
 **/*.fdb_latexmk
-**/*.pdf
+infufrgs/*.pdf
+infufrgs/chapters/*.pdf
+presentation/*.pdf
+.DS_Store
+.vscode/settings.json
