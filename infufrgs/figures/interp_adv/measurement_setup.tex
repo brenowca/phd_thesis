@@ -1,0 +1,81 @@
+% Measurement setup of chapters/interp_adv.tex (TikZ).
+% Ported from interp_adv_tmlr_2026/figures/network_diagram_figure.tex (833c357).
+% Needs tikz with the libraries positioning, arrows.meta, fit and
+% decorations.pathreplacing, and the colors probe, atk, ben (ppgc-tese.tex).
+% Font sizes are absolute (8pt/7pt/5pt, the sizes of the 10pt paper), because
+% the thesis is set in 12pt and the relative sizes overflow the boxes.
+\begin{figure}[ht]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  font=\fontsize{8}{9.5}\selectfont,
+  every node/.append style={execute at begin node={\hyphenpenalty=10000\exhyphenpenalty=10000\thickmuskip=5mu\medmuskip=4mu}},
+  box/.style={rectangle, rounded corners=2pt, draw=black!55, line width=0.6pt, align=center, inner sep=1.6mm},
+  inp/.style={box, minimum height=16.5mm, text width=30mm},
+  blk/.style={rectangle, draw=black!55, line width=0.6pt, minimum width=6.2mm, minimum height=9mm, inner sep=0pt, font=\fontsize{7}{8.4}\selectfont},
+  tap/.style={blk, draw=probe, fill=probe!10, line width=0.9pt},
+  canon/.style={blk, draw=probe, fill=probe!30, line width=1.2pt},
+  arr/.style={-{Stealth[length=1.8mm]}, draw=black!60, line width=0.6pt},
+  tarr/.style={-{Stealth[length=1.8mm]}, draw=probe, line width=0.8pt},
+  lab/.style={font=\fontsize{7}{8.4}\selectfont, text=black!60},
+]
+% ---------------- inputs ----------------
+\node[inp, fill=black!4] (clean) at (1.6,0) {Clean image $x_i$\\(CIFAR-10)};
+\node[inp, draw=atk, fill=atk!8] (atk) at (5.2,0) {Attacks: FGSM, PGD,\\APGD-CE, CW-$L_2$,\\minimal-displacement,\\adaptive APGD};
+\node[inp, draw=ben, fill=ben!8] (ben) at (8.8,0) {Benign families:\\noise, blur, JPEG,\\dropout};
+\node[inp, fill=black!4] (stego) at (12.4,0) {Watermark control\\(faint text)};
+\node[lab, anchor=south] at (8.8,1.05) {perturbed image $\tilde x_i$};
+\draw[decorate, decoration={brace, amplitude=3pt}, black!45] (3.65,0.92) -- (13.95,0.92);
+% ---------------- preprocessing ----------------
+\node[box, text width=134mm] (pre) at (7,-1.7) {Upsample to $224\times224$ and normalize with ImageNet statistics};
+\foreach \n in {clean,atk,ben,stego} \draw[arr] (\n.south) -- (\n.south |- pre.north);
+% ---------------- ViT ----------------
+\node[box, text width=17mm, minimum height=9mm] (emb) at (1.15,-3.2) {Patch embed.\\+ CLS (197)};
+\foreach \i in {0,...,11} {
+  \pgfmathsetmacro{\xx}{2.75+\i*0.78}
+  \ifnum\i=10 \node[canon] (b\i) at (\xx,-3.2) {\i};
+  \else\ifnum\i=11 \node[tap] (b\i) at (\xx,-3.2) {\i};
+  \else\ifnum\i=0 \node[tap] (b\i) at (\xx,-3.2) {\i};
+  \else\ifnum\i=3 \node[tap] (b\i) at (\xx,-3.2) {\i};
+  \else\ifnum\i=6 \node[tap] (b\i) at (\xx,-3.2) {\i};
+  \else\ifnum\i=9 \node[tap] (b\i) at (\xx,-3.2) {\i};
+  \else \node[blk] (b\i) at (\xx,-3.2) {\i};
+  \fi\fi\fi\fi\fi\fi
+}
+\draw[arr] (emb) -- (b0);
+\foreach \i [count=\j from 1] in {0,...,10} \draw[arr] (b\i) -- (b\j);
+\node[box, text width=17mm, minimum height=9mm, draw=black!70] (head) at (12.95,-3.2) {Linear head $W$\\$\to$ logits};
+\draw[arr] (b11) -- (head);
+\draw[arr] (pre.south -| emb) -- (emb);
+\node[draw=black!40, dashed, rounded corners=3pt, fit=(emb)(b11), inner sep=1.6mm, label={[lab, anchor=south east]north east:ViT-B/16 backbone, frozen}] {};
+\node[lab, anchor=north, text width=26mm, align=center] at ([yshift=-0.5mm]head.south) {label change (ASR);\\$W$ splits $\Delta h_\parallel$, $\Delta h_\perp$};
+% ---------------- pooling ----------------
+\node[box, draw=probe, text width=134mm] (pool) at (7,-5.35) {MLP output of each probed block, mean-pooled over 197 tokens: $a_\ell \in \mathbb{R}^{768}$};
+\foreach \i/\nm in {0/0,3/3,6/6,9/9,10/10,11/11} \draw[tarr] (b\i.south) -- (b\i.south |- pool.north) node[pos=0.45, right=-0.5mm, font=\fontsize{5}{6}\selectfont, text=probe] {};
+
+% ---------------- analysis row ----------------
+\node[box, text width=36mm, minimum height=19mm] (dx) at (2.0,-7.35) {Displacement\\$\Delta a_\ell = a_\ell(\tilde x_i) - a_\ell(x_i)$\\$\|\Delta a\|$ per example};
+\node[box, draw=probe, fill=probe!6, text width=36mm, minimum height=19mm] (sae) at (7.05,-7.35) {SAE, trained on clean\\$z=\mathrm{ReLU}(\mathrm{enc}(a))$\\$a = \hat a + r$};
+\node[box, draw=probe, fill=probe!6, text width=36mm, minimum height=19mm] (prb) at (12.1,-7.35) {Linear probe:\\clean vs.\ one family,\\grouped 5-fold CV\\$\to$ AUC, $\Delta_{\mathrm{AUC}}$};
+\draw[arr] (pool.south -| dx) -- (dx);
+\draw[tarr] (pool.south -| sae) -- (sae);
+\draw[tarr] (pool.south -| prb) -- node[lab, right] {on $a$} (prb);
+\draw[tarr] (sae) -- node[lab, above] {$z,\hat a, r$} (prb);
+\node[lab, anchor=north, text width=36mm, align=center] at (dx.south) {displacement-matched control\\(calibrated at \texttt{mlp\_10})};
+\node[lab, anchor=north, text width=36mm, align=center] at (sae.south) {gate: FVE $\ge 0.9$, dead features $\le 30\%$\\(passes at \texttt{mlp\_10}, \texttt{mlp\_11})};
+% ---------------- legend ----------------
+\node[anchor=north west, lab, align=left] at (-0.05,-9.75) {%
+  \tikz[baseline=-0.6ex]\node[canon, minimum width=3mm, minimum height=3mm]{}; probed layer (\texttt{mlp\_10})\quad
+  \tikz[baseline=-0.6ex]\node[tap, minimum width=3mm, minimum height=3mm]{}; probed layer\quad
+  \tikz[baseline=-0.6ex]\node[blk, minimum width=3mm, minimum height=3mm]{}; not probed};
+\end{tikzpicture}%
+}
+\caption{Measurement setup. Clean images and perturbed images go through the same frozen
+ViT-B/16. At each probed block, the MLP output is mean-pooled over the 197 tokens. The
+pooled activation feeds three paths: the displacement $\|\Delta a\|$, the SAE trained on clean
+activations, and the linear probe. The probe reads $a$ directly or the SAE outputs
+$z$, $\hat a$ and $r$. The linear head $W$ gives the label and the split of the head-input displacement
+$\Delta h$ into $\Delta h_\parallel$ and $\Delta h_\perp$.}
+% src: figures/network_diagram_figure.tex in the paper repository (commit 833c357)
+\label{fig:adv-setup}
+\end{figure}

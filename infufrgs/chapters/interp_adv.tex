@@ -3,6 +3,10 @@
 \begin{document}
 
 % =============================================================================
+% Bib key of the source paper: carvalho2026activation_space_detection_displacement
+% (not cited in the text yet: the paper is under double-blind review at TMLR;
+% decide whether the thesis may cite it before the deposit).
+%
 % Chapter source: "Activation-Space Adversarial Detection in a Vision
 % Transformer Measures Displacement, Not Meaning" (TMLR submission),
 % repository interp_adv_tmlr_2026, main.tex at commit 833c357 (2026-11-16).
@@ -333,8 +337,11 @@ through $12$ blocks of width $768$. We probe the MLP outputs of blocks
 $\{0,3,6,9,10,11\}$; block~10, \texttt{mlp\_10}, is the probed layer of the
 main result. Every activation is mean-pooled over the $197$ tokens, which
 limits what the probe can see (Section~\ref{sec:adv-scope}). All runs use
-seed~42 unless a five-seed protocol is stated.
+seed~42 unless a five-seed protocol is stated, and
+Figure~\ref{fig:adv-setup} shows the setup.
 % src: config/base.yaml; experiments/2026-06-22_sae-residual-decomp/params.yaml [EST]
+
+\input{figures/interp_adv/measurement_setup}
 
 \subsection{Notation and the displacement}
 \label{sec:adv-dx-axis}
@@ -892,8 +899,9 @@ on $a$ ($0.066$; Table~\ref{tab:adv-representations}). This does not show that
 the SAE amplifies specificity. The probes on $a$ and on $r$ detect FGSM near
 the ceiling, where a difference of AUCs is compressed, and a pre-specified
 anti-condition forbids the claim: at $\varepsilon{=}0.004$ the difference on
-the logit scale on $a$ is compatible with that on $z$, and only at
-$\varepsilon{=}0.002$ is $z$ distinct from $a$.
+the logit scale on $a$ ($1.88\pm0.17$ over five seeds) is not smaller than
+that on $z$ ($1.59\pm0.11$), and only at $\varepsilon{=}0.002$ is $z$ distinct
+from $a$.
 % src: gap_robustness_summary.csv (logit columns); DESIGN_CHOICES.md D12 (G5.3, frozen 2026-07-02) [PRE — anti-condition]
 % NOTE: action point B5 of the paper ("the SAE inflates the apparent
 % specificity", 0.199 on z vs 0.066 on a) conflicts with this anti-condition.
@@ -1323,24 +1331,37 @@ $0.675$--$0.685$ on $a$, and it decays with depth.
   every block, while the watermark control decays to chance. (b) In the
   input-matched control at $\varepsilon{=}0.004$, the detection advantage
   $\dauc$ is negative or near zero at the first blocks and largest at
-  \texttt{mlp\_10}. In the legend, $x$ denotes the raw activation $a$ of
-  Equation~\eqref{eq:adv-decomp}, and ``stego'' the watermark control.}
+  \texttt{mlp\_10}; the curve on $a$ uses $192$ examples
+  (Section~\ref{sec:adv-depth}).}
   % src: experiments/2026-06-22_sae-residual-decomp/outputs/decomposition_metrics.csv;
   %      experiments/2026-07-21_decomp-6layer/outputs/decomposition_metrics.csv;
   %      experiments/2026-07-02_gap-robustness/outputs/gap_robustness_summary.csv
-  % The figure predates the notation change (x -> a) and the rename of the
-  % control; regenerate it in the research repository when possible.
+  % Regenerated 2026-11-16 from interp_adversarial_image_paper/figs/src/fig_decomp_layers.py
+  % with labels only changed: x -> a, stego -> watermark, panel (b) title.
   \label{fig:adv-decomp-layers}
 \end{figure}
 
 \subsection{The input-matched advantage across layers}
 \label{sec:adv-depth}
 The detection advantage in the input-matched control is a property of the mid
-and late layers (Figure~\ref{fig:adv-decomp-layers}b): it is negative at
-\texttt{mlp\_0} and rises to $0.204\pm0.014$ on $z$ at \texttt{mlp\_10} over
-five seeds, while FGSM is already detected at the first block. The curve on
-$a$ comes from the six-layer decomposition, which ran at a reduced sample
-($192$ examples). A possible explanation is the amplification of
+and late layers (Figure~\ref{fig:adv-decomp-layers}b). On $z$, over five
+seeds, it is $-0.038\pm0.004$ at \texttt{mlp\_0}, $0.127\pm0.005$ at
+\texttt{mlp\_6} and $0.204\pm0.014$ at \texttt{mlp\_10}; on $a$ it is
+$-0.001\pm0.001$, $0.037\pm0.004$ and $0.065\pm0.006$ at the same layers. FGSM
+is already detected at the first block, so the detection of the displacement
+does not need depth, and the advantage over the benign families does.
+% src: experiments/2026-07-02_gap-robustness/outputs/gap_robustness_summary.csv (eps=4 rows) [EST]
+The curve on $a$ in the figure comes from the six-layer decomposition, which
+ran at a reduced sample ($192$ examples). It shows the same profile, but its
+values differ from those of the full sample: it gives $0.180$ at
+\texttt{mlp\_10}, where the five-seed run gives $0.065$. We use it for the
+shape of the profile only.
+% src: experiments/2026-07-21_decomp-6layer/outputs/decomposition_metrics.csv (representation x; n=192) [EST]
+% FLAG (Breno): 0.180 (n=192, one seed) against 0.065 +/- 0.006 (five seeds) at
+% the same cell is a large difference for a sample-size effect alone; the two
+% runs also use different SAE fits (FVE 0.078 at mlp_0 in the six-layer run).
+% Worth one check in the research repository before the defence.
+A possible explanation is the amplification of
 Section~\ref{sec:adv-amplification}: the displacement of FGSM grows with depth,
 from $0.09$ at \texttt{mlp\_0} to $2.00$ at \texttt{mlp\_10}
 (Table~\ref{tab:adv-dx-layers}). We did not measure the displacement of the
@@ -1390,7 +1411,10 @@ the encoder, but here it does not (Section~\ref{sec:adv-scope}). A sweep of
 eleven detection signals in the same cell (input-matched control,
 $\varepsilon{=}0.004$, \texttt{mlp\_10}; Figure~\ref{fig:adv-zoo}) orders them
 by $\dauc$: the signals on the SAE features have the largest input-matched
-$\dauc$, and the scalar magnitudes the smallest. The anti-condition of
+$\dauc$, and the scalar magnitudes the smallest. The sweep includes two small
+non-linear (MLP) probes, and their input-matched $\dauc$ is close to that of
+the linear probes: $0.199$ on $z$ for both, and $0.086$ against $0.066$ on
+$a$. The anti-condition of
 Section~\ref{sec:adv-scope} applies to this ordering too: it compares
 differences of AUCs at different distances from the ceiling.
 % src: experiments/2026-07-02_signal-zoo/outputs/zoo/zoo_metrics.csv [EST]
@@ -1400,10 +1424,11 @@ differences of AUCs at different distances from the ceiling.
   \includegraphics[width=0.85\linewidth]{figures/interp_adv/fig_zoo.pdf}
   \caption{Input-matched $\dauc$ (FGSM minus the most detectable input-matched
   benign family) for eleven detection signals at $\varepsilon{=}0.004$,
-  \texttt{mlp\_10}. In the labels, $x$ and $\hat{x}$ denote the raw activation
-  $a$ and its reconstruction $\hat{a}$ of Equation~\eqref{eq:adv-decomp}.}
+  \texttt{mlp\_10}. S: linear or scalar signals; N: non-linear or max-pooled
+  variants.}
   % src: experiments/2026-07-02_signal-zoo/outputs/zoo/zoo_metrics.csv
-  % The figure predates the notation change (x -> a).
+  % Regenerated 2026-11-16 from interp_adversarial_image_paper/figs/src/fig_zoo.py
+  % with labels only changed: x -> a, x-hat -> a-hat, "matched" -> "input-matched".
   \label{fig:adv-zoo}
 \end{figure}
 
