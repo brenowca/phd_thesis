@@ -21,6 +21,17 @@
 %     head split, pre-specified (was pre-registered);
 %   - new experiments: APGD-CE replication and the adaptive APGD attack.
 %
+% Phase 2 (2026-11-16) put back the material that only the thesis has, revised
+% to the new claim and vocabulary: the verified input match per family
+% (tab:adv-input-match), the sweeps over layers and representations
+% (sec:adv-layers), the pre-specified rules at the frozen budget
+% (sec:adv-provenance) and the two measurement bugs (sec:adv-bugs).
+% Dropped from the July version, with the reason: the ViT-L/16 scale check and
+% the TopK SAE (old protocol; the paper removed both), the note on a non-linear
+% probe recovering 0.14 AUC (earlier protocol, not re-run), fig_gap_regimes
+% (superseded by fig_controls), fig_jspace (three numbers that are in the text)
+% and fig_ladder (the ladder was cut).
+%
 % Thesis notation that differs from the paper: the maximum in \dauc runs over
 % benign families b (the paper uses f, which is the sub-sampling fraction of
 % Chapter 3); N is the number of examples and K the number of folds.
@@ -86,8 +97,11 @@ the model, the displacement, the perturbation families, the two matched
 controls and the detection protocol. Sections~\ref{sec:adv-usual}
 to~\ref{sec:adv-attackers} give the results in five steps, and each step opens
 with the objection of a skeptical reader that it answers.
-Section~\ref{sec:adv-provenance} gives the provenance of the tests,
-Section~\ref{sec:adv-reconciliation} relates the results to deployment work,
+Section~\ref{sec:adv-layers} gives the sweeps over layers and representations,
+Section~\ref{sec:adv-provenance} gives the provenance of the tests and the
+pre-specified rules, Section~\ref{sec:adv-bugs} documents two measurement
+bugs, Section~\ref{sec:adv-reconciliation} relates the results to deployment
+work,
 and Section~\ref{sec:adv-closing} states the limitations and the reading for
 the thesis.
 
@@ -427,7 +441,10 @@ never used in a decision rule.
 A faint text watermark (steganography, opacity $0.03$) has an input $L_2$ of
 $2.24$ ($0.33\times$ FGSM at $\varepsilon{=}0.004$) and the smallest
 displacement of any family ($\lVert\Delta a\rVert=0.09$ at \texttt{mlp\_10},
-under $1\%$ of the clean activation norm). It anchors the low-displacement
+under $1\%$ of the clean activation norm). It changes almost no label (ASR
+$\approx0.0007$), so it is not adversarial in the functional sense.
+% src: experiments/2026-06-29_h2-v2-eps0004/outputs/h2_crossval/metrics.json (asr block) [EST]
+It anchors the low-displacement
 column of the design matrix (Table~\ref{tab:adv-design}) by measurement, not
 by assumption.
 % src: 2026-06-29_h2-v2-eps0004 metrics.json (l2_report); 2026-07-23_jpeg-matched-l2-dx/outputs/displacement_summary.json [EST]
@@ -574,7 +591,9 @@ probe trained for its own clean-vs-family task, and
 
 \paragraph*{Statistical controls.}
 The five folds share one seed, one SAE and one attack draw, so the standard
-deviation over folds understates the variance. Four controls calibrate what
+deviation over folds understates the variance. A measurement bug that gave a
+false flat sweep (Section~\ref{sec:adv-bugs}) also showed that the pipeline
+must be seen to return chance when it should. Four controls calibrate what
 the AUCs mean. A clean-vs-clean null gives AUC $0.500\pm0.018$ ($10$ repeats).
 A within-group label-permutation null gives $0.500\pm0.013$, which places the
 observed FGSM AUC of $0.932$ at $\varepsilon{=}0.004$ at $p=0.0099$, the
@@ -611,6 +630,48 @@ same picture, with $\dauc = 0.271\pm0.010$ over five seeds
 Without the displacement-matched control, this is the number that one would
 read as adversarial specificity, and it is the strongest evidence for $H_{M}$
 in the study.
+
+The input match is verified in the run, not assumed from the parameters of the
+families (Table~\ref{tab:adv-input-match}): the realized per-image input $L_2$
+of each benign family is within $0.999$--$1.008$ of that of FGSM, and within
+$0.939$--$1.001$ of that of PGD.
+
+\begin{table}[ht]
+  \centering
+  \caption{Input-matched control, probe on $z$ at \texttt{mlp\_10}: detection
+  AUC of each family and the ratio of its measured input $L_2$ to that of the
+  attack. JPEG is absent from the PGD block because its $L_2$ cannot reach the
+  $\pm20\%$ band. The interval is a paired-bootstrap $95\%$ CI over source
+  images.}
+  \label{tab:adv-input-match}
+  \small
+  \begin{tabular}{@{}lcc@{}}
+    \toprule
+    Family & AUC on $z$ & $L_2$ ratio \\
+    \midrule
+    \multicolumn{3}{@{}l}{\emph{FGSM, $\varepsilon{=}0.004$}}\\
+    FGSM                  & $0.932$ & --- \\
+    Gaussian blur         & $0.733$ & $1.000$ \\
+    Dropout               & $0.617$ & $1.005$ \\
+    JPEG                  & $0.604$ & $1.008$ \\
+    Gaussian noise        & $0.574$ & $0.999$ \\
+    $\dauc$               & $0.199$ $[0.188, 0.212]$ & \\
+    \midrule
+    \multicolumn{3}{@{}l}{\emph{PGD, $\varepsilon{=}0.002$}}\\
+    PGD                   & $0.827$ & --- \\
+    Gaussian blur         & $0.603$ & $1.000$ \\
+    Dropout               & $0.524$ & $0.939$ \\
+    Gaussian noise        & $0.512$ & $1.001$ \\
+    $\dauc$               & $0.224$ & \\
+    \bottomrule
+  \end{tabular}
+  % src: experiments/2026-06-29_h2-v2-eps0004/outputs/h2_crossval/metrics.json;
+  %      experiments/2026-07-02_pgd-h2-eps0002/outputs/h2_crossval/metrics.json;
+  %      experiments/2026-07-21_stat-package/outputs/stat_package.json
+  % The July version printed "+/-" values next to each AUC, carried from the
+  % paper without a stated meaning; they are omitted until their meaning is
+  % confirmed (fold standard deviations?).
+\end{table}
 
 \begin{table}[ht]
   \centering
@@ -660,7 +721,11 @@ $0.19$--$0.59$ (Table~\ref{tab:adv-main}).
 % src: experiments/2026-07-21_attack-lib-smoke/outputs/smoke_results.json; experiments/2026-07-23_jpeg-matched-l2-dx/outputs/displacement_summary.json [EST]
 The clean activation norm at that layer is $10.0$, so the attack moves the
 activation by $20\%$ of its length and the benign families move it by
-$2$--$6\%$. CW-$L_2$ shows the same relation from the other side: it changes
+$2$--$6\%$. CW-$L_2$ shows the same relation from the other side. Because it
+minimizes the input norm, it was the planned candidate for the adversarial,
+low-displacement cell of Table~\ref{tab:adv-design}.
+% src: EXPERIMENT_PLAN_ATTACKS.md §0
+It changes
 every label (ASR $1.000$) with an input $L_2$ of $4.97$, $0.72\times$ that of
 FGSM, and it still arrives with a mean $\lVert\Delta a\rVert$ of $1.81$
 (standard deviation over images $1.39$) and is detected at AUC $0.865$.
@@ -821,10 +886,18 @@ the latents $z$ at $0.932$; for detection, this SAE loses signal.
 % src: experiments/2026-06-30_decomp-eps0004/outputs/decomposition_metrics.csv [EST — L2]
 In the displacement-matched control, the sign of $\dauc$ is the same on $a$
 and on $z$ (Table~\ref{tab:adv-main}); on $a$, the comparison is at the
-ceiling. The SAE also raises the apparent specificity in the input-matched
-control: $\dauc$ is $0.199$ on $z$ and $0.178$ on $\hat{a}$, against $0.079$
-on $r$ and $0.066$ on $a$ (Table~\ref{tab:adv-representations}). This
-advantage also depends on depth: it is negative at \texttt{mlp\_0} and rises
+ceiling. In the input-matched control, $\dauc$ is larger on the SAE-explained
+component ($0.199$ on $z$ and $0.178$ on $\hat{a}$) than on $r$ ($0.079$) and
+on $a$ ($0.066$; Table~\ref{tab:adv-representations}). This does not show that
+the SAE amplifies specificity. The probes on $a$ and on $r$ detect FGSM near
+the ceiling, where a difference of AUCs is compressed, and a pre-specified
+anti-condition forbids the claim: at $\varepsilon{=}0.004$ the difference on
+the logit scale on $a$ is compatible with that on $z$, and only at
+$\varepsilon{=}0.002$ is $z$ distinct from $a$.
+% src: gap_robustness_summary.csv (logit columns); DESIGN_CHOICES.md D12 (G5.3, frozen 2026-07-02) [PRE — anti-condition]
+% NOTE: action point B5 of the paper ("the SAE inflates the apparent
+% specificity", 0.199 on z vs 0.066 on a) conflicts with this anti-condition.
+The input-matched advantage also depends on depth: it is negative at \texttt{mlp\_0} and rises
 to $0.204\pm0.014$ at \texttt{mlp\_10} over five seeds, while detection of the
 displacement is already present at the first block.
 % src: experiments/2026-07-02_gap-robustness/outputs/gap_robustness_summary.csv [EST]
@@ -858,7 +931,9 @@ Mean-pooling over $197$ tokens can remove a localized perturbation, and the
 pooled probe does not detect the watermark control ($0.542$ on $a$, $0.519$ on
 $z$ at \texttt{mlp\_10}). A token-by-token probe finds the watermark tokens:
 the best single token reaches AUC $0.667\pm0.010$ (standard deviation over the
-five folds; Figure~\ref{fig:adv-token}).
+five folds; Figure~\ref{fig:adv-token}), and tokens $1$ to $6$ span
+$0.601$--$0.667$, against $0.542$ for the mean-pooled probe, $0.517$ for the
+class token alone and $0.512$ for a max-pooled probe.
 % src: experiments/2026-07-21_stego-token/outputs/token_probe_metrics.json [EST — E9]
 The watermark is therefore invisible to the pooled probe because its pooled
 displacement is small ($\lVert\Delta a\rVert=0.09$), not because the
@@ -1191,11 +1266,152 @@ not by a fixed probe against an attacker who knows it; and a small
 displacement does not imply that the example is not detected.
 
 % =============================================================================
+\section{Layers and representations}
+\label{sec:adv-layers}
+% Thesis-only material (not in the paper, or reduced there to one sentence).
+
+The five steps use one probed layer, \texttt{mlp\_10}, and one budget,
+$\varepsilon{=}0.004$. This section gives the sweeps over layers and
+representations that support these two choices.
+
+\subsection{The saturated budget}
+\label{sec:adv-saturated}
+At $\varepsilon{=}0.012$, the budget of the pre-specified rules
+(Section~\ref{sec:adv-provenance}), every representation detects FGSM at the
+ceiling at every probed layer (Table~\ref{tab:adv-decomp},
+Figure~\ref{fig:adv-decomp-layers}a). At the ceiling, a comparison between
+representations or between families says nothing, and this is the reason for
+the range before saturation that the five steps use. The watermark control is
+near chance from \texttt{mlp\_6} on; at the first two blocks it reaches
+$0.675$--$0.685$ on $a$, and it decays with depth.
+% src: experiments/2026-06-22_sae-residual-decomp/outputs/decomposition_metrics.csv [EST]
+
+\begin{table}[ht]
+  \centering
+  \caption{Detection AUC (grouped cross-validation, $K{=}5$, $N{=}3200$) by
+  representation and layer at the \emph{saturated} budget
+  ($\varepsilon{=}0.012$). FGSM is at the ceiling everywhere; the watermark
+  control is near chance at the late layers.}
+  \label{tab:adv-decomp}
+  \small
+  \begin{tabular}{@{}llcccc@{}}
+    \toprule
+    Layer & Family & $a$ & $z$ & $\hat{a}$ & $r$ \\
+    \midrule
+    \multirow{2}{*}{\texttt{mlp\_0}}  & FGSM      & 1.000 & 0.996 & 1.000 & 1.000 \\
+                                      & Watermark & 0.675 & 0.539 & 0.541 & 0.677 \\
+    \multirow{2}{*}{\texttt{mlp\_3}}  & FGSM      & 1.000 & 1.000 & 1.000 & 1.000 \\
+                                      & Watermark & 0.685 & 0.604 & 0.604 & 0.664 \\
+    \multirow{2}{*}{\texttt{mlp\_6}}  & FGSM      & 1.000 & 1.000 & 1.000 & 1.000 \\
+                                      & Watermark & 0.549 & 0.531 & 0.537 & 0.542 \\
+    \multirow{2}{*}{\texttt{mlp\_9}}  & FGSM      & 1.000 & 0.999 & 0.998 & 1.000 \\
+                                      & Watermark & 0.530 & 0.513 & 0.524 & 0.530 \\
+    \multirow{2}{*}{\texttt{mlp\_10}} & FGSM      & 1.000 & 1.000 & 1.000 & 1.000 \\
+                                      & Watermark & 0.543 & 0.519 & 0.532 & 0.540 \\
+    \multirow{2}{*}{\texttt{mlp\_11}} & FGSM      & 1.000 & 0.997 & 1.000 & 1.000 \\
+                                      & Watermark & 0.544 & 0.513 & 0.524 & 0.542 \\
+    \bottomrule
+  \end{tabular}
+  % src: experiments/2026-06-22_sae-residual-decomp/outputs/decomposition_metrics.csv
+\end{table}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\linewidth]{figures/interp_adv/fig_decomp_layers.pdf}
+  \caption{Detection across layers. (a) At the saturated budget
+  ($\varepsilon{=}0.012$) every representation detects FGSM at the ceiling at
+  every block, while the watermark control decays to chance. (b) In the
+  input-matched control at $\varepsilon{=}0.004$, the detection advantage
+  $\dauc$ is negative or near zero at the first blocks and largest at
+  \texttt{mlp\_10}. In the legend, $x$ denotes the raw activation $a$ of
+  Equation~\eqref{eq:adv-decomp}, and ``stego'' the watermark control.}
+  % src: experiments/2026-06-22_sae-residual-decomp/outputs/decomposition_metrics.csv;
+  %      experiments/2026-07-21_decomp-6layer/outputs/decomposition_metrics.csv;
+  %      experiments/2026-07-02_gap-robustness/outputs/gap_robustness_summary.csv
+  % The figure predates the notation change (x -> a) and the rename of the
+  % control; regenerate it in the research repository when possible.
+  \label{fig:adv-decomp-layers}
+\end{figure}
+
+\subsection{The input-matched advantage across layers}
+\label{sec:adv-depth}
+The detection advantage in the input-matched control is a property of the mid
+and late layers (Figure~\ref{fig:adv-decomp-layers}b): it is negative at
+\texttt{mlp\_0} and rises to $0.204\pm0.014$ on $z$ at \texttt{mlp\_10} over
+five seeds, while FGSM is already detected at the first block. The curve on
+$a$ comes from the six-layer decomposition, which ran at a reduced sample
+($192$ examples). A possible explanation is the amplification of
+Section~\ref{sec:adv-amplification}: the displacement of FGSM grows with depth,
+from $0.09$ at \texttt{mlp\_0} to $2.00$ at \texttt{mlp\_10}
+(Table~\ref{tab:adv-dx-layers}). We did not measure the displacement of the
+input-matched benign families at the layers other than \texttt{mlp\_10}, so
+this explanation is a conjecture.
+% src: experiments/2026-07-02_gap-robustness/outputs/gap_robustness_summary.csv; 2026-07-21_decomp-6layer [EST]
+
+\subsection{The displacement-matched control on the latents, per layer}
+\label{sec:adv-matched-dx-z}
+Table~\ref{tab:adv-dx-layers} gives $\dauc$ on $a$ at each layer in the
+displacement-matched control. Table~\ref{tab:adv-matched-dx} gives the same
+control on $z$, with the FVE of the SAE at each layer. Only \texttt{mlp\_10}
+and \texttt{mlp\_11} pass the health gate, and the caveat of
+Section~\ref{sec:adv-dx-layers} applies to both tables: the match is
+calibrated at \texttt{mlp\_10}.
+% src: experiments/2026-07-22_h2-matched-dx/outputs/h2_matched_dx_summary.json [EST — E1]
+
+\begin{table}[ht]
+  \centering
+  \caption{Displacement-matched control on the latents $z$, seed 42.
+  $^{\dagger}$FVE below the $0.9$ health gate: these cells are reported for
+  completeness only. Five-seed replication: $\dauc = -0.063\pm0.003$ at
+  \texttt{mlp\_10} and $-0.076\pm0.005$ at \texttt{mlp\_11}.}
+  \label{tab:adv-matched-dx}
+  \small
+  \begin{tabular}{@{}lcccc@{}}
+    \toprule
+    Layer & FVE & FGSM, AUC on $z$ & Best benign, AUC on $z$ & $\dauc$ on $z$ \\
+    \midrule
+    \texttt{mlp\_0}  & $0.753^{\dagger}$ & $0.944$ & $0.999$ & $-0.055$ \\
+    \texttt{mlp\_3}  & $0.779^{\dagger}$ & $1.000$ & $1.000$ & $-0.000$ \\
+    \texttt{mlp\_6}  & $0.720^{\dagger}$ & $0.977$ & $1.000$ & $-0.023$ \\
+    \texttt{mlp\_9}  & $0.697^{\dagger}$ & $0.886$ & $0.994$ & $-0.108$ \\
+    \texttt{mlp\_10} & $0.936$ & $0.933$ & $0.995$ & $-0.062$ \\
+    \texttt{mlp\_11} & $0.947$ & $0.918$ & $0.996$ & $-0.078$ \\
+    \bottomrule
+  \end{tabular}
+  % src: experiments/2026-07-22_h2-matched-dx/outputs/h2_matched_dx_summary.json;
+  %      experiments/2026-07-23_h2-matched-dx-multiseed/outputs/multiseed_summary.csv
+\end{table}
+
+\subsection{Eleven detection signals}
+\label{sec:adv-zoo}
+The SAE is a lossy bottleneck, so $z$ cannot carry detection information that
+$a$ lacks; a linear probe on $z$ could still gain from the non-linearity of
+the encoder, but here it does not (Section~\ref{sec:adv-scope}). A sweep of
+eleven detection signals in the same cell (input-matched control,
+$\varepsilon{=}0.004$, \texttt{mlp\_10}; Figure~\ref{fig:adv-zoo}) orders them
+by $\dauc$: the signals on the SAE features have the largest input-matched
+$\dauc$, and the scalar magnitudes the smallest. The anti-condition of
+Section~\ref{sec:adv-scope} applies to this ordering too: it compares
+differences of AUCs at different distances from the ceiling.
+% src: experiments/2026-07-02_signal-zoo/outputs/zoo/zoo_metrics.csv [EST]
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\linewidth]{figures/interp_adv/fig_zoo.pdf}
+  \caption{Input-matched $\dauc$ (FGSM minus the most detectable input-matched
+  benign family) for eleven detection signals at $\varepsilon{=}0.004$,
+  \texttt{mlp\_10}. In the labels, $x$ and $\hat{x}$ denote the raw activation
+  $a$ and its reconstruction $\hat{a}$ of Equation~\eqref{eq:adv-decomp}.}
+  % src: experiments/2026-07-02_signal-zoo/outputs/zoo/zoo_metrics.csv
+  % The figure predates the notation change (x -> a).
+  \label{fig:adv-zoo}
+\end{figure}
+
+% =============================================================================
 \section{Provenance of the tests}
 \label{sec:adv-provenance}
-% Phase 1 carries the content of the paper's provenance appendix. Phase 2 adds
-% the material that only the thesis has: the frozen-budget H2 run, the layer
-% and representation sweeps, and the two measurement bugs.
+% The paper's provenance appendix, plus the frozen-budget runs of the two
+% pre-specified rules, which only the thesis reports in full.
 
 The order of execution was different from the order of
 Sections~\ref{sec:adv-usual} to~\ref{sec:adv-attackers}. A test is
@@ -1206,16 +1422,36 @@ predictions of $H_{M}$ with fixed decision rules; the rules are never
 evaluated again on later data.
 % src: EXPERIMENT_PLAN_ATTACKS.md (rev. 2026-07-21, rule block); PLAN.md; DESIGN_CHOICES.md [PRE]
 
-H1 predicted that the detection AUC stays constant over $\varepsilon$. It
-fails all three of its criteria ($|\rho|<0.3$ for the correlation between
-$\varepsilon$ and AUC, variance $<10^{-3}$, mean AUC $>0.95$) for FGSM and
-PGD, because the AUC rises monotonically with the budget: from $0.670$ to
-$1.000$ for FGSM, with saturation at $\varepsilon\geq0.012$, and from $0.663$
-to $1.000$ for PGD (Table~\ref{tab:adv-h1}).
+\paragraph*{The two rules.}
+\emph{H1 (budget invariance)} passes if, over $\varepsilon\leq0.012$, the
+correlation between $\varepsilon$ and the AUC is near zero ($|\rho|<0.3$), the
+variance of the AUC is below $10^{-3}$, and the mean AUC is above $0.95$.
+\emph{H2 (adversarial specificity)} passes if, at the frozen budget
+$\varepsilon{=}0.012$ and against benign families of matched nominal $L_2$,
+$\dauc>0.3$ and the most detectable benign family is below AUC $0.7$.
+% src: PLAN.md; DESIGN_CHOICES.md (frozen-gate definitions) [PRE]
+
+\paragraph*{H1 fails.}
+H1 fails all three of its criteria for FGSM and PGD, because the AUC rises
+monotonically with the budget: from $0.670$ to $1.000$ for FGSM, with
+saturation at $\varepsilon\geq0.012$, and from $0.663$ to $1.000$ for PGD
+(Table~\ref{tab:adv-h1}, Figure~\ref{fig:adv-h1}). The mean over the five
+budgets $\varepsilon\leq0.012$ is about $0.88$ for FGSM, below the floor.
 % src: both magnitude_sweep_metrics.csv; RESEARCH_LOG.md (corrected re-run verdict) [PRE — gate fails]
-H2 predicted $\dauc>0.3$ in the input-matched control; it fails, and leaves a
-$\dauc$ of $0.199$ (Section~\ref{sec:adv-usual}). The input-matched $\dauc$
-also passes a third pre-specified rule, a robustness criterion
+% The 0.88 is arithmetic on the five FGSM values (0.670, 0.785, 0.932, 0.996, 1.000).
+
+\paragraph*{H2 fails, at the frozen budget and below it.}
+At the frozen budget the attack is at the ceiling (FGSM $0.9999$), and every
+benign family of comparable nominal magnitude is detected at $0.85$--$0.94$
+(JPEG $0.939$, dropout $0.921$, blur $0.910$, noise $0.847$). $\dauc = 0.061$,
+and the rule fails on both criteria.
+% src: experiments/2026-06-23_corrected-rerun/outputs/h2_crossval/metrics.json [EST/PRE]
+This run is older than the per-family measurement of the input $L_2$, so at
+the frozen budget the input match is the design intent of the perturbation
+configurations, not a verified match. In the range before saturation, with the
+match verified, the rule still fails: $\dauc = 0.199$ at $\varepsilon{=}0.004$
+is below $0.3$, and the most detectable benign family (blur, $0.733$) is above
+$0.7$ (Section~\ref{sec:adv-usual}). The input-matched $\dauc$ also passes a third pre-specified rule, a robustness criterion
 ($\dauc-2\sigma > 0.05$ at $\varepsilon\in\{0.002,0.004\}$, at mid and late
 layers, over five seeds); this rule tests whether a detection advantage
 exists, and H2 tests whether it is large.
@@ -1250,8 +1486,27 @@ exists, and H2 tests whether it is large.
   %      experiments/2026-07-02_pgd-h1h2/outputs/h1_sweep/magnitude_sweep_metrics.csv
 \end{table}
 
-Because the two rules test $H_{M}$, their failure is only consistent with
-$H_{D}$ and does not test it. A test counts as evidence for $H_{D}$ only if it
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.75\linewidth]{figures/interp_adv/fig_h1_sweep.pdf}
+  \caption{Budget sweep: detection AUC against the budget for FGSM and PGD,
+  with the AUC of successful and of failed FGSM attacks
+  (Section~\ref{sec:adv-success}). The AUC rises with the budget, and
+  successful and failed attacks are equally detectable.}
+  % src: the two magnitude_sweep_metrics.csv; experiments/2026-07-21_success-conditioned/outputs/metrics.json
+  \label{fig:adv-h1}
+\end{figure}
+
+\paragraph*{What the failures show.}
+The two rules fail, for two attacks. This eliminates $H_{M}$ in the form that
+was pre-specified, and it is weak evidence for $H_{D}$, for two reasons. The
+first is saturation: when the AUC is at the ceiling, H1 cannot separate a
+detector of displacement from a detector of adversarial structure that grows
+with $\varepsilon$, and the $\dauc$ of H2 is measured against the ceiling. The
+success split of Section~\ref{sec:adv-success} answers the first reading, and
+the runs at $\varepsilon\approx0.002$--$0.004$ answer the second. The second
+reason is logical. Because the two rules test $H_{M}$, their failure is only
+consistent with $H_{D}$ and does not test it. A test counts as evidence for $H_{D}$ only if it
 could have failed under $H_{D}$ \cite{mayo2018severe_testing}; this is the
 method of strong inference with multiple working hypotheses
 \cite{platt1964strong_inference,chamberlin1890multiple_working_hypotheses}.
@@ -1268,6 +1523,60 @@ The two APGD experiments came last, and both were pre-specified with fixed
 decision rules: the APGD-CE replication (Section~\ref{sec:adv-apgd-ce}) and
 the adaptive attack against the probe (Section~\ref{sec:adv-adaptive}).
 % src: JOURNAL_V3.md §8b (P7, frozen 2026-10-19), §8c (P8, frozen 2026-10-27) [PRE]
+
+% =============================================================================
+\section{Two measurement bugs}
+\label{sec:adv-bugs}
+% Thesis-only material. Kept because each bug gave a plausible result that was
+% wrong, and because the first one motivated the statistical controls of
+% sec:adv-protocol.
+
+Two measurement bugs were found during this work. Each gave a plausible result
+that was wrong, and each gives a rule that applies to other studies.
+
+\paragraph*{The clip bug: an artefact that looked like budget-invariant
+detection.}
+The FGSM routine first applied $\mathrm{clamp}(\cdot, 0, 1)$ to
+ImageNet-\emph{normalized} images, whose values span about $[-2.2, 2.6]$.
+% src: DESIGN_CHOICES.md; RESEARCH_LOG.md 2026-04-23 [EST]
+Clipping in that space changes most pixels: at $\varepsilon{=}0.012$ the
+measured per-image $L_2$ was about $284$, against the $20$ that the budget
+implies, and the clipped images were far from every clean image, in a way that
+did not depend on $\varepsilon$. The detector read this artefact. The sweep
+before the fix was therefore \emph{flat} at AUC $\approx 0.88$, a false
+confirmation of H1: the artefact added about $0.23$ AUC at
+$\varepsilon{=}0.001$ and only $0.02$ at $0.032$, and it cancelled the true
+trend with the budget.
+% src: RESEARCH_LOG.md 2026-04-23 (delta table) [EST]
+The fix clips in pixel space (denormalize, clip in $[0,1]$, renormalize);
+after the fix, the $L_2$ at $\varepsilon{=}0.012$ is $20.51$, which agrees
+with the budget, and the sweep gives the monotone curve of
+Table~\ref{tab:adv-h1}.
+% src: src/adv_interp/attacks/fgsm.py [EST]
+The rule: measure the realized perturbation norm and compare it with the
+budget \emph{before} reporting a detection number. With the bug, the flat
+sweep would have passed the two invariance criteria of the pre-specified H1
+rule (correlation and variance) on an artefact, and failed only the criterion
+on the mean AUC.
+
+\paragraph*{The first-key bug: the SAE was trained on a different layer from
+the documented one.}
+The SAE trainer took as its target the first non-label key of the saved
+activation file. With forward hooks registered in the order
+$[\texttt{layer\_10}, \texttt{layer\_11}]$, that key was always
+\texttt{layer\_10}, and the \texttt{target\_layer} field of the configuration
+files had no effect.
+% src: CLUSTER_NOTES.md 2026-06-22; RESEARCH_LOG.md [EST]
+The reference detection number of the project was thus computed on
+\texttt{mlp\_10} alone, not on \texttt{mlp\_11} or on the two layers together,
+as the documentation said. This is an error of provenance and does not
+invalidate the measurement: the layer sweep, which uses one layer per run, was
+not affected. The fix passes an explicit \texttt{--target-layer} argument to
+SAE training and to latent encoding; \texttt{mlp\_10} was then adopted as the
+probed layer of the main result.
+% src: CLUSTER_NOTES.md (P5 rewire) [EST]
+The rule: an analysis target must be an explicit, logged argument, never the
+result of the order of a container.
 
 % =============================================================================
 \section{Reconciliation with deployment work}
@@ -1378,10 +1687,9 @@ and at equal displacement the attack has no detection advantage over benign
 perturbations.
 
 Three things follow. First, the sparse autoencoder is not needed for this
-detection, and it raises the apparent specificity: the detection advantage in
-the input-matched control is $0.199$ on its latents and $0.066$ on the raw
-activation. The SAE is a legitimate measuring instrument, but it is not the
-source of the signal. Second, the result was visible only with a control that
+detection: the raw activation detects the attack better than the latents, and
+the result at equal displacement holds on both. The SAE is a legitimate
+measuring instrument, but it is not the source of the signal. Second, the result was visible only with a control that
 the usual evaluations do not have and that the pre-specified hypotheses did
 not anticipate; the pre-specified tests kept the negative result honest, and
 an exploratory experiment found the explanation, so the two are reported with
