@@ -46,6 +46,11 @@
 
 % Macro for the activation-displacement specificity gap used in the adversarial-detection chapter.
 \newcommand{\dauc}{\Delta_{\mathrm{AUC}}}
+% Invisible marker for text that depends on a result still open in the source
+% paper (interp_adv_tmlr_2026). Usage: \pendingpaper{A1}{text}; the first
+% argument names the action point (A1, A3, A4, B13) and prints nothing.
+% Find them with: grep -n 'pendingpaper' chapters/*.tex
+\newcommand{\pendingpaper}[2]{#2}
 
 \newtheorem{definition}{Definition}
 

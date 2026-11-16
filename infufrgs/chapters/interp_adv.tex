@@ -3,70 +3,93 @@
 \begin{document}
 
 % =============================================================================
-% Chapter source: "Magnitude, Not Meaning: What Activation-Space Adversarial
-% Detection Measures in Vision Transformers" (interp_adversarial_image_paper,
-% main.tex + appendix.tex, final version 2026-07-28).
+% Chapter source: "Activation-Space Adversarial Detection in a Vision
+% Transformer Measures Displacement, Not Meaning" (TMLR submission),
+% repository interp_adv_tmlr_2026, main.tex at commit 833c357 (2026-11-16).
+% To resynchronize: git -C ../interp_adv_tmlr_2026 diff 833c357 -- main.tex figures/
 %
-% Narrative contract (Breno, 2026-09-10): state the hypothesis first, then
-% present each experiment as the elimination of one objection to it. The
-% structure must NOT become rhetoric: objections that are only refined, or that
-% remain open, are labelled as such in the ledger (Table~\ref{tab:adv-ledger})
-% and in the prose.
+% This file was rebuilt on that source on 2026-11-16 (Phase 1). It replaces the
+% chapter written from the July version of the paper (v06), which is in the git
+% history of this repository. What changed with respect to that version:
+%   - claim: the probe reads the displacement ALONG A LEARNED DIRECTION; a large
+%     displacement is sufficient for detection, not necessary; "meaning" is
+%     tested as the change of the label;
+%   - structure: five steps, each opened by an objection (was: twelve objections
+%     and a three-degree specificity ladder, both removed);
+%   - notation: \Delta a (was \Delta x); vocabulary: input-matched and
+%     displacement-matched control, detection advantage, watermark control,
+%     head split, pre-specified (was pre-registered);
+%   - new experiments: APGD-CE replication and the adaptive APGD attack.
+%
+% Thesis notation that differs from the paper: the maximum in \dauc runs over
+% benign families b (the paper uses f, which is the sub-sampling fraction of
+% Chapter 3); N is the number of examples and K the number of folds.
 %
 % Evidence-status legend, kept in comments next to each claim:
-%   [EST]  established by data on disk in the research repo
-%   [PRE]  pre-registered frozen gate / anti-condition (never relaxed)
-%   [EXPL] exploratory run whose expectations were written down before execution
+%   [EST]  established by data on disk in the research repository
+%   [PRE]  pre-specified hypothesis or decision rule (never relaxed)
+%   [EXPL] exploratory run whose expected outcome was written before execution
 %   [EXT]  external cited claim
-% Every number below is copied from main.tex/appendix.tex, whose \src trailers
-% name the artifact; the trailer is preserved here as a "% src:" comment.
+% Every number is copied from main.tex; its \src trailer is kept as "% src:".
+%
+% Text that depends on results still open in the paper is wrapped in
+% \pendingpaper{<action point>}{...} (defined in ppgc-tese.tex; prints its
+% second argument unchanged). Open points: A1 (APGD-CE below the ceiling),
+% A3 (attack-vs-benign probe), A4 (benign control matched in input L_inf to the
+% minimal-displacement attack), B13 (single-detector result as the main result).
 % =============================================================================
 
 Sparse autoencoders (SAEs) promise interpretable features in vision models, and
-a natural application is adversarial-attack detection: reading, from a model's
-own activations, whether an input has been manipulated. This chapter asks not
-whether such a detector can be built, since it plainly can, but what it
-measures. The answer, for a Vision Transformer classifier probed with a linear
-detector under a leakage-free protocol, turns out to be physical rather than
-semantic. Adversarial optimization buys activation displacement cheaply: at
-equal input norm, attacks arrive at the probed layer with $3$--$10\times$ the
-displacement of benign corruptions, and even the minimal-norm attack that flips
-every label lands at attack scale (Figure~\ref{fig:adv-amplification}). Once
-benign perturbations are calibrated to move the activation as far as the attack
-does, they become at least as detectable as the attack, at every layer and
-across five seeds; what still separates perturbation families is low-level
-texture, not adversarialness, and the SAE's interpretable features are not
-load-bearing at any step. % [EST — preview of sec:adv-specificity and sec:adv-residue]
-An attack built instead to minimize displacement reaches benign scale only at a
-$34\times$ input-norm premium, on visibly corrupted images, and is still
-detected; whether the probe there reads adversarial structure or the wake of
-that outsized input perturbation is the one question this chapter leaves
-open. % [EST — sec:adv-lowdx; open question owned there]
+one proposed application is the detection of adversarial attacks from the
+activations of a model. This chapter asks not whether such a detector can be
+built, but what it measures. We train a linear probe on the mean-pooled
+activations of a ViT-B/16 classifier. The usual control matches benign
+perturbations to the attack in input norm, and with this control the attack is
+more detectable than every benign perturbation. This control is not matched in
+what the probe reads: at equal input norm, the attack moves the activations at
+the probed layer $3$ to $10\times$ more than a benign perturbation does. When
+the benign perturbations are matched to the attack in this activation
+displacement, each benign family is at least as separable from clean images as
+the attack (Figure~\ref{fig:adv-controls}). The probe detects successful and
+failed attacks equally, and the SAE is not necessary for any of these results.
+% [EST — preview of sec:adv-usual, sec:adv-amplification, sec:adv-main, sec:adv-reads]
+
+The size of the displacement does not determine detection. A smaller
+displacement does not evade the probe: an attack built to minimize the
+displacement reaches the benign scale, and the probe still detects it. A
+different direction does evade it: an attacker who knows the probe evades it at
+the budget of the reference attack, but the displacement stays at the attack
+scale. In this setting, activation-space adversarial detection reads the
+displacement along a learned direction, not adversarial meaning, which we test
+as the change of the label.
+% [EST — preview of sec:adv-attackers]
 
 \begin{figure}[ht]
   \centering
-  \includegraphics[width=0.9\linewidth]{figures/interp_adv/fig_amplification.pdf}
-  \caption{Input norm versus what the detector reads. At the same input $L_2$,
-  attacks arrive at \texttt{mlp\_10} of ViT-B/16 with $3$--$10\times$ the
-  activation displacement $\lVert\Delta x\rVert$ of benign perturbations; the
-  minimal-input-norm Carlini--Wagner attack flips every label from the smallest
-  input budget yet still lands at attack-scale displacement; the steganographic
-  control barely moves the representation at all. This figure is the preview
-  of the chapter's turning point (Section~\ref{sec:adv-specificity}).}
-  % src: figs/src/fig_amplification.py header lists the seven source artifacts
-  \label{fig:adv-amplification}
+  \includegraphics[width=0.7\linewidth]{figures/interp_adv/fig_controls.pdf}
+  \caption{Detection AUC against mean $\lVert\Delta a\rVert$ at
+  \texttt{mlp\_10}, probe on the SAE latents $z$, for the benign families in the
+  input-matched (open) and displacement-matched (filled) controls, and for FGSM
+  ($\varepsilon{=}0.004$). Within each benign family, the AUC rises with the
+  displacement, and at equal mean displacement every benign family is at least
+  as detectable as FGSM. The AUCs and the input-matched $\dauc$ are from one
+  seed (over five seeds, $0.204\pm0.014$); the displacement-matched $\dauc$ is
+  the mean $\pm$ standard deviation over five seeds.}
+  % src: figures/src/fig_controls.py (paper repository)
+  \label{fig:adv-controls}
 \end{figure}
 
-The chapter is organized as a defence. Section~\ref{sec:adv-hypotheses} states
-the hypothesis under test, the rival hypothesis it was pre-registered against,
-and the ledger of objections that the remaining sections address one by one.
-Section~\ref{sec:adv-background} gives the background specific to this study.
-Section~\ref{sec:adv-instrument} fixes the instrument. Section~\ref{sec:adv-gates}
-reports the pre-registered test, and Sections~\ref{sec:adv-regime}
-to~\ref{sec:adv-lowdx} work through the objections, ending with the one that
-stays open. Section~\ref{sec:adv-reconciliation} reconciles the result with the
-deployment literature, and Section~\ref{sec:adv-closing} states the
-limitations and the reading for the thesis.
+Section~\ref{sec:adv-hypotheses} states the confound, the two hypotheses and
+the structure of the argument. Section~\ref{sec:adv-background} gives the
+background specific to this study, and Section~\ref{sec:adv-instrument} defines
+the model, the displacement, the perturbation families, the two matched
+controls and the detection protocol. Sections~\ref{sec:adv-usual}
+to~\ref{sec:adv-attackers} give the results in five steps, and each step opens
+with the objection of a skeptical reader that it answers.
+Section~\ref{sec:adv-provenance} gives the provenance of the tests,
+Section~\ref{sec:adv-reconciliation} relates the results to deployment work,
+and Section~\ref{sec:adv-closing} states the limitations and the reading for
+the thesis.
 
 % =============================================================================
 \section{Two hypotheses and a confound}
@@ -75,407 +98,466 @@ limitations and the reading for the thesis.
 Adversarial examples remain among the most studied failure modes of deep vision
 models: small input perturbations that flip a confident prediction
 \cite{goodfellow2015fgsm,costa2024adversarial_survey}. A recurring hope is that
-the model's own internal representations betray the attack, that somewhere in
+the model's own internal representations betray the attack: that somewhere in
 activation space there is a signal for ``this input is adversarial'', and that
 SAEs, by decomposing activations into interpretable features, can expose it
 \cite{rao2024discover_then_name,pach2025sae_monosemantic_vlm}. On this view,
 adversarial detection becomes a form of introspection: the model, read through
 its features, ``knows'' it is under attack. % [EXT/context]
 
-This hope rests on a confound that is rarely isolated. Every adversarial example
-is two things at once: it is \emph{adversarial}, crafted to change the output,
-and it is a \emph{perturbation}, so the activation has moved off its clean
-location. A detector that fires on adversarial inputs may be reading either
-property, the adversarial structure or merely the displacement. The two are
-entangled in any standard evaluation, because the only negatives are clean
-inputs, which differ from adversarial ones in both respects at once.
-Disentangling them requires a control that standard detection setups omit: a
-benign perturbation that moves the representation as far as the attack does.
+\paragraph*{The confound.}
+An adversarial example is a perturbation of a clean image, and it changes the
+output of the model. A detector can read either property, or both. Usual tests
+compare clean inputs with adversarial inputs only, which differ in the two
+properties at the same time, so they cannot separate them
+\cite{metzen2017detecting_adversarial,wang2026saegis}; some tests add benign
+noise matched to the attack in input norm
+\cite{feinman2017adversarial_artifacts,ma2018lid_adversarial}. To separate the
+two properties, we compare the attack with benign perturbations of the same
+magnitude. The question is thus not whether such a detector can be built, but
+what it measures, which is a question of construct validity
+\cite{cronbach1955construct_validity,jacobs2021measurement_fairness}.
 
-\subsection{The hypothesis defended and the hypothesis pre-registered}
+\paragraph*{Two definitions of ``same magnitude''.}
+The first is the \emph{input norm}, the size of the change to the image. The
+second is the \emph{activation displacement} $\lVert\Delta a\rVert$, the size
+of the change in the activation at the layer that the detector reads
+(Equation~\eqref{eq:adv-dx}). A linear probe on mean-pooled activations
+responds only to $\Delta a$ at its layer, and the two definitions are not
+equivalent: at equal input $L_2$, FGSM moves the activation at
+\texttt{mlp\_10} by $2.00$, and the four benign families move it by
+$0.19$--$0.59$ (Section~\ref{sec:adv-amplification}). We therefore use two
+controls: the \emph{input-matched control} matches the input $L_2$, as usual,
+and the \emph{displacement-matched control} matches $\lVert\Delta a\rVert$ at
+the probed layer.
+
+\subsection{The two hypotheses}
 \label{sec:adv-two-hypotheses}
 
-Two hypotheses compete for the same observations, and the chapter is honest
-about which one was written down first.
+Two hypotheses compete for the same observations.
 
 \paragraph*{The introspection hypothesis ($H_{M}$).}
-Sparse-feature signatures of an attacked input carry a signal that is specific
-to the adversarial class and invariant to the perturbation's magnitude. This is
-the hypothesis the thesis proposal pre-registered, operationalized as two frozen
-gates: \emph{H1 (magnitude invariance)}, detection AUC should not track the
-attack budget $\varepsilon$; and \emph{H2 (adversarial specificity)}, the attack
-should be markedly more detectable than a benign perturbation of matched
-magnitude. The gate definitions are given in Section~\ref{sec:adv-gates} and
-were fixed before any run. % [PRE]
+The probe reads adversarial \emph{meaning}: the property that makes an example
+adversarial, which we operationalize as the change of the label. Under $H_{M}$,
+the attack stays more detectable than benign perturbations that are equal in
+the quantity that the probe reads, successful attacks are more detectable than
+failed ones, and the signal is in the part of the displacement that changes the
+logits. This is the hypothesis that was written first: before any run, two
+predictions of $H_{M}$ were pre-specified with fixed decision rules, H1
+(detection does not depend on the attack budget) and H2 (a large detection
+advantage in the input-matched control). Section~\ref{sec:adv-provenance}
+gives the rules and their outcome. % [PRE]
 
 \paragraph*{The displacement hypothesis ($H_{D}$).}
-To a linear probe on mean-pooled activations, the detectability of a
-perturbation is a function of the activation-space displacement
-$\lVert\Delta x\rVert$ that the perturbation induces at the probed layer.
-Adversarialness has no privileged role beyond being one cause of that
-displacement. The instrument scope, linear and mean-pooled, is part of the
-statement rather than a caveat added later: $H_{D}$ makes no claim about what a
-richer probe would see (Section~\ref{sec:adv-instrument-scope}).
+The probe reads the activation displacement $\Delta a$ along a direction that
+it learns, and the change of the label has no role in what it reads.
+Adversarial optimization is one cause of a large displacement, and nothing
+more. $H_{D}$ has two parts, and each can fail. First, at equal
+$\lVert\Delta a\rVert$ the attack has no detection advantage over benign
+perturbations. Second, detection does not depend on the functional effect of
+the attack. The scope of the instrument, a linear probe on mean-pooled
+activations, is part of the statement: $H_{D}$ makes no claim about what a
+non-linear or a token-level probe would see (Section~\ref{sec:adv-scope}).
 
-The pre-registered gates are the contest between the two. If $H_{M}$ holds, the
-gates pass; if $H_{D}$ holds, they fail in a specific way, with AUC rising
-monotonically with budget and benign controls of equal displacement detected as
-readily as the attack. Section~\ref{sec:adv-gates} reports that they fail. The
-failure of $H_{M}$ is, however, only weak evidence \emph{for} $H_{D}$: the
-frozen-budget runs are saturated, and a rival reading survives every gate
-failure. The rest of the chapter is therefore organized around $H_{D}$ and the
-objections that can be raised against it, each answered by an experiment
-designed for that purpose.
+\paragraph*{What $H_{D}$ does not say.}
+$H_{D}$ does not say that the detection AUC is a function of
+$\lVert\Delta a\rVert$ alone. An earlier formulation of this study did say so,
+and the data reject it: the scalar norms are near chance
+(Section~\ref{sec:adv-reads}), an attack with a displacement at the benign
+scale is detected, and an attack with a displacement at the attack scale evades
+a fixed probe (Section~\ref{sec:adv-attackers}). A large displacement is
+\emph{sufficient} for detection by a probe trained on that family: every
+perturbation at the attack scale that we tested is detectable. It is not
+\emph{necessary}. The chapter also does not claim that attacks and benign
+perturbations are indistinguishable in activation space;
+\pendingpaper{A3}{we did not train an attack-vs-benign probe, and the collapse
+test of Section~\ref{sec:adv-reads} suggests that the family of a perturbation
+can be decoded.}
 
-\subsection{The specificity ladder}
-\label{sec:adv-ladder}
+\subsection{The structure of the argument}
+\label{sec:adv-flow}
 
-It helps to organize ``how specific is the detected signal?'' as a ladder with
-three degrees (Figure~\ref{fig:adv-ladder}). At \emph{Degree~1} the signal is
-specific to the \emph{attack method}: the features that expose one attack
-family differ from those exposing another. At \emph{Degree~2} it is specific to
-the \emph{adversarial class}: adversarial features differ from those of a benign
-perturbation of equal magnitude. At \emph{Degree~3} it is \emph{generic
-displacement}: the detector fires for anything that moves the activation off
-its clean location, attack or not. A magnitude-matched benign control is
-precisely the instrument that separates Degree~2 from Degree~3, and the chapter
-will show that even that control is not enough unless the match is made on the
-axis the detector reads. $H_{M}$ lives at Degree~2 or above; $H_{D}$ is the
-claim that the detector sits at Degree~3.
+A detector has discriminant validity for ``adversarial'' only if it separates
+attacks from benign perturbations that are equal in the quantity that it reads
+\cite{campbell1959convergent_discriminant_validation}. Each of the five steps
+states one objection and gives an experiment whose outcome would differ if the
+objection were correct
+\cite{platt1964strong_inference,shadish2002experimental_designs}
+(Table~\ref{tab:adv-flow}). The order of the steps is the order of the
+argument, not the order in which the experiments were run; the tests of $H_{D}$
+are exploratory, and Section~\ref{sec:adv-provenance} gives the status of each
+test.
 
-\begin{figure}[ht]
+\begin{table}[ht]
   \centering
-  \includegraphics[width=0.85\linewidth]{figures/interp_adv/fig_ladder.pdf}
-  \caption{The specificity ladder. Each control descends one level: the
-  cross-attack analysis of SAEgis \cite{wang2026saegis} leaves Degree~1; a
-  matched input-$L_2$ control appears to stop at Degree~2 with a residual
-  $\dauc$, but that difference prices in amplification; the
-  matched-$\lVert\Delta x\rVert$ control completes the descent to Degree~3, with
-  texture as the remaining, non-adversarial, family axis.}
-  \label{fig:adv-ladder}
-\end{figure}
-
-\subsection{The ledger of objections}
-\label{sec:adv-ledger}
-
-Table~\ref{tab:adv-ledger} lists every objection to $H_{D}$ that the study
-confronted, the experiment built to answer it, and the verdict. Three entries
-deserve attention precisely because they do not read as clean eliminations.
-Objection~1 was answered by an experiment that \emph{strengthened} the
-objection, producing the strongest evidence against $H_{D}$ in the study and
-forcing the axis change that organizes everything downstream. Objection~5 was
-not eliminated but forced a refinement of $H_{D}$: what remains at equal
-displacement is texture. Objection~7 remains open. The ``origin'' column
-separates the pre-registered gates from the exploratory experiments whose
-expectations were written down before execution but after the gates had failed;
-a committee should read the latter as designed follow-ups, not as
-pre-registered tests.
-
-\begin{table}[p]
-  \centering
-  \caption{The ledger of objections to the displacement hypothesis $H_{D}$.
-  Status: \emph{eliminated}, \emph{refined} (the hypothesis had to be amended),
-  or \emph{open}. Origin: PRE, pre-registered frozen gate; EXPL, exploratory
-  experiment with expectations pre-stated; EXT, external evidence.}
-  \label{tab:adv-ledger}
-  \footnotesize
-  \setlength{\tabcolsep}{3pt}
-  \renewcommand{\arraystretch}{1.15}
-  \begin{tabular}{@{}c >{\raggedright\arraybackslash}p{0.25\linewidth} >{\raggedright\arraybackslash}p{0.24\linewidth} >{\raggedright\arraybackslash}p{0.19\linewidth} >{\raggedright\arraybackslash}p{0.17\linewidth} >{\raggedright\arraybackslash}p{0.06\linewidth}@{}}
+  \caption{Structure of the results, in five steps. Each step opens with the
+  objection of a skeptical reader that it answers.}
+  \label{tab:adv-flow}
+  \small
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.28\linewidth}>{\raggedright\arraybackslash}p{0.22\linewidth}>{\raggedright\arraybackslash}p{0.42\linewidth}@{}}
     \toprule
-    \# & Objection to $H_{D}$ & Experiment & Verdict & Status & Orig. \\
+    Step and objection & Experiment & Answer \\
     \midrule
-    0 & $H_{M}$ is true: the signal is magnitude-invariant and adversarial-specific & H1 $\varepsilon$-sweep and H2 matched-$L_2$ benigns at the frozen budget, FGSM and PGD (\S\ref{sec:adv-gates}) & Both gates fail on every criterion; gap measured against a ceiling & $H_{M}$ eliminated in the tested regime; saturation weakens the test & PRE \\
-    1 & The gates only fail because AUC is saturated & Decomposition and H2 re-run at $\varepsilon{=}0.004$ with the $L_2$ match verified (\S\ref{sec:adv-regime}) & A residual $\dauc{=}0.199$ appears and replicates & \textbf{Not eliminated}: strengthens the objection and motivates the axis change & EXPL \\
-    2 & AUC rises with $\varepsilon$ because adversarial structure grows with $\varepsilon$ & Success-conditioned AUC (\S\ref{sec:adv-regime}) & Successful and failed attacks equally detectable & Eliminated & EXPL \\
-    3 & The residual $\dauc$ is Degree-2 specificity & Per-example $\lVert\Delta x\rVert$, then benigns matched on $\lVert\Delta x\rVert$, five seeds, all layers (\S\ref{sec:adv-specificity}) & $\dauc\leq0$ at every layer & Eliminated; the hinge of the chapter & EXPL \\
-    4 & The SAE is load-bearing: the gap lives in $z$, not in $a$ & Residual decomposition, signal zoo, logit-scale anti-condition (\S\ref{sec:adv-specificity}) & $a$ detects better than $z$; the gap lives on the manifold and vanishes at matched $\lVert\Delta x\rVert$ & Eliminated for detection & EXPL, PRE \\
-    5 & If only magnitude mattered, all families would collapse onto one score curve & Collapse test with nested $F$-test (\S\ref{sec:adv-residue}) & Collapse fails, but the separating axis is texture & \textbf{Refined}: magnitude plus texture & EXPL \\
-    6 & The probe reads the direction that flips the label & Projection ablation onto the head subspace (\S\ref{sec:adv-residue}) & Most energy and all of the signal in $\Delta x_{\perp}$ & Eliminated, with an enrichment caveat & EXPL \\
-    7 & Adversarial and high-$\lVert\Delta x\rVert$ are confounded by construction & Minimal-input-norm CW, then a purpose-built minimal-displacement attack (\S\ref{sec:adv-lowdx}) & Cell occupiable at a $34\times$ input premium; still detected, unlike JPEG at equal $\lVert\Delta x\rVert$ & \textbf{Open}: asymmetry reported, not interpreted & EXPL \\
-    8 & Stego at chance shows a blind probe, not a small displacement & Token-level probe and measured $\lVert\Delta x\rVert$ (\S\ref{sec:adv-regime}) & Watermark tokens light up; pooled displacement is $1\%$ of the norm & Eliminated; the null is instrument-scoped & EXPL \\
-    9 & Then any off-manifold distance should reproduce the probe & Mahalanobis on the same activations (\S\ref{sec:adv-residue}) & $0.710$ against $0.989$ & \textbf{Refined}: a learned direction, not a generic distance & EXPL \\
-    10 & The numbers are single-seed or pipeline artifacts & Clean-vs-clean and permutation nulls, paired bootstrap, five-seed replication, two documented bugs (\S\ref{sec:adv-protocol}) & Nulls at $0.500$; hinge replicates & Eliminated for the hinge; remaining single-seed scope declared & EXPL \\
-    11 & SAEgis shows that SAE-based detection works & Reconciliation and the ladder (\S\ref{sec:adv-reconciliation}) & Three corroborations; only the strong reading is contested & Repositioned & EXT \\
+    1 (\S\ref{sec:adv-usual}). ``The input-norm match is the standard control, and it shows a detection advantage.'' & Input-matched control, for FGSM, PGD and APGD-CE & The usual control reports $\dauc=0.199$ on $z$ for FGSM, and a positive $\dauc$ for each attack. \\
+    \addlinespace
+    2 (\S\ref{sec:adv-amplification}). ``The benign perturbations have the same input norm, so they have the same magnitude.'' & $\lVert\Delta a\rVert$ of each family; CW-$L_2$; PGD budget grid & At equal input $L_2$ the attack has $3$--$10\times$ the $\lVert\Delta a\rVert$ of the benign families. \\
+    \addlinespace
+    3 (\S\ref{sec:adv-main}). ``The displacement match is the wrong control.'' ``The result is a property of the SAE or of the pooling.'' & Displacement-matched control; representations; token-level probe & Benign families matched to FGSM in $\lVert\Delta a\rVert$ at \texttt{mlp\_10} are at least as detectable as FGSM, in five seeds. The SAE is not needed, and pooling hides only localized signal. \\
+    \addlinespace
+    4 (\S\ref{sec:adv-reads}). ``Matching $\lVert\Delta a\rVert$ removes the adversarial signal itself.'' ``$\dauc<0$, so something remains.'' & Success split; head split; scalar norms and Mahalanobis distance; collapse test & Successful and failed attacks are equally detectable, and the probe does not need the component that changes the logits. What remains is a direction: Gaussian noise scores as high as FGSM, and blur and JPEG score low. \\
+    \addlinespace
+    5 (\S\ref{sec:adv-attackers}). ``An attacker can evade the probe with a low-displacement example.'' & Minimal-displacement attack; adaptive APGD & An attack at benign-scale $\lVert\Delta a\rVert$ is still detected; an attacker who knows the probe evades it by direction, at attack-scale $\lVert\Delta a\rVert$. \emph{Open:} the input-$L_\infty$-matched benign control. \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-\subsection{Relation to the thesis question}
-The study answers the diagnostics research question of the thesis:
-under pre-registered tests, when do sparse-feature signatures isolate a
-structurally specific perturbation and when do they collapse into change
-detection? The chapter's answer is that, for adversarial perturbations that
-optimize misclassification alone, they collapse into change detection, and the
-change is measurable as a single physical variable. The methodological
-contribution is the control that made that answer visible: matching benign
-perturbations on the displacement the detector reads, not on the input.
+% NOTE (2026-11-16): the subsection "Relation to the thesis question" of the
+% July version was removed. It quoted the diagnostics research question of the
+% proposal-era introduction ("under pre-registered tests, when do sparse-feature
+% signatures isolate a structurally specific perturbation..."), which is to be
+% rewritten (Phase 4). The reading for the thesis is in sec:adv-closing.
 
 % =============================================================================
 \section{Background specific to this study}
 \label{sec:adv-background}
-% Condensed from the paper's Related Work (four paragraphs). SAE fundamentals
-% are in the Background chapter; only what that chapter lacks is kept here.
-% All paraphrase; no verbatim sentences from cited work.
+% From the Related Work of the paper. SAE fundamentals are in the Background
+% chapter; only what that chapter lacks is kept here. All paraphrase; no
+% verbatim sentences from cited work.
 
 \paragraph*{Detecting adversarial examples in representation space.}
-Small crafted perturbations that flip a model's prediction
-\cite{goodfellow2015fgsm,madry2018pgd,carlini2017cw_attack} prompted a
-recurring proposal: read the attack off internal statistics, via auxiliary
-classifiers \cite{metzen2017detecting_adversarial}, density and uncertainty
-estimates \cite{feinman2017adversarial_artifacts}, input squeezing
+A small crafted perturbation can change the prediction of a model
+\cite{goodfellow2015fgsm,madry2018pgd,carlini2017cw_attack}. Many detectors
+read the attack from internal statistics: auxiliary classifiers
+\cite{metzen2017detecting_adversarial}, density and uncertainty estimates
+\cite{feinman2017adversarial_artifacts}, input squeezing
 \cite{xu2018feature_squeezing}, local intrinsic dimensionality
-\cite{ma2018lid_adversarial}, reconstruction defences \cite{meng2017magnet},
-or class-conditional Mahalanobis distances \cite{lee2018mahalanobis}, the
-baseline run in Section~\ref{sec:adv-residue}. A counter-literature showed most
-of these fail against adaptive adversaries
+\cite{ma2018lid_adversarial}, reconstruction \cite{meng2017magnet}, and
+class-conditional Mahalanobis distances \cite{lee2018mahalanobis}. The last is
+the baseline of Section~\ref{sec:adv-reads}; it detects out-of-distribution
+inputs and attacks with one score, an early sign that such detectors respond to
+a generic departure from clean data. Most of these detectors fail against
+adaptive attackers
 \cite{carlini2017bypassing_detection,sharma2018bypassing_feature_squeezing,athalye2018obfuscated_gradients,tramer2020adaptive_attacks},
-detection being provably about as hard as robust classification
-\cite{tramer2022detection_hardness}, and rigorous-evaluation guidelines followed
-\cite{carlini2019evaluating_robustness}, which the pre-registered gates of this
-chapter inherit. ViT-specific robustness work, from CNN comparisons to attention
-patch attacks and architectural defences
-\cite{bhojanapalli2021vit_robustness,naseer2021vit_properties,lovisotto2022attention_harmful,huang2023patchcensor},
-acts at the architecture level, leaving open the representation-level seam this
-detector occupies. What this literature rarely asks is what a working detector
-\emph{reads}: while some detectors scale a noise baseline to the attack's
-magnitude \cite{feinman2017adversarial_artifacts,ma2018lid_adversarial}, the
-benign negatives are not verified to match each attack family, let alone matched
-in activation displacement, so displacement and adversarialness stay
-confounded. That verified per-family match, and above all the
-displacement-matched regime, is this chapter's subject. % [EXT]
+detection is about as hard as robust classification
+\cite{tramer2022detection_hardness}, and guidelines for rigorous evaluation
+followed \cite{carlini2019evaluating_robustness}. Work on ViT robustness acts on
+the architecture
+\cite{bhojanapalli2021vit_robustness,naseer2021vit_properties,lovisotto2022attention_harmful,huang2023patchcensor}.
+This literature rarely asks what a working detector reads. Some detectors scale
+a noise baseline to the input norm of the attack
+\cite{feinman2017adversarial_artifacts,ma2018lid_adversarial}, but the match is
+not verified for each attack family, and no control matches the activation
+displacement, so displacement and adversarial effect stay confounded. % [EXT]
 
-\paragraph*{Sparse autoencoders for vision models.}
+\paragraph*{Controls for what a probe reads.}
+High probe accuracy does not show that a representation encodes a property: a
+probe needs a control that removes the property and keeps everything else
+\cite{hewitt2019control_tasks,belinkov2022probing_classifiers}, and an
+explanation method needs a test that it can fail
+\cite{adebayo2018sanity_checks_saliency}. In SAE probing, simple baselines on
+the raw activations match SAE probes \cite{kantamneni2025sae_probing}, which
+agrees with the comparison of $a$ and $z$ in Section~\ref{sec:adv-scope}. In
+out-of-distribution detection, feature-based scores answer a different question
+from the one they are used for: a far feature-space distance is not the same as
+being out of distribution \cite{li2025ood_wrong_questions}, and the feature
+norm behaves like the confidence of a hidden classifier
+\cite{park2023feature_norm_ood}. The benign perturbations matched in
+displacement are the control task of an adversarial-detection probe. % [EXT]
+
+\paragraph*{Sparse autoencoders and adversarial inputs.}
 The Background chapter (Chapter~\ref{chpt:background}) introduces SAEs as
-overcomplete dictionaries of sparse, often monosemantic features. On vision
-backbones the extraction machinery has matured rapidly: concept discovery and
-naming
+overcomplete dictionaries of sparse features. On vision backbones the methods
+have matured: concept discovery and naming
 \cite{rao2024discover_then_name,gorton2024curve_detectors_sae,pach2025sae_monosemantic_vlm,lim2025sae_visual_concepts,zaigrajew2025clip_hierarchical_sae,stevens2025testable_vision_sae},
-dictionary stability and cross-model alignment
-\cite{fel2025archetypal_sae,thasarathan2025universal_sae}, and causal steering
-of ViT features
-\cite{joseph2025steering_clip_sae,han2025causal_sae_vision}. This chapter takes
-that machinery as given and uses it as a measuring instrument: the clean-trained
-SAE defines the on-/off-manifold split of Equation~\eqref{eq:adv-decomp}, and
-the question is whether its features carry attack-specific information. % [EXT]
+dictionary stability and alignment
+\cite{fel2025archetypal_sae,thasarathan2025universal_sae}, and steering of ViT
+features \cite{joseph2025steering_clip_sae,han2025causal_sae_vision}. This
+chapter uses the SAE as a measuring instrument. SAEgis \cite{wang2026saegis}
+is, to our knowledge, the only SAE-based adversarial detector
+(Section~\ref{sec:adv-reconciliation}). Adjacent work removes unsafe concepts
+with SAEs \cite{geng2025sae_unsafe_concepts}, attacks SAE concept
+representations \cite{li2026sae_concept_robustness}, and links superposition to
+adversarial vulnerability \cite{bereska2025superposition_lossy}. None of these
+supplies a displacement-matched control. % [EXT]
 
-\paragraph*{SAEs meet adversarial inputs.}
-The intersection is nascent. SAEgis \cite{wang2026saegis} is, to our knowledge,
-the only SAE-based adversarial \emph{detector}, a deployment-oriented firewall
-for vision--language models; Section~\ref{sec:adv-reconciliation} reconciles
-this chapter's characterization with its findings. Adjacent work removes unsafe
-concepts with SAEs \cite{geng2025sae_unsafe_concepts}, shows that SAE concept
-representations are themselves attackable \cite{li2026sae_concept_robustness},
-the concern behind the adaptive-attack item left for future work, and links
-superposition to adversarial vulnerability \cite{bereska2025superposition_lossy}.
-None of these supplies the magnitude- or displacement-matched control
-contributed here. % [EXT]
-
-\paragraph*{Sensitivity, local linearity, and amplification.}
-Whether a small input perturbation grows into a large internal displacement is a
-question of network sensitivity, and it has a literature. The linear view of
-adversarial examples already predicts that a norm-bounded input perturbation
-induces an activation change that scales with dimensionality
-\cite{goodfellow2015fgsm}; the layer-to-layer amplification is governed by the
-Lipschitz constant, which can grow sharply with depth unless constrained
-\cite{cisse2017parseval}; and perturbations imperceptible in pixel space are
-known to surface as substantial noise in intermediate feature maps
-\cite{xie2019feature_denoising}. A smaller line studies transformers through
-Jacobians and local linearity: activation steering via local-linear models
-\cite{skifstad2026local_linearity}, layer-wise Jacobian regularization
-\cite{martnishn2026dreg_jacobian}, Fisher-spectral robustness measures
-\cite{zhang2026fisher_robustness}, and Lipschitz bounds on attention
-\cite{yudin2025attention_lipschitz}. That work seeks to bound, denoise, or
-exploit the amplification; this chapter \emph{measures} it per example and asks
-what a detector reading the resulting displacement responds to. The
-head-subspace ablation of Section~\ref{sec:adv-residue} is the simplest exact
-member of the Jacobian family, with $J{=}W$ at the head input. % [EXT]
+\paragraph*{Sensitivity and amplification.}
+Jacobian and local-linearity methods for transformers are used for steering,
+regularization and robustness measures
+\cite{skifstad2026local_linearity,martnishn2026dreg_jacobian,zhang2026fisher_robustness,yudin2025attention_lipschitz};
+the head split of Section~\ref{sec:adv-reads} is the simplest exact case,
+$J{=}W$ at the head input, used to ask what a detector reads. That a small
+input perturbation grows into a large internal displacement is also known. The
+linear view predicts activation changes that scale with the dimension
+\cite{goodfellow2015fgsm}, the Lipschitz constant can grow with depth
+\cite{cisse2017parseval}, adversarial perturbations appear as noise in
+intermediate feature maps \cite{xie2019feature_denoising}, and a denoiser fails
+because the network amplifies the residual perturbation towards the top layers
+\cite{liao2018hgd_denoiser}. For linear classifiers, the adversarial direction
+moves the output more than random noise of equal norm, by a factor that grows
+with the dimension \cite{fawzi2016robustness_adversarial_to_random_noise}. That
+work bounds or removes the amplification; this chapter measures it per example
+(Section~\ref{sec:adv-amplification}) and asks what a detector that reads the
+resulting displacement responds to. % [EXT]
 
 % =============================================================================
 \section{The instrument}
 \label{sec:adv-instrument}
+% Definitions only; no results.
 
-\subsection{Models and activations}
+\subsection{Model, data and activations}
 \label{sec:adv-models}
 The system is a Vision Transformer \emph{classifier}, not a vision--language
-model: an ImageNet-1k \cite{deng2009imagenet} pretrained ViT-B/16 backbone
-\cite{dosovitskiy2021vit} with a linear-probe classification head trained on
-CIFAR-10 \cite{krizhevsky2009cifar} for three epochs (validation accuracy
-$0.952$). % src: config/model/vit_b16.yaml; DESIGN_CHOICES.md §D1 [EST]
-ViT-B/16 is the primary model and ViT-L/16 the scale check (head validation
-accuracy $0.9548$). % src: config/model/vit_l16.yaml [EST]
+model: an ImageNet-1k-pretrained ViT-B/16 backbone
+\cite{deng2009imagenet,dosovitskiy2021vit} with a linear classification head
+trained on CIFAR-10 \cite{krizhevsky2009cifar} (validation accuracy $0.952$).
+% src: config/model/vit_b16.yaml; DESIGN_CHOICES.md §D1 [EST]
 CIFAR-10 images are upsampled to $224\times224$ and normalized with ImageNet
-statistics throughout, consistent with the pretrained backbone; all runs use
-seed~42 unless a multi-seed protocol is stated.
-% src: config/data/cifar10.yaml; DESIGN_CHOICES.md §D1/§D7; config/base.yaml [EST]
-
-ViT-B/16 processes each image as $197$ tokens ($196$ patches plus a class token)
-through $12$ blocks of width $768$; ViT-L/16 has $24$ blocks of width $1024$.
-The probe reads the MLP-output activations of blocks $\{0,3,6,9,10,11\}$ (and
-the final pair $\{22,23\}$ for ViT-L/16), with block~10 canonical throughout.
+statistics.
+% src: config/data/cifar10.yaml; DESIGN_CHOICES.md §D1/§D7
+ViT-B/16 processes each image as $197$ tokens ($196$ patches and a class token)
+through $12$ blocks of width $768$. We probe the MLP outputs of blocks
+$\{0,3,6,9,10,11\}$; block~10, \texttt{mlp\_10}, is the probed layer of the
+main result. Every activation is mean-pooled over the $197$ tokens, which
+limits what the probe can see (Section~\ref{sec:adv-scope}). All runs use
+seed~42 unless a five-seed protocol is stated.
 % src: config/base.yaml; experiments/2026-06-22_sae-residual-decomp/params.yaml [EST]
-Following SAE convention, every activation is \emph{mean-pooled over the $197$
-tokens}: a deliberate simplification that erases token-localized structure and
-bounds what the probe can see. Section~\ref{sec:adv-instrument-scope} states
-the bound, and Section~\ref{sec:adv-regime} measures it in the one case where it
-matters. % [EST/PRE — instrument scope]
+
+\subsection{Notation and the displacement}
+\label{sec:adv-dx-axis}
+We write $x_i$ for the clean source image $i$ and $\tilde{x}_i$ for a perturbed
+version of it, and $a$ for an activation (Section~\ref{sec:adv-sae}). Attack
+budgets $\varepsilon$ are in pixel space, with pixel values in $[0,1]$; input
+$L_2$ norms are measured in ImageNet-normalized space on the $224\times224$
+image, and all perturbations are applied after the upsampling.
+% src: src/adv_interp/attacks/fgsm.py:48-50; pgd.py:28-29; data/datamodules.py:33; scripts/calibrate_benign_l2.py:54-62; cli/generate_attacks.py:75-77
+For source image $i$ at layer $\ell$, with $a_\ell(\cdot)$ the mean-pooled
+activation, the \emph{activation displacement} is
+\begin{equation}
+  \Delta a_\ell(i) \;=\; a_\ell(\tilde{x}_i) - a_\ell(x_i),
+  \label{eq:adv-dx}
+\end{equation}
+and we measure $\lVert\Delta a\rVert_2$ per example and per layer in every run.
+The input norm is a parameter that we set; $\lVert\Delta a\rVert$ is what a
+probe at layer $\ell$ can respond to, and the two are related by an
+amplification that depends on the family
+(Section~\ref{sec:adv-amplification}).
+
+\subsection{Attacks, benign families, and matched controls}
+\label{sec:adv-attacks}
+
+We use six attacks, four benign families and one low-displacement control, the
+watermark control. All attacks are untargeted and white-box: they use the
+gradient of the ViT-B/16 classifier, head included, and they change the input
+image only. Table~\ref{tab:adv-attacks} gives the objective and the constraint
+of each attack. FGSM at $\varepsilon{=}0.004$ is the reference attack to which
+the benign families are matched, except in the PGD replication of
+Section~\ref{sec:adv-usual}, where they are matched to PGD at
+$\varepsilon{=}0.002$; FGSM and PGD are also swept over
+$\varepsilon\in\{0.001,0.002,0.004,0.008,0.012,0.016,0.024,0.032\}$, to test
+whether the AUC depends on the budget (Section~\ref{sec:adv-provenance}).
+APGD-CE repeats the main result with a stronger attack
+(Section~\ref{sec:adv-main}), and the adaptive APGD attacks the classifier and
+the probe together (Section~\ref{sec:adv-attackers}). The probe is a logistic
+regression on standardized, mean-pooled activations
+(Section~\ref{sec:adv-protocol}). It is differentiable and smooth, and it has
+no random part. Thus, gradient masking is not probable, and methods for masked
+gradients such as BPDA and EOT
+\cite{athalye2018obfuscated_gradients,tramer2020adaptive_attacks} are not
+necessary. We measure the realized input norm and the attack success rate
+(ASR) in every run; the ASR is the fraction of the images classified correctly
+when clean ($1536$ of $1600$ in the main run) whose label the attack changes:
+FGSM has $L_2=6.85$ and ASR $0.762$ at $\varepsilon{=}0.004$, PGD has ASR
+$0.922$ at $\varepsilon{=}0.002$, and CW-$L_2$ has ASR $1.000$.
+% src: 2026-06-29_h2-v2-eps0004/outputs/h2_crossval/metrics.json (l2_report); 2026-07-02_pgd-h2-eps0002/outputs/h2_crossval/metrics.json; 2026-07-21_cw-attack/outputs/full/asr_cw.json [EST]
+
+\begin{table}[ht]
+  \centering
+  \caption{Attacks. The input norm is either set by the budget $\varepsilon$ or
+  measured after the attack. The adaptive APGD and the minimal-displacement
+  attack are defined in Section~\ref{sec:adv-attackers}.}
+  \label{tab:adv-attacks}
+  \small
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.18\linewidth}>{\raggedright\arraybackslash}p{0.16\linewidth}>{\raggedright\arraybackslash}p{0.24\linewidth}>{\raggedright\arraybackslash}p{0.15\linewidth}>{\raggedright\arraybackslash}p{0.11\linewidth}@{}}
+    \toprule
+    Attack & Steps & Objective & Constraint & Input norm \\
+    \midrule
+    FGSM \cite{goodfellow2015fgsm} & $1$ & Increase the classification loss & $L_\infty\le\varepsilon$ & Set by $\varepsilon$ \\
+    PGD \cite{madry2018pgd} & $20$, step $2.5\varepsilon/20$, random start & Increase the classification loss & $L_\infty\le\varepsilon$ & Set by $\varepsilon$ \\
+    APGD-CE \cite{croce2020apgd_autoattack} & $100$, $1$ restart & Increase the classification loss & $L_\infty\le\varepsilon$ & Set by $\varepsilon$ \\
+    Adaptive APGD & $100$ per $\lambda$, $1$ restart & Wrong label and probe score below $\tau$ & $L_\infty\le\varepsilon$ & Set by $\varepsilon$ \\
+    CW-$L_2$ \cite{carlini2017cw_attack} & $50$, fixed $c{=}1$ & Decrease the input $L_2$ plus a margin term & Margin penalty ($\kappa{=}0$) & Measured \\
+    Minimal-displacement & Iterative, binary search on $c$ & Decrease $\lVert\Delta a\rVert$ at \texttt{mlp\_10} & Label must change & Measured \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph*{Benign families and two matched controls.}
+To separate ``adversarial'' from ``perturbed'', we use four benign perturbation
+families: Gaussian noise, Gaussian blur, JPEG compression, and random pixel
+dropout. Each family has one parameter, which we calibrate so that the family
+matches FGSM in one of two matched controls (Table~\ref{tab:adv-controls}).
+The displacement-matched control is exploratory
+(Section~\ref{sec:adv-provenance}). Non-matched variants of the benign
+families at $L_2\approx17$--$21$ reach AUC $0.853$--$0.938$ on $z$; they are
+never used in a decision rule.
+% src: 2026-06-29_h2-v2-eps0004 metrics.json; 2026-07-22_h2-matched-dx/outputs/h2_matched_dx_summary.json (realized_mean_dx_mlp10); calib/dx_calibration.json [EST — E1]
+
+\begin{table}[ht]
+  \centering
+  \caption{The two matched controls. Both match the benign families to FGSM at
+  $\varepsilon{=}0.004$; the PGD replication of the input-matched control
+  (Section~\ref{sec:adv-usual}) matches them to PGD at $\varepsilon{=}0.002$.}
+  \label{tab:adv-controls}
+  \small
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.17\linewidth}>{\raggedright\arraybackslash}p{0.37\linewidth}>{\raggedright\arraybackslash}p{0.37\linewidth}@{}}
+    \toprule
+     & Input-matched control & Displacement-matched control \\
+    \midrule
+    Matched quantity & Per-image input $L_2$, within $\pm20\%$ & Mean $\lVert\Delta a\rVert$ at \texttt{mlp\_10} (target $1.994$, the FGSM mean) \\
+    Method & Family parameter set from the $L_2$ target & Model-in-the-loop search on the family parameter \\
+    Verification & Ratios $0.999$--$1.008$ & Realized $1.78$--$2.06$ (calibration), $1.78$--$2.11$ (evaluation) \\
+    Granularity & Per image & Mean over images \\
+    Layers & Not layer-specific (input space) & Calibrated at \texttt{mlp\_10}; other layers inherit it \\
+    Status & Pre-specified & Exploratory, expectation written before the run \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph*{The watermark control.}
+A faint text watermark (steganography, opacity $0.03$) has an input $L_2$ of
+$2.24$ ($0.33\times$ FGSM at $\varepsilon{=}0.004$) and the smallest
+displacement of any family ($\lVert\Delta a\rVert=0.09$ at \texttt{mlp\_10},
+under $1\%$ of the clean activation norm). It anchors the low-displacement
+column of the design matrix (Table~\ref{tab:adv-design}) by measurement, not
+by assumption.
+% src: 2026-06-29_h2-v2-eps0004 metrics.json (l2_report); 2026-07-23_jpeg-matched-l2-dx/outputs/displacement_summary.json [EST]
+
+\paragraph*{The design matrix.}
+Table~\ref{tab:adv-design} crosses the functional effect (does the
+perturbation change the label?) with the activation displacement. FGSM, PGD
+and CW-$L_2$ are in the adversarial, high-displacement cell; the benign
+families are in the non-adversarial row, at low displacement in the
+input-matched control and at high displacement in the displacement-matched
+control; and the watermark control is at low displacement. No standard attack
+occupies the adversarial, low-displacement cell;
+Section~\ref{sec:adv-attackers} occupies it by construction.
+% NOTE: the non-adversarial row is labelled "not optimized against the
+% classifier" because the rate at which the displacement-matched benign
+% families change the label was not measured (paper action point A2).
+
+\begin{table}[ht]
+  \centering
+  \caption{Design matrix. In the two rows, a probe trained on a family at high
+  displacement detects it. The adversarial cell at low displacement is the
+  exception: the probe detects these examples, and the cause is an open
+  question (Section~\ref{sec:adv-attackers}).}
+  \label{tab:adv-design}
+  \small
+  \renewcommand{\arraystretch}{1.25}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.17\linewidth}>{\raggedright\arraybackslash}p{0.37\linewidth}>{\raggedright\arraybackslash}p{0.37\linewidth}@{}}
+    \toprule
+     & \textbf{Low $\lVert\Delta a\rVert$} & \textbf{High $\lVert\Delta a\rVert$} \\
+    \midrule
+    \textbf{Adversarial} \newline {\footnotesize label changes}
+     & \textbf{Empty for standard attacks} \newline
+       Minimal-displacement attack \newline
+       $\lVert\Delta a\rVert = 0.298$, ASR $1.000$ \newline
+       Input $L_\infty = 0.137$, $L_2$ $1.22\times$ FGSM \newline
+       Probe AUC $0.999$ (open question)
+     & \textbf{FGSM, PGD, CW-$L_2$} \newline
+       Optimize misclassification only \newline
+       PGD grid: $\lVert\Delta a\rVert$ $1.24$ to $3.11$ \newline
+       FGSM $2.00$, CW-$L_2$ $1.81$ \newline
+       Detected; AUC rises with $\varepsilon$ \\
+    \midrule
+    \textbf{Not optimized} \newline {\footnotesize against the classifier}
+     & \textbf{Watermark, benign at matched $L_2$} \newline
+       Watermark: $\lVert\Delta a\rVert = 0.09$, AUC $0.542$ \newline
+       Benign at matched input $L_2$: \newline
+       $\lVert\Delta a\rVert$ $0.19$ to $0.59$ \newline
+       Less detectable than FGSM
+     & \textbf{Benign at matched $\lVert\Delta a\rVert$} \newline
+       Noise, blur, JPEG, dropout \newline
+       $\lVert\Delta a\rVert$ $1.78$ to $2.11$ (target $1.994$) \newline
+       At least as detectable as FGSM \newline
+       $\dauc \le 0$ at \texttt{mlp\_10}, five seeds \\
+    \bottomrule
+  \end{tabular}
+\end{table}
 
 \subsection{Sparse autoencoders and the residual decomposition}
 \label{sec:adv-sae}
-The whole chapter rests on one decomposition of the activation,
+The SAE decomposes the activation as
 \begin{equation}
-  a \;\approx\; \hat{a} + r,
-  \qquad \hat{a} = \mathrm{dec}(z), \quad z = \mathrm{ReLU}(\mathrm{enc}(a)),
-  \qquad r = a - \hat{a},
+  a \;=\; \hat{a} + r,
+  \qquad \hat{a} = \mathrm{dec}(z), \qquad z = \mathrm{ReLU}(\mathrm{enc}(a)),
   \label{eq:adv-decomp}
 \end{equation}
-where $a$ is the mean-pooled raw activation at the probed block (the $a_\ell$ of
-Section~\ref{sec:adv-dx-axis}, with the block index dropped when it is fixed),
-$z$ the sparse latents, $\hat{a}$ the reconstruction, and $r$ the residual. The SAE is a vanilla $L_1$ SAE (input
-dimension $768$, $1024$ latents, $L_1$ penalty $0.1$; Adam, learning rate
-$10^{-3}$, batch $256$, ten epochs). % src: config/sae/default.yaml [EST]
-Crucially, it is trained on \emph{clean activations only}, so $\hat{a}$ projects
-onto the clean-data manifold and $r$ is, by construction, the off-manifold part
-the clean dictionary cannot explain. Detection AUC is evaluated for the four
-vector representations $a$, $z$, $\hat{a}$, $r$ and three scalar controls
-($\lVert r\rVert_2$, $\lVert\hat{a}\rVert_2$, $\lVert z\rVert_1$), plus a
-sparsity-matched TopK SAE ($k{=}128$) as a parametrization check.
-% src: experiments/2026-06-22_sae-residual-decomp/params.yaml; config/sae/topk.yaml; D3b_RESULTS.md §3.2 [EST]
-
-The logic of the decomposition is a competition. If interpretable SAE features
-carried the adversarial signal, the latents $z$ should win; if the signal is
-mere off-manifold displacement, the residual $r$, or even its scalar norm,
-should already capture most of it. Because the SAE is a lossy bottleneck, $z$
-can only discard detection information relative to $a$, never manufacture it,
-so ``$z$ beats $a$'' would be the signature of a feature-level signal and
-``$a \geq z$'' the signature of the SAE not being load-bearing.
+where $a$ is the mean-pooled raw activation, $z$ the sparse latents, $\hat{a}$
+the reconstruction, and $r=a-\hat{a}$ the residual. We use a vanilla $L_1$ SAE
+(input dimension $768$, $1024$ latents, $L_1$ penalty $0.1$; Adam, learning
+rate $10^{-3}$, batch $256$, ten epochs). % src: config/sae/default.yaml [EST]
+It is trained on \emph{clean activations only}, the $1600$ mean-pooled clean
+activations of the run, so $r$ is the part of the activation that the clean
+dictionary cannot explain. These clean activations are also the clean class of
+every detection task, and no clean images are held out from the SAE; this can
+raise the AUCs on $z$, $\hat{a}$ and $r$, and it does not affect the AUCs on
+$a$. We evaluate detection on the four vector representations $a$, $z$,
+$\hat{a}$, $r$ and on three scalar norms ($\lVert r\rVert_2$,
+$\lVert\hat{a}\rVert_2$, $\lVert z\rVert_1$).
+% src: experiments/2026-06-22_sae-residual-decomp/params.yaml [EST]
+% NOTE: the July version said that \hat{a} "projects onto the clean-data
+% manifold" and that r is "the off-manifold part". The residual of an SAE
+% trained on clean data is not a projection onto a manifold; the wording was
+% dropped here (the paper still carries it in its SAE appendix: action point B12).
 
 \paragraph*{SAE health gates.}
-Every $z$, $\hat{a}$, or $r$ comparison is gated on SAE health: fraction of
-variance explained (FVE) $\geq 0.9$, dead-feature fraction $\leq 30\%$, and
-$L_0$ in a sane band. % [PRE — health gate]
-The canonical-layer SAE is healthy (FVE $0.938$, $L_0\approx135$, dead fraction
-$3$--$5\%$); away from it, health varies by run, and in practice only
-\texttt{mlp\_10} and \texttt{mlp\_11} ever pass (early layers reach FVE
+Every comparison on $z$, $\hat{a}$ or $r$ is gated on the health of the SAE:
+fraction of variance explained (FVE) $\geq 0.9$ and dead-feature fraction
+$\leq 30\%$; we also report $L_0$, which has no threshold. % [PRE — health gate]
+The SAE at \texttt{mlp\_10} is healthy (FVE $0.938$, $L_0\approx135$, dead
+fraction $3$--$5\%$); away from it, health varies by run, and in practice only
+\texttt{mlp\_10} and \texttt{mlp\_11} pass (early layers reach FVE
 $0.078$--$0.352$ in the six-layer decomposition).
 % src: magnitude_sweep_metrics.csv; h2_matched_dx_summary.json; 2026-07-21_decomp-6layer [EST]
 % Internal note carried over from the paper: FVE at mlp_0 differs between runs
 % (0.75 in the 2026-06-22 decomposition vs 0.08 in the 2026-07-21 six-layer run);
 % unexplained fit difference, flagged rather than resolved.
-Tables therefore print the per-run FVE, sub-gate cells are marked, and prose
-claims about latent-dependent quantities are restricted to passing layers;
-claims about the raw activation $a$ are exempt.
+Claims about $z$, $\hat{a}$ and $r$ are therefore restricted to these two
+layers; claims about the raw activation $a$ are exempt.
 
-\subsection{The displacement axis and the design matrix}
-\label{sec:adv-dx-axis}
-The variable that $H_{D}$ refers to is not the input-space perturbation budget but the
-\emph{activation-space displacement} at the probed layer. For source image $i$
-at layer $\ell$, let $a_\ell(\cdot)$ be the mean-pooled activation and
-\begin{equation}
-  \Delta x_\ell(i) \;=\; a_\ell(\tilde{x}_i) - a_\ell(x_i),
-  \label{eq:adv-dx}
-\end{equation}
-the displacement of the perturbed input $\tilde{x}_i$ from its own clean
-activation; $\lVert\Delta x\rVert_2$ is measured \emph{per example, per layer},
-in every run. Input-space $L_2$ is a knob turned when constructing
-perturbations; $\lVert\Delta x\rVert$ is what a probe reading layer $\ell$ can
-possibly respond to. The two must not be conflated, because the network's
-input-to-activation amplification is strongly family-dependent
-(Section~\ref{sec:adv-specificity}); the amplification is itself a reported
-quantity, not an assumption. % [EST]
-
-The design space is a matrix (Table~\ref{tab:adv-design}): functional
-adversarialness (does the perturbation flip the label?) crossed with activation
-displacement. Its cells are populated by FGSM, PGD, and CW (adversarial, high
-$\lVert\Delta x\rVert$), the four benign families (non-adversarial, high or
-matched), the steganographic control (non-adversarial, low; attack success rate
-$\approx 0.0007$, so not functionally adversarial),
-% src: experiments/2026-06-29_h2-v2-eps0004/outputs/h2_crossval/metrics.json (asr block) [EST]
-and, crucially, a cell no standard attack occupies: a successful attack with
-low displacement. $H_{D}$ predicts that detectability is a function of the
-displacement column only; any perturbation that breaks row-invariance breaks
-the hypothesis. Section~\ref{sec:adv-lowdx} attempts to occupy the empty cell
-by construction.
-
-\begin{table}[ht]
-  \centering
-  \caption{The design matrix: functional adversarialness $\times$ measured
-  activation displacement. $H_{D}$ predicts detectability depends on the column
-  only. CW was the pre-registered \emph{candidate} for the top-right cell
-  (minimal input norm); measured, it lands in the top-left, because the network
-  amplifies it (Section~\ref{sec:adv-specificity}).}
-  \label{tab:adv-design}
-  \begin{tabular}{lcc}
-    \toprule
-    & High $\lVert\Delta x\rVert$ & Low $\lVert\Delta x\rVert$ \\
-    \midrule
-    Flips label      & FGSM, PGD, CW & \emph{empty} (Section~\ref{sec:adv-lowdx}) \\
-    Does not flip    & four benign families & stego (control) \\
-    \bottomrule
-  \end{tabular}
-  % src: EXPERIMENT_PLAN_ATTACKS.md §0
-\end{table}
-
-\subsection{Attacks, controls, and two matching regimes}
-\label{sec:adv-attacks}
-
-\paragraph*{Attacks.}
-The attacks are untargeted FGSM \cite{goodfellow2015fgsm} with an $L_\infty$
-budget, swept over the eight budgets from $\varepsilon{=}0.001$ to
-$\varepsilon{=}0.032$ listed in Table~\ref{tab:adv-h1};
-% src: config/attack/fgsm.yaml; experiments/2026-06-23_corrected-rerun/params.yaml [EST]
-PGD \cite{madry2018pgd} with $20$ steps over the same grid, pre-registered as
-the most rigorous H1 test;
-% src: config/attack/pgd.yaml; experiments/2026-07-02_pgd-h1h2/outputs/h1_sweep/magnitude_sweep_metrics.csv [PRE — run]
-and Carlini--Wagner $L_2$ \cite{carlini2017cw_attack}, the minimal-input-norm
-attack, as the candidate for the low-displacement adversarial cell (attack
-success rate $1.000$ on all $1600$ source images).
-% src: experiments/2026-07-21_cw-attack/outputs/full/asr_cw.json [EXPL — E7]
-Realized per-image input $L_2$ is measured in every run and checked against the
-$\varepsilon$ arithmetic: FGSM has $L_2=6.85$ at $\varepsilon{=}0.004$ and
-$20.51$ at $\varepsilon{=}0.012$ in normalized space.
-% src: 2026-06-29_h2-v2-eps0004 metrics.json (l2_report); RESEARCH_LOG.md 2026-04-23 [EST]
-Attack success rates (ASR) accompany every detection number: FGSM $0.762$ at
-$\varepsilon{=}0.004$; PGD $0.922$ at $\varepsilon{=}0.002$; CW $1.000$.
-% src: same metrics.json; 2026-07-02_pgd-h2-eps0002 metrics.json; asr_cw.json [EST]
-
-\paragraph*{The low-displacement control.}
-Steganography, a faint text watermark at opacity $0.03$, carries a near-zero
-input payload ($L_2=2.24$, $0.33\times$ FGSM at $\varepsilon{=}0.004$).
-% src: 2026-06-29_h2-v2-eps0004 metrics.json (l2_report) [EST]
-Its measured displacement is the smallest of any family
-($\lVert\Delta x\rVert=0.09$ at \texttt{mlp\_10}, under $1\%$ of the clean
-activation norm), so it anchors the low-displacement column of the design
-matrix by measurement, not by assumption.
-% src: experiments/2026-07-23_jpeg-matched-l2-dx/outputs/displacement_summary.json [EST]
-
-\paragraph*{Benign families and two matching regimes.}
-To separate ``adversarial'' from merely ``perturbed'', four benign perturbation
-families are used (Gaussian noise, Gaussian blur, JPEG compression, and random
-pixel dropout), calibrated to match the attack in one of two regimes. Under
-\emph{matched input-$L_2$}, each family's realized per-image input $L_2$ falls
-within $\pm20\%$ of the attack's, verified in-run (ratios $0.999$--$1.008$ of
-FGSM's at $\varepsilon{=}0.004$, with clean-alignment guards); non-matched
-variants at $L_2\approx17$--$21$ are reported but never gated.
-% src: 2026-06-29_h2-v2-eps0004 metrics.json [EST — closes audit gap R-C1]
-Under \emph{matched $\lVert\Delta x\rVert$}, a model-in-the-loop calibration
-searches each family's parameter until its mean displacement at the canonical
-layer matches FGSM's (target $1.994$ at \texttt{mlp\_10}; realized
-$1.78$--$2.06$, all within tolerance), the regime the displacement axis demands;
-Section~\ref{sec:adv-specificity} shows the two regimes give sharply different
-answers. % src: 2026-07-22_h2-matched-dx/outputs/calib/dx_calibration.json [EST — E1]
-
-\subsection{Leakage-free protocol and statistical controls}
+\subsection{Detection protocol and statistical controls}
 \label{sec:adv-protocol}
-Every detection AUC uses one shared routine: grouped $K$-fold cross-validation
-($K{=}5$) keyed to the \emph{source image}, so all perturbations of image~$i$
-(clean, FGSM, stego, benign) share a fold and no detector is tested on a
-near-duplicate of a training example. Features are standardized on the training
-fold only; the detector is a converged logistic regression (LBFGS, $\leq 1000$
-iterations); each binary task pits clean against \emph{one} family, never a
-pool, at $N{=}3200$ ($1600$ clean, $1600$ perturbed).
-% src: src/adv_interp/detection/evaluation.py; 2026-06-29_h2-v2-eps0004 h2_crossval/metrics.json [EST]
+Every detection AUC comes from one routine. Each binary task compares clean
+images with \emph{one} family, never a pool, at $N{=}3200$ ($1600$ clean,
+$1600$ perturbed). We use grouped $K$-fold cross-validation ($K{=}5$) by
+source image: all versions of image~$i$ (clean, attacked, benign and
+watermark) are in the same fold, so the probe is never tested on a near-copy
+of a training image. Features are standardized on the training fold only, and
+the probe is a logistic regression (LBFGS, at most $1000$ iterations).
+% src: src/adv_interp/detection/evaluation.py; experiments/2026-06-29_h2-v2-eps0004/outputs/h2_crossval/metrics.json [EST]
 
+\paragraph*{What a linear probe can read.}
+Because the probe is linear, the change of its score has a simple form. Let
+$w$ be the probe weights, $\sigma_k$ the training-fold standard deviation of
+feature $k$, and $\tilde{w}_k = w_k/\sigma_k$. The logit $s$ of a perturbed
+image then differs from the logit of its clean source by
+\begin{equation}
+  s(\tilde{x}_i) - s(x_i) \;=\; \tilde{w}^{\top}\Delta a
+  \;=\; \lVert\tilde{w}\rVert\,\lVert\Delta a\rVert\cos\theta,
+  \label{eq:adv-probe}
+\end{equation}
+where $\theta$ is the angle between $\Delta a$ and $\tilde{w}$. The probe
+therefore reads the component of $\Delta a$ along one learned direction:
+$\lVert\Delta a\rVert$ sets the scale of this component, and $\cos\theta$ sets
+its sign and the fraction of the displacement that the probe sees. Two
+families with equal $\lVert\Delta a\rVert$ can thus get different scores. The
+same form holds for each representation of Equation~\eqref{eq:adv-decomp},
+with $\Delta a$ replaced by the change of that representation.
+Equation~\eqref{eq:adv-probe} describes the shift of one example; the AUC also
+depends on how these shifts are spread over examples.
+
+\paragraph*{The detection advantage.}
 Throughout, specificity is summarized by the signed quantity
 \begin{equation}
   \dauc \;=\; \mathrm{AUC}(\text{clean vs.\ attack})
@@ -485,940 +567,830 @@ Throughout, specificity is summarized by the signed quantity
 with the maximum taken over the magnitude-matched benign families $b$. It is
 positive when the attack is more detectable than every benign perturbation of
 equal magnitude, and negative when some benign family is more detectable than
-the attack; nothing constrains its sign. The frozen H2 gate of
-Section~\ref{sec:adv-gates} is defined on this quantity.
+the attack; nothing constrains its sign. When $\dauc>0$, we say that the
+attack has a \emph{detection advantage}. Each AUC in $\dauc$ comes from a
+probe trained for its own clean-vs-family task, and
+\pendingpaper{A3}{we did not train an attack-vs-benign probe.}
 
-\paragraph*{Statistical controls (Objection~10).}
-Fold standard deviations alone understate variance, because the five folds
-share one seed, one SAE, and one attack draw. Three controls calibrate what the
-AUCs mean. A clean-vs-clean null, two independent realizations of the
-preprocessing pipeline for the same images, gives AUC $0.500\pm0.018$ over $10$
-repeats; a within-group label-permutation null gives $0.500\pm0.013$, placing
-the observed $\varepsilon{=}0.004$ FGSM AUC of $0.932$ at $p=0.0099$ over $100$
-permutations.
+\paragraph*{Statistical controls.}
+The five folds share one seed, one SAE and one attack draw, so the standard
+deviation over folds understates the variance. Four controls calibrate what
+the AUCs mean. A clean-vs-clean null gives AUC $0.500\pm0.018$ ($10$ repeats).
+A within-group label-permutation null gives $0.500\pm0.013$, which places the
+observed FGSM AUC of $0.932$ at $\varepsilon{=}0.004$ at $p=0.0099$, the
+smallest value that $100$ permutations can give.
 % src: experiments/2026-07-21_stat-package/outputs/stat_package.json (b, c blocks) [EST — E4b/E4c]
-Headline $\dauc$ values also carry a paired bootstrap over source images
-($95\%$ CI) and a five-seed replication with full SAE retraining and attack
-regeneration (Section~\ref{sec:adv-specificity}).
+The headline $\dauc$ values also carry a paired bootstrap over source images
+($95\%$ CI) and a five-seed replication, with the SAE retrained and the
+perturbations regenerated for each seed
+(Sections~\ref{sec:adv-usual} and~\ref{sec:adv-main}).
 % src: same file (a block); experiments/2026-07-02_gap-robustness/outputs/gap_robustness_summary.csv [EST — E4a/G5.3]
-Two measurement bugs caught during this work motivated these controls; both are
-documented as transferable case studies in Section~\ref{sec:adv-bugs}. For a
-study whose central claims are that a control sits at chance and that a gap
-vanishes, showing that the pipeline yields chance when it must is what makes
-those nulls credible.
-
-\paragraph*{Frozen-gate discipline.}
-The pre-registered H1/H2 gates were fixed before any run and are never
-re-evaluated on later data. Every experiment introduced after the gates failed
-is exploratory: its expectations were written down before execution, and its
-result is additive to the frozen verdict, never a substitute for it.
-% src: EXPERIMENT_PLAN_ATTACKS.md (rev. 2026-07-21, rule block) [PRE/EXPL]
-
-\subsection{Instrument scope: what pooling erases}
-\label{sec:adv-instrument-scope}
-Mean-pooling bounds the instrument, and the bound is measured rather than argued
-about. A null result in this chapter is a null of a \emph{linear} probe on
-\emph{mean-pooled} activations. Pooling over $197$ tokens erases any
-token-localized perturbation by construction, and an earlier protocol showed
-that a small non-linear probe on the same SAE latents recovered roughly $0.14$
-AUC that the linear probe could not see. % src: D3b_RESULTS.md §3.1 [EST]
-Consequently the chapter never claims that fine-grained adversarial structure is
-\emph{absent}; it claims that such structure is invisible to a
-magnitude-sensitive linear, mean-pooled probe under matched conditions. The
-sharpest case, the steganographic control, is treated as Objection~8 in
-Section~\ref{sec:adv-regime}, where the pooled null is rescoped to the
-instrument by a token-level measurement.
+We read specificity in the range before saturation
+($\varepsilon\approx0.002$--$0.004$): FGSM reaches AUC $1.000$ at
+$\varepsilon\geq0.012$, and at the ceiling no comparison can separate the two
+readings of the detector. % src: magnitude_sweep_metrics.csv
 
 % =============================================================================
-\section{The pre-registered test: H1 and H2 at the frozen budget}
-\label{sec:adv-gates}
-% Objection 0. Both gates [PRE]; every number [EST].
+\section{Step 1: the usual control shows a detection advantage}
+\label{sec:adv-usual}
+\emph{Objection: ``The input-norm match is the standard control, and it shows
+a detection advantage.''}
 
-The gates were defined as follows and never relaxed. \emph{H1 (magnitude
-invariance)} passes if, over $\varepsilon\leq0.012$, the $\varepsilon$--AUC
-correlation is near zero ($|r|<0.3$), the AUC variance is below $10^{-3}$, and
-the mean AUC exceeds $0.95$. \emph{H2 (adversarial specificity)} passes if, at
-the frozen budget $\varepsilon{=}0.012$ and against benign families of matched
-nominal $L_2$, $\dauc>0.3$ and the strongest benign family is detected below
-AUC $0.7$. % src: PLAN.md; DESIGN_CHOICES.md (frozen-gate definitions) [PRE]
-
-\subsection{H1: detectability scales with the budget, for both attacks}
-Table~\ref{tab:adv-h1} and Figure~\ref{fig:adv-h1} show detection AUC rising
-monotonically with the perturbation budget for FGSM ($0.670$ to $1.000$,
-saturating at $\varepsilon\geq0.012$) and for PGD, the pre-registered ``most
-rigorous'' H1 test ($0.663$ to $1.000$, saturating earlier).
-% src: both magnitude_sweep_metrics.csv [EST — L5]
-This is the signature of a magnitude detector, and it fails the H1 gate on all
-three criteria for both attacks: the correlation is strongly positive, the
-variance is far above the threshold, and the mean over the five budgets
-$\varepsilon\leq0.012$ is approximately $0.88$ for FGSM, below the floor.
-% src: RESEARCH_LOG.md (corrected re-run verdict); PGD CSV [PRE — gate fails]
-% The 0.88 is arithmetic on the five sourced FGSM values (0.670, 0.785, 0.932, 0.996, 1.000).
+The standard control does report a detection advantage, and a large one. In
+the input-matched control at $\varepsilon{=}0.004$, FGSM is the most
+detectable family on $z$ and on $a$ (Table~\ref{tab:adv-main}): $\dauc =
+0.199$ on $z$ at \texttt{mlp\_10}, with a paired-bootstrap $95\%$ CI of
+$[0.188, 0.212]$ and $0.204\pm0.014$ over five seeds. PGD at
+$\varepsilon{=}0.002$ gives the same picture. For this replication only, the
+benign families are matched to PGD in input $L_2$ ($3.06$); JPEG is absent,
+because its $L_2$ cannot reach the $\pm20\%$ band. $\dauc = 0.224$, with every
+benign family below $0.61$. APGD-CE at $\varepsilon{=}0.004$ also gives the
+same picture, with $\dauc = 0.271\pm0.010$ over five seeds
+(Section~\ref{sec:adv-main}).
+% src: 2026-06-29_h2-v2-eps0004 and 2026-07-02_pgd-h2-eps0002 metrics.json; stat_package.json; gap_robustness_summary.csv [EST]
+Without the displacement-matched control, this is the number that one would
+read as adversarial specificity, and it is the strongest evidence for $H_{M}$
+in the study.
 
 \begin{table}[ht]
   \centering
-  \caption{H1: detection AUC and attack success rate (ASR) versus budget
-  $\varepsilon$ under the corrected protocol, SAE latents at
-  \texttt{mlp\_10}. Both attacks show the magnitude-detector signature: AUC
-  rises monotonically and saturates ($\varepsilon\geq0.012$ for FGSM,
-  $\approx0.008$ for PGD). The pre-registered H1 invariance gate fails all
-  three criteria for both.}
-  \label{tab:adv-h1}
-  \begin{tabular}{lcccccccc}
+  \caption{Main result at \texttt{mlp\_10}, FGSM at $\varepsilon{=}0.004$. Mean
+  displacement and detection AUC of the clean-vs-family probe on the raw
+  activation $a$ and on the SAE latents $z$, in the two matched controls. Bold:
+  the most detectable benign family, which sets $\dauc$
+  (Equation~\eqref{eq:adv-dauc}); in the displacement-matched control on $a$,
+  Gaussian noise ($1.0000$) is above JPEG ($0.9999$). Each control is a
+  separate run, with the FGSM examples regenerated and the probe retrained, so
+  FGSM differs between the two controls by at most $0.001$. Five-seed values
+  are mean $\pm$ standard deviation, with the SAE retrained and the
+  perturbations regenerated for each seed.}
+  \label{tab:adv-main}
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{@{}lcccccc@{}}
     \toprule
-    $\varepsilon$ & 0.001 & 0.002 & 0.004 & 0.008 & 0.012 & 0.016 & 0.024 & 0.032 \\
+     & \multicolumn{3}{c}{Input-matched control} & \multicolumn{3}{c}{Displacement-matched control} \\
+    \cmidrule(lr){2-4}\cmidrule(lr){5-7}
+    Family & $\lVert\Delta a\rVert$ & AUC on $a$ & AUC on $z$ & $\lVert\Delta a\rVert$ & AUC on $a$ & AUC on $z$ \\
     \midrule
-    FGSM AUC & 0.670 & 0.785 & 0.932 & 0.996 & 1.000 & 1.000 & 1.000 & 1.000 \\
-    FGSM ASR & 0.382 & 0.619 & 0.762 & 0.819 & 0.832 & 0.831 & 0.817 & 0.808 \\
-    PGD AUC  & 0.663 & 0.827 & 0.969 & 0.993 & 0.999 & 1.000 & 1.000 & 1.000 \\
-    PGD ASR  & 0.580 & 0.922 & 0.999 & 1.000 & 1.000 & 1.000 & 1.000 & 1.000 \\
+    FGSM & $2.00$ & $0.989$ & $0.932$ & $2.00$ & $0.989$ & $0.933$ \\
+    Gaussian noise & $0.19$ & $0.673$ & $0.574$ & $2.01$ & $\mathbf{1.000}$ & $0.994$ \\
+    Gaussian blur & $0.59$ & $\mathbf{0.923}$ & $\mathbf{0.733}$ & $1.78$ & $0.998$ & $0.954$ \\
+    JPEG & $0.28$ & $0.721$ & $0.604$ & $2.06$ & $1.000$ & $\mathbf{0.995}$ \\
+    Dropout & $0.21$ & $0.705$ & $0.617$ & $2.11$ & $0.999$ & $0.989$ \\
+    \midrule
+    $\dauc$, seed 42 & & $+0.066$ & $+0.199$ & & $-0.011$ & $-0.062$ \\
+    $\dauc$, five seeds & & $+0.065\pm0.006$ & $+0.204\pm0.014$ & & $-0.013\pm0.002$ & $-0.063\pm0.003$ \\
+    \bottomrule
+  \end{tabular}
+  % src: figures/tab_main.tex in the paper repository (generated by figures/src/tab_main.py)
+\end{table}
+
+% =============================================================================
+\section{Step 2: the usual control is not matched in activation displacement}
+\label{sec:adv-amplification}
+\emph{Objection: ``The benign perturbations have the same input norm as the
+attack, so they have the same magnitude.''}
+
+The input norm does not set the displacement
+(Figure~\ref{fig:adv-amplification}). At matched input $L_2$
+($\varepsilon{=}0.004$), FGSM arrives at \texttt{mlp\_10} with
+$\lVert\Delta a\rVert=2.00$, and the four benign families arrive with
+$0.19$--$0.59$ (Table~\ref{tab:adv-main}).
+% src: experiments/2026-07-21_attack-lib-smoke/outputs/smoke_results.json; experiments/2026-07-23_jpeg-matched-l2-dx/outputs/displacement_summary.json [EST]
+The clean activation norm at that layer is $10.0$, so the attack moves the
+activation by $20\%$ of its length and the benign families move it by
+$2$--$6\%$. CW-$L_2$ shows the same relation from the other side: it changes
+every label (ASR $1.000$) with an input $L_2$ of $4.97$, $0.72\times$ that of
+FGSM, and it still arrives with a mean $\lVert\Delta a\rVert$ of $1.81$
+(standard deviation over images $1.39$) and is detected at AUC $0.865$.
+% src: experiments/2026-07-21_cw-attack/outputs/full/cw_input_l2.json; asr_cw.json; displacement_summary.json; eval/metrics.json [EST — E7]
+PGD follows the same relation along its budget grid, from
+$\lVert\Delta a\rVert=1.24$ at $\varepsilon{=}0.001$ to $3.11$ at $0.032$; PGD
+at $\varepsilon{=}0.002$ and FGSM at $0.004$ have the same displacement
+($2.01$ and $2.00$).
+% src: experiments/2026-07-21_pgd-displacement/outputs/pgd_displacement_summary.csv [EST — E6]
+
+We call the ratio of displacement to input norm the \emph{amplification}. It
+is much larger for perturbations made by adversarial optimization, which
+follows the gradient of the network, than for the benign families. Every
+attack that optimizes misclassification alone thus lands in the
+high-displacement column of Table~\ref{tab:adv-design}. This is where
+adversarial optimization enters the account: as a cause of the displacement,
+before anything that the probe reads.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.7\linewidth]{figures/interp_adv/fig_amplification.pdf}
+  \caption{Input norm and displacement at \texttt{mlp\_10}. At the same input
+  $L_2$, FGSM arrives with $3$--$10\times$ the displacement of the benign
+  families; CW-$L_2$ changes every label with a smaller input norm and still
+  arrives with an attack-scale displacement; PGD arrives with $2.01$ at
+  $\varepsilon{=}0.002$ and $2.50$ at $\varepsilon{=}0.004$; the watermark
+  control almost does not move the activation.}
+  % src: figures/src/fig_amplification.py (paper repository)
+  \label{fig:adv-amplification}
+\end{figure}
+
+% =============================================================================
+\section{Step 3: matched displacement removes the detection advantage}
+\label{sec:adv-main}
+\emph{Objection: ``The displacement match is the wrong control.''}
+
+The probe reads $\Delta a$ at its layer (Equation~\eqref{eq:adv-probe}) and
+does not see the input norm, so the quantity to match is
+$\lVert\Delta a\rVert$. The displacement-matched control is the decisive one.
+We calibrate the four benign families to FGSM's displacement at
+\texttt{mlp\_10} (Section~\ref{sec:adv-attacks}) and train the clean-vs-family
+probes again at every layer. Table~\ref{tab:adv-main} gives the AUCs at
+\texttt{mlp\_10} in the two controls. In the displacement-matched control,
+every benign family is at least as detectable as FGSM, on $z$ and on $a$, so
+$\dauc$ is negative. The matched benign families are strong corruptions (for
+example, blur with $\sigma=8.00$ and JPEG quality $17$;
+Table~\ref{tab:adv-params}), and most of their AUCs are near the ceiling. At
+\texttt{mlp\_11}, $\dauc=-0.078$ on $z$ (dropout).
+% src: 2026-07-22_h2-matched-dx/outputs/h2_matched_dx_summary.json; decomposition_metrics.csv; figures/src/tab_main.py [EST — E1]
+
+A five-seed replication retrains the SAE and regenerates the perturbations for
+each seed, and it verifies the displacement match in all $25$ family--seed
+cells (the four benign families and FGSM, in five seeds). On $z$, the mean and
+the $+2\sigma$ upper bound of $\dauc$ stay negative at \texttt{mlp\_10}
+(Table~\ref{tab:adv-main}) and at \texttt{mlp\_11} ($-0.076\pm0.005$). On $a$,
+the mean $\dauc$ is zero or negative at all six layers, from $-0.032\pm0.001$
+at \texttt{mlp\_9} to $0.000\pm0.000$ at \texttt{mlp\_3}.
+% src: experiments/2026-07-23_h2-matched-dx-multiseed/outputs/multiseed_summary.csv; multiseed_verdict.json; README.md (caveat) [EST — replicated 2026-07-23]
+
+The detection advantage of $0.199$ in the input-matched control therefore
+needs no adversarial meaning to explain it: it is the amplification of
+Section~\ref{sec:adv-amplification}, read by a control that is matched in the
+wrong quantity.
+
+\subsection{The match at each layer}
+\label{sec:adv-dx-layers}
+The displacement-matched control is calibrated at \texttt{mlp\_10} only, so
+``$\dauc\le0$ at every layer'' would overstate the result.
+Table~\ref{tab:adv-dx-layers} gives the realized mean displacement of each
+family at each probed layer, and Table~\ref{tab:adv-params} gives the
+calibrated parameter of each benign family in the two matched controls. At
+\texttt{mlp\_9} and \texttt{mlp\_11} every benign family has a smaller mean
+displacement than FGSM ($0.64$--$0.97\times$), and it is still at least as
+detectable; these layers agree with the result at \texttt{mlp\_10}. At
+\texttt{mlp\_0} and \texttt{mlp\_3} every benign family has a larger mean
+displacement than FGSM ($1.1$--$10.5\times$), so $\dauc\le0$ at these layers
+is not evidence about equal displacement. In the five-seed replication, one
+flag applies: the dead-feature fraction exceeds $0.30$ at \texttt{mlp\_11} in
+two seeds, and excluding these seeds does not change the verdict.
+% src: experiments/2026-07-22_h2-matched-dx/outputs/displacement.csv; h2_matched_dx_summary.json (per_layer gap_x); calib/dx_calibration.json; config/attack/benign_*_l2_0004.yaml
+
+\begin{table}[ht]
+  \centering
+  \caption{Displacement-matched control, seed 42: mean $\lVert\Delta a\rVert$
+  of each family at each probed layer ($1600$ examples per cell), with the
+  ratio to FGSM in parentheses, and $\dauc$ on the raw activation $a$. The
+  control is calibrated at \texttt{mlp\_10}.}
+  \label{tab:adv-dx-layers}
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{@{}lcccccc@{}}
+    \toprule
+    Layer & FGSM & Noise & Blur & JPEG & Dropout & $\dauc$ on $a$ \\
+    \midrule
+    \texttt{mlp\_0} & $0.09$ & $0.91$ ($10.5\times$) & $0.21$ ($2.4\times$) & $0.33$ ($3.9\times$) & $0.86$ ($10.0\times$) & $-0.001$ \\
+    \texttt{mlp\_3} & $0.97$ & $2.47$ ($2.5\times$) & $1.07$ ($1.1\times$) & $1.92$ ($2.0\times$) & $2.42$ ($2.5\times$) & $\phantom{-}0.000$ \\
+    \texttt{mlp\_6} & $1.31$ & $1.42$ ($1.1\times$) & $1.15$ ($0.9\times$) & $2.06$ ($1.6\times$) & $1.38$ ($1.1\times$) & $-0.007$ \\
+    \texttt{mlp\_9} & $1.47$ & $1.02$ ($0.70\times$) & $0.94$ ($0.64\times$) & $1.38$ ($0.94\times$) & $1.00$ ($0.68\times$) & $-0.032$ \\
+    \texttt{mlp\_10} & $2.00$ & $2.01$ ($1.00\times$) & $1.78$ ($0.89\times$) & $2.06$ ($1.03\times$) & $2.11$ ($1.05\times$) & $-0.011$ \\
+    \texttt{mlp\_11} & $1.08$ & $0.93$ ($0.87\times$) & $0.91$ ($0.84\times$) & $1.05$ ($0.97\times$) & $0.91$ ($0.84\times$) & $-0.011$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[ht]
+  \centering
+  \caption{Calibrated parameter of each benign family in the two matched
+  controls (FGSM at $\varepsilon{=}0.004$, seed 42).}
+  \label{tab:adv-params}
+  \small
+  \begin{tabular}{@{}llcc@{}}
+    \toprule
+    Family & Parameter & Input-matched control & Displacement-matched control \\
+    \midrule
+    Gaussian noise & Standard deviation $\sigma$ & $0.0040$ & $0.0266$ \\
+    Gaussian blur & Standard deviation $\sigma$ & $1.17$ & $8.00$ \\
+    JPEG & Quality & $93$ & $17$ \\
+    Dropout & Pixel probability $p$ & $6.2\times10^{-5}$ & $3.1\times10^{-3}$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{A stronger attack}
+\label{sec:adv-apgd-ce}
+FGSM is a weak attack, so we repeat the two matched controls with APGD-CE
+\cite{croce2020apgd_autoattack} at the same budget ($\varepsilon{=}0.004$; ASR
+$1.000$; five seeds). The test was pre-specified, with the decision rule of
+the five-seed replication: the attack has a detection advantage if the mean
+minus $2\sigma$ of $\dauc$ is above $0.05$, and none if the mean plus
+$2\sigma$ is below $0.05$. APGD-CE arrives at \texttt{mlp\_10} with a mean
+$\lVert\Delta a\rVert$ of $2.70$ on the calibration images, $1.35\times$ that
+of FGSM, with a smaller input $L_2$ ($6.03$ against $6.85$ in seed $42$). In
+the input-matched control we use the benign families matched to FGSM (their
+input $L_2$ is $1.12$--$1.15\times$ that of APGD-CE); in the
+displacement-matched control we calibrate them again to
+$\lVert\Delta a\rVert = 2.70$ (realized ratios $0.96$--$1.05$).
+% src: experiments/2026-10-19_apgd-p7/outputs/pilot/seed42/pilot_metrics.json; calib/dx_calibration.json; metrics.json (matching_per_seed); JOURNAL_V3.md §8b [PRE — P7]
+
+In the input-matched control the attack again has a detection advantage:
+$\dauc = 0.077\pm0.005$ on $a$ and $0.271\pm0.010$ on $z$ at \texttt{mlp\_10}.
+In the displacement-matched control it disappears ($\dauc = -0.001\pm0.000$ on
+$a$ and $-0.003\pm0.001$ on $z$), but at the ceiling: the most detectable
+benign family (Gaussian noise) is at AUC $1.000$ on $a$ and $0.999$ on $z$, so
+$\dauc$ cannot be much above zero.
+% src: experiments/2026-10-19_apgd-p7/outputs/metrics.json (gated_cells); p7_cells.csv [PRE — P7 branch B]
+\pendingpaper{A1}{The evidence that the advantage disappears at equal
+displacement therefore comes from FGSM on $z$, where FGSM ($0.933$) and blur
+($0.954$) are below the ceiling; a replication with APGD-CE below the ceiling
+is not available.}
+
+\subsection{The result is not a property of the SAE, and pooling bounds it}
+\label{sec:adv-scope}
+\emph{Objection: ``The result is a property of the SAE or of the pooling.''}
+
+\paragraph*{The SAE is not needed for detection.}
+At $\varepsilon{=}0.004$, the raw activation $a$ detects FGSM at $0.989$, and
+the latents $z$ at $0.932$; for detection, this SAE loses signal.
+% src: experiments/2026-06-30_decomp-eps0004/outputs/decomposition_metrics.csv [EST — L2]
+In the displacement-matched control, the sign of $\dauc$ is the same on $a$
+and on $z$ (Table~\ref{tab:adv-main}); on $a$, the comparison is at the
+ceiling. The SAE also raises the apparent specificity in the input-matched
+control: $\dauc$ is $0.199$ on $z$ and $0.178$ on $\hat{a}$, against $0.079$
+on $r$ and $0.066$ on $a$ (Table~\ref{tab:adv-representations}). This
+advantage also depends on depth: it is negative at \texttt{mlp\_0} and rises
+to $0.204\pm0.014$ at \texttt{mlp\_10} over five seeds, while detection of the
+displacement is already present at the first block.
+% src: experiments/2026-07-02_gap-robustness/outputs/gap_robustness_summary.csv [EST]
+
+\begin{table}[ht]
+  \centering
+  \caption{Detection AUC per representation at \texttt{mlp\_10}, input-matched
+  control, $\varepsilon{=}0.004$, one seed (FVE $0.938$). The vector
+  representations detect the displacement; the scalar norms are near chance.
+  $\dauc$ is FGSM minus the most detectable benign family.}
+  \label{tab:adv-representations}
+  \small
+  \begin{tabular}{@{}lccccccc@{}}
+    \toprule
+    Family & $a$ & $z$ & $\hat{a}$ & $r$ & $\lVert r\rVert$ & $\lVert\hat{a}\rVert$ & $\lVert z\rVert_1$ \\
+    \midrule
+    FGSM & $0.989$ & $0.932$ & $0.963$ & $0.990$ & $0.594$ & $0.570$ & $0.578$ \\
+    Noise & $0.673$ & $0.574$ & $0.608$ & $0.660$ & $0.505$ & $0.512$ & $0.510$ \\
+    Blur & $0.923$ & $0.733$ & $0.785$ & $0.911$ & $0.540$ & $0.557$ & $0.552$ \\
+    JPEG & $0.721$ & $0.604$ & $0.653$ & $0.698$ & $0.501$ & $0.515$ & $0.514$ \\
+    Dropout & $0.705$ & $0.617$ & $0.659$ & $0.687$ & $0.516$ & $0.507$ & $0.506$ \\
+    \midrule
+    $\dauc$ & $+0.066$ & $+0.199$ & $+0.178$ & $+0.079$ & $+0.054$ & $+0.013$ & $+0.026$ \\
+    \bottomrule
+  \end{tabular}
+  % src: figures/tab_representations.tex in the paper repository; experiments/2026-06-30_decomp-eps0004/outputs/decomposition_metrics.csv
+\end{table}
+
+\paragraph*{Pooling hides localized signal.}
+Mean-pooling over $197$ tokens can remove a localized perturbation, and the
+pooled probe does not detect the watermark control ($0.542$ on $a$, $0.519$ on
+$z$ at \texttt{mlp\_10}). A token-by-token probe finds the watermark tokens:
+the best single token reaches AUC $0.667\pm0.010$ (standard deviation over the
+five folds; Figure~\ref{fig:adv-token}).
+% src: experiments/2026-07-21_stego-token/outputs/token_probe_metrics.json [EST — E9]
+The watermark is therefore invisible to the pooled probe because its pooled
+displacement is small ($\lVert\Delta a\rVert=0.09$), not because the
+activations carry no trace of it. This limits every null result of the chapter
+to pooled probes (Section~\ref{sec:adv-closing}).
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.5\linewidth]{figures/interp_adv/fig_token.pdf}
+  \caption{Per-token detection AUC of the watermark control at
+  \texttt{mlp\_10} (probe on $a$, one token at a time; the $14\times14$ grid of
+  image patches). The watermark tokens at the top of the image are detected
+  (best token $0.667$), while the mean-pooled probe reaches $0.542$ and the
+  class token $0.517$.}
+  % src: figures/src/appendix_items.py; 2026-07-21_stego-token/outputs/token_probe_metrics.json
+  \label{fig:adv-token}
+\end{figure}
+
+% =============================================================================
+\section{Step 4: the probe reads a direction, not the change of the label}
+\label{sec:adv-reads}
+\emph{Objection: ``Matching $\lVert\Delta a\rVert$ removes exactly the
+adversarial signal, because adversarial examples are defined by a large
+displacement.''}
+
+If this objection were correct, the probe would respond to the property that
+makes an example adversarial: the change of the label. Two experiments show
+that it does not.
+
+\subsection{Detection does not depend on attack success}
+\label{sec:adv-success}
+We split the FGSM examples by whether the attack changed the label. At every
+budget below saturation, successful and failed attacks are equally detectable:
+AUC $0.780$ vs.\ $0.782$ at $\varepsilon{=}0.002$ ($950$ and $650$ examples),
+$0.928$ vs.\ $0.939$ at $0.004$ ($1170$ and $430$), and $0.997$ vs.\ $0.999$
+at $0.008$. The second group holds all the other images, including the $64$
+that the model misclassifies when clean.
+% src: experiments/2026-07-21_success-conditioned/outputs/metrics.json [EST — E3]
+The probe responds to the perturbation in activation space, not to its effect
+on the label.
+
+\subsection{The head split}
+\label{sec:adv-head-split}
+A displacement can change the label only through the part of it that changes
+the logits. The classification head is linear, $Z = Wh + b$ with
+$W\in\mathbb{R}^{10\times768}$, on the class token $h$ of the last block after
+the final LayerNorm, so the Jacobian of the logits is exact, $J=W$, and each
+displacement $\Delta h$ of the head input splits into two orthogonal parts:
+\begin{equation}
+  \Delta h = \Delta h_{\parallel} + \Delta h_{\perp},
+  \qquad \Delta h_{\parallel} = W^{+}W\,\Delta h,
+  \label{eq:adv-split}
+\end{equation}
+where $W^{+}$ is the pseudo-inverse of $W$. The \emph{functional component}
+$\Delta h_{\parallel}$ is the only part that changes the logits; the
+\emph{non-functional component} satisfies $W\Delta h_{\perp}=0$. The row space
+of $W$ has at most $10$ of the $768$ dimensions, so an isotropic displacement
+puts about $1.3\%$ of its energy in $\Delta h_{\parallel}$. We train the probe
+of Section~\ref{sec:adv-protocol} on $\Delta h$, on $\Delta h_{\parallel}$ and
+on $\Delta h_{\perp}$ separately. On FGSM at $\varepsilon{=}0.004$ ($1600$
+examples), $87.7\%$ of the energy of $\Delta h$ is in $\Delta h_{\perp}$, and
+a probe restricted to $\Delta h_{\perp}$ loses nothing: the AUC is $0.968$ on
+the full $\Delta h$, $0.967$ on $\Delta h_{\perp}$ alone, and $0.694$ on
+$\Delta h_{\parallel}$ alone, which is above chance.
+% src: experiments/2026-07-21_jacobian/outputs/e12a_full/jacobian_metrics.json [EST — E12a]
+
+Three notes limit this result. First, the attack does concentrate energy in
+$\Delta h_{\parallel}$: the measured $12.3\%$ is about $10\times$ the isotropic
+expectation of $1.3\%$, so $\Delta h_{\parallel}$ is not empty of signal.
+Second, the two subspaces have very different dimensions (at most $10$ and
+about $758$), so the AUCs show where the signal is and are not a paired
+comparison. Third, the split is exact at the head input and not at
+\texttt{mlp\_10}, because the map from \texttt{mlp\_10} to the logits is not
+linear; there we use the local per-example Jacobian of the logits with respect
+to the mean-pooled \texttt{mlp\_10} activation, evaluated at the clean input,
+in place of $W$. The AUC of $0.968$ is that of a probe on the head input,
+which is lower than that of the probe on $a$ at \texttt{mlp\_10} ($0.989$).
+% src: src/adv_interp/cli/compute_jacobian.py:79-81,126-131,195-200; analysis/jspace.py:42-44; EXPERIMENT_PLAN_ATTACKS.md:194-216
+
+One case stays open: an attack that is built to have a small displacement
+(Section~\ref{sec:adv-attackers}).
+
+\subsection{The probe does not read only the size of the displacement}
+\label{sec:adv-not-size}
+The scalar norms ($\lVert r\rVert$, $\lVert\hat{a}\rVert$, $\lVert z\rVert_1$)
+lose the detection signal: they detect FGSM at $0.57$--$0.59$, where the
+vector representations reach $0.93$--$0.99$
+(Table~\ref{tab:adv-representations}). This agrees with a probe that reads the
+direction of the displacement and not only its size.
+% src: 2026-06-30_decomp-eps0004 decomposition_metrics.csv; 2026-07-02_signal-zoo/outputs/zoo/zoo_metrics.csv [EST]
+The budget sweep gives a second example: PGD at $\varepsilon{=}0.002$ and FGSM
+at $\varepsilon{=}0.004$ arrive with the same mean displacement ($2.01$ and
+$2.00$), and they are detected at different AUCs on $z$ ($0.827$ and $0.932$;
+Table~\ref{tab:adv-h1}).
+% [EST — the two numbers are in tab:adv-h1 and in sec:adv-amplification; the comparison itself is from ACTION_POINTS_ARTUR.md B1, not from main.tex]
+
+A Mahalanobis distance in the simplest form of \citeonline{lee2018mahalanobis}
+(one Gaussian on the clean training-fold activations at one layer), on the
+same mean-pooled activations and splits, reaches $0.710$ on FGSM at
+$\varepsilon{=}0.004$ and \texttt{mlp\_10}, where the logistic probe reaches
+$0.989$, and it is near chance on the input-matched benign families
+($0.482$--$0.557$) and on the watermark control ($0.498$).
+% src: experiments/2026-07-21_mahalanobis/outputs/maha_vs_logit.csv; maha_baseline.py (single clean Gaussian, shrinkage 1e-3, per-layer) [EST — E8]
+The baseline is run without the layer-wise ensemble and the input
+pre-processing of the original method, so the claim is not that the method
+fails; it is that the probe reads a learned direction in displacement space
+(Equation~\eqref{eq:adv-probe}), not a generic off-manifold distance.
+
+\subsection{What remains at equal displacement: the collapse test}
+\label{sec:adv-collapse}
+\emph{Objection: ``$\dauc$ is negative, not zero, so something remains.''}
+
+What remains is direction. By Equation~\eqref{eq:adv-probe}, the change of
+the probe score depends on $\lVert\Delta a\rVert$ and on $\cos\theta$. The
+displacement-matched control matches $\lVert\Delta a\rVert$ but not $\theta$,
+so families with equal displacement can still get different scores. The
+collapse test asks what this direction separates.
+
+We train one clean-vs-FGSM probe on $z$ at \texttt{mlp\_10} (held-out AUC
+$0.933$) and score the benign families with it, without training it again. We
+pair each score with the $\lVert\Delta a\rVert$ of its example, and a nested
+$F$-test asks whether family identity adds explanatory power to a polynomial
+in $\lVert\Delta a\rVert$.
+% src: experiments/2026-07-22_collapse-e5/outputs/metrics.json (protocol block) [EXPL — E5, expectations pre-stated]
+If the probe read only $\lVert\Delta a\rVert$, all families would fall on one
+curve. They do not: family identity adds explanatory power
+($\Delta R^2=0.373$, $F=1204$, $8000$ examples, $p\approx0$;
+Figure~\ref{fig:adv-collapse}). % src: same file (collapse_test) [EST]
+In the matched band $\lVert\Delta a\rVert\in[1.8,2.2]$, Gaussian noise scores
+as high as FGSM ($0.890$ against $0.877$), and the smooth families score low
+(JPEG $0.291$, blur $0.206$; dropout $0.519$).
+% src: same file (per_family_score, matched band) [EST]
+This agrees with the view that adversarial examples and errors under Gaussian
+noise come from one property of the model
+\cite{gilmer2019adversarial_examples_noise}.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.6\linewidth]{figures/interp_adv/fig_collapse.pdf}
+  \caption{Collapse test at \texttt{mlp\_10}: mean score of the clean-vs-FGSM
+  probe on $z$, applied without retraining to each family, in bins of
+  $\lVert\Delta a\rVert$ ($1600$ examples per family, displacement-matched
+  families). The shaded band is the matched band
+  $\lVert\Delta a\rVert\in[1.8,2.2]$. The families do not fall on one curve: at
+  equal displacement, Gaussian noise scores like FGSM, and the smooth families
+  score low.}
+  % src: figures/src/appendix_items.py; 2026-07-22_collapse-e5/outputs/collapse_table.csv
+  \label{fig:adv-collapse}
+\end{figure}
+
+The direction that the FGSM probe learns therefore separates noise-like from
+smooth perturbations, not attacks from benign perturbations. We call this
+property \emph{texture}, as an operational hypothesis. We do not measure the
+frequency content of the perturbations, and dropout, whose sparse impulses
+carry high-frequency energy, falls between noise and the smooth families. The
+test measures how well the FGSM direction transfers to each family, not how
+detectable each family is: with its own probe, each smooth family is detected
+at least as well as FGSM (Section~\ref{sec:adv-main}).
+% NOTE (B13): the research journal treats this single-detector result as a
+% candidate for the main result of the paper (partial, three of five seeds).
+% If the paper adopts it, this subsection moves up and the per-family probes of
+% sec:adv-main become the supporting evidence.
+
+\paragraph*{The refined claim.}
+Together with Section~\ref{sec:adv-main}, this result gives the refined form
+of $H_{D}$: the probe reads the displacement along a learned direction, and at
+equal displacement this direction separates noise-like from smooth
+perturbations. Adversarial optimization is a cause of the large displacement,
+but the probe does not read adversarial meaning.
+
+% =============================================================================
+\section{Step 5: two attackers, a smaller displacement and a different direction}
+\label{sec:adv-attackers}
+\emph{Objection: ``If the probe reads displacement, an attacker can evade it
+with an example that has a low displacement.''}
+
+FGSM, PGD and CW-$L_2$ do not try to keep the displacement small. We therefore
+built an attack that does, and a second attack that uses the probe itself.
+
+\subsection{The minimal-displacement attack}
+\label{sec:adv-lowdx}
+For each image, the attack minimizes the displacement at the probed layer,
+\begin{equation}
+  \min_{\tilde{x}} \;\lVert a_{10}(\tilde{x}) - a_{10}(x_i)\rVert_2^2
+  \;+\; c\cdot\max\bigl(\mathrm{margin}(\tilde{x}), -\kappa\bigr),
+  \label{eq:adv-mindisp}
+\end{equation}
+where $a_{10}$ is the mean-pooled \texttt{mlp\_10} activation and
+$\mathrm{margin}(\tilde{x})$ is the logit of the true class minus the largest
+other logit. A tanh reparametrization keeps $\tilde{x}$ in pixel space, and an
+outer binary search finds the smallest $c$ that still changes the label. The
+\emph{floor} is the smallest realized $\lVert\Delta a\rVert$ among successful
+iterates; by construction, it is an upper bound on the true minimum. We fixed
+the benign band in advance at $\lVert\Delta a\rVert \leq 0.30$, anchored on
+the JPEG displacement in the input-matched control ($0.284$).
+% src: experiments/2026-07-25_min-displacement-cw/README.md (pre-registration block); params.yaml; src/adv_interp/attacks/cw_min_displacement.py [EXPL — outcome branches pre-stated before the full run]
+
+\paragraph*{The low-displacement cell can be occupied.}
+On all $1536$ images that the model classifies correctly when clean, the
+attack succeeds (ASR $1.000$), with a median floor of
+$\lVert\Delta a\rVert = 0.298$ at \texttt{mlp\_10} (IQR $[0.235, 0.368]$;
+$50.7\%$ inside the benign band). This is $6.7\times$ below FGSM at
+$\varepsilon{=}0.004$ ($2.00$) and $6.1\times$ below CW-$L_2$ ($1.81$); one
+block later, at \texttt{mlp\_11}, the same images have $0.579$.
+% src: experiments/2026-07-25_min-displacement-cw/outputs/full/floor_summary.json; verdict.json [EST]
+The objective has no constraint on the input norm. The median pixel $L_\infty$
+is $0.137$, $34\times$ the FGSM budget at $\varepsilon{=}0.004$; the input
+$L_2$ is $8.39$, $1.22\times$ that of FGSM; and the perturbations are visible.
+% src: same floor_summary.json (input_linf/input_l2 blocks) [EST; L2 ratio calculated, 8.39/6.85]
+For this attack, a small displacement requires a large input perturbation, and
+the size of this cost depends on the norm: it is large in $L_\infty$ and small
+in $L_2$. The attack does not use the probe: it is adaptive to our hypothesis
+about the probe, not to the probe itself.
+
+The search reaches a stable value: the median displacement of the successful
+examples stays between $0.308$ and $0.315$ over the first five values of $c$,
+and it rises at the smaller values, where fewer attacks succeed. This per-step
+median is not the per-image floor (median $0.298$), which is the smallest
+successful displacement of each image over all steps. The search used about
+half of the planned inner budget, so each floor is an upper bound on the
+minimal displacement of its image, and a longer search could find lower values.
+% src: outputs/full/pareto_trace.csv; params.yaml (attack.search_budget_rationale) [EST — upper-bound discipline]
+
+\paragraph*{The probe is not evaded.}
+The AUC of clean against the minimal-displacement examples is $0.999$ on $a$
+and $0.990$ on $z$ at \texttt{mlp\_10}.
+% src: outputs/full/detection_auc.json (floor_set cells) [EST]
+At almost the same displacement, JPEG in the input-matched control
+($\lVert\Delta a\rVert = 0.284$) is detected at $0.604$ on $z$, which is an
+asymmetry of $\approx 0.39$ AUC at matched displacement.
+% src: detection_auc.json; 2026-06-29_h2-v2-eps0004/outputs/h2_crossval/metrics.json (benign_jpeg) [EST]
+\pendingpaper{A4}{We report this asymmetry without an interpretation, because
+one alternative explanation stays open. The input perturbation of these
+examples is much larger than that of JPEG, so its small displacement can point
+in a direction that a linear probe separates easily ($\cos\theta$ in
+Equation~\eqref{eq:adv-probe}). A benign family matched to their input
+$L_\infty$ would separate ``adversarial structure beyond displacement'' from
+``a direction caused by a large input perturbation''; this control was not
+run. This cell is the one open question of the chapter.}
+% [DECISION 2026-07-28 (Breno): reported, not interpreted; L_inf-matched control not run]
+
+The head split on these examples agrees with
+Section~\ref{sec:adv-head-split}. $92.4\%$ of the energy of their displacement
+is in $\Delta h_{\perp}$ (FGSM: $87.7\%$), and the probe signal is there: AUC
+$0.9996$ on the full $\Delta h$, $0.9997$ on $\Delta h_{\perp}$ alone, and
+$0.7804$ on $\Delta h_{\parallel}$ alone. At \texttt{mlp\_10}, with the local
+Jacobian, the functional component alone is at chance ($0.518$).
+% src: outputs/full/perp_parallel.json [EST — E12-consistent]
+
+\subsection{An adaptive attack against the probe}
+\label{sec:adv-adaptive}
+The minimal-displacement attack does not use the probe, so we also ran an
+attack that does, with a decision rule pre-specified before the run.
+% src: JOURNAL_V3.md §8c (P8, frozen 2026-10-27, with pre-results amendments) [PRE — P8]
+The threat model is white-box on the classifier and on the probe: the attacker
+knows the ViT-B/16, the pooling, the standardization and the weights of the
+logistic probe. The attacked probe is the clean-vs-APGD-CE probe at
+\texttt{mlp\_10}, one on $a$ and one on $z$; each image is attacked with the
+probe of the cross-validation fold that holds it out. For each fold, the
+threshold $\tau$ is the $95$th percentile of the probe score on the held-out
+clean images (false-positive rate $5\%$). The attack is successful on an image
+if the label is wrong and the probe score is below $\tau$. The adaptive APGD
+(Table~\ref{tab:adv-attacks}) maximizes
+\begin{equation}
+  L(\tilde{x}) \;=\; \mathrm{CE}\bigl(g(\tilde{x}), y\bigr) \;-\; \lambda\, s(\tilde{x}),
+  \label{eq:adv-adaptive}
+\end{equation}
+where $g$ is the classifier, $y$ the true label and $s$ the probe logit, at
+$\varepsilon{=}0.004$. The attack uses $100$ iterations and one restart, with
+$\lambda\in\{0.1, 1, 10\}$ in sequence: a larger $\lambda$ is applied only to
+the images on which the smaller values failed. The decision rule defines
+evasion as a success rate of at least $0.5$ on the images that the model
+classifies correctly when clean.
+
+\paragraph*{The attacker evades the probe.}
+Over five seeds, the success rate is $0.774\pm0.010$ on $a$ and
+$0.730\pm0.017$ on $z$, and almost all successes occur at $\lambda=0.1$.
+% src: experiments/2026-10-27_p8-adaptive/outputs/metrics.json [PRE — P8 gate: evasion in both cells]
+No final example has a probe score above $\tau$: the attack fails only on
+images whose label does not change.
+% src: outputs/{pilot,runs}/seed*/cell_*_eps0.004/per_example.csv (s_adv vs tau, pred_adv vs label; computed for the paper) [EST — not in the journal]
+Thus, for this attacker the probe constraint is easy and the label constraint
+is the difficult one. The success also shows directly that the gradient of the
+probe is not masked. The input cost is that of FGSM, an $L_\infty$ of $0.004$.
+
+\paragraph*{The attacker does not remove the displacement.}
+The attacker evades the probe by changing the direction of the displacement,
+not its size (Figure~\ref{fig:adv-adaptive}). The median
+$\lVert\Delta a\rVert$ at \texttt{mlp\_10} is $2.55$ on $a$ and $2.82$ on $z$,
+against $2.38$ for APGD-CE on the same images, and more than $99.9\%$ of the
+adaptive examples are above the largest benign displacement in the
+input-matched control ($0.59$). What changes is $\cos\theta$ in
+Equation~\eqref{eq:adv-probe}, measured between the change of the probed
+representation and the probe direction: its median goes from $+0.092$ for
+APGD-CE to $-0.032$ for the adaptive attack on $a$. On $z$ the values are much
+smaller, and the sign changes in the same way (from $+0.0003$ to $-0.0023$).
+% src: experiments/2026-10-27_p8-adaptive/outputs/diag/diag_metrics_with_retrained.json; diag_per_example.csv [PRE diagnostic, reported not gated]
+A probe retrained on clean against adaptive examples, with the same protocol,
+detects them at AUC $0.991$ on $a$ and $0.998$ on $z$. The clean-vs-FGSM
+probe, which the attacker did not use, gives the adaptive examples lower
+scores than the clean images on $a$ (AUC $0.34$--$0.44$, three seeds) and is
+near chance on $z$ ($0.51$--$0.66$); the attack moved the examples to the
+clean side of the direction that the two probes share.
+% src: diag_metrics_with_retrained.json (retrained_probe, transfer_p1; seeds 42/44/46)
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\linewidth]{figures/interp_adv/fig_adaptive.pdf}
+  \caption{The adaptive attack changes the direction of the displacement, not
+  its size. Each point is one image that the model classifies correctly when
+  clean (five seeds): $\lVert\Delta a\rVert$ at \texttt{mlp\_10} against
+  $\cos\theta$ between the change of the probed representation and the probe
+  direction, for APGD-CE and for the adaptive APGD at $\varepsilon{=}0.004$.
+  White circles are medians. The dashed line is the largest benign
+  displacement in the input-matched control. Adaptive examples that keep the
+  true label are in grey; all adaptive examples are below $\tau$. The $z$
+  panel does not show the $1\%$ most negative adaptive values.}
+  % src: figures/src/fig_adaptive.py (paper repository)
+  \label{fig:adv-adaptive}
+\end{figure}
+
+\subsection{What the two attackers show}
+An attacker who knows the probe evades it by direction at the FGSM budget, and
+the displacement stays at the attack scale; a retrained probe detects these
+examples again. Only the costly minimal-displacement attack removes the
+displacement, and the probe still detects it. The two attackers are the two
+limits of $H_{D}$ stated in Section~\ref{sec:adv-two-hypotheses}: a large
+displacement is sufficient for detection by a probe trained on that family,
+not by a fixed probe against an attacker who knows it; and a small
+displacement does not imply that the example is not detected.
+
+% =============================================================================
+\section{Provenance of the tests}
+\label{sec:adv-provenance}
+% Phase 1 carries the content of the paper's provenance appendix. Phase 2 adds
+% the material that only the thesis has: the frozen-budget H2 run, the layer
+% and representation sweeps, and the two measurement bugs.
+
+The order of execution was different from the order of
+Sections~\ref{sec:adv-usual} to~\ref{sec:adv-attackers}. A test is
+\emph{pre-specified} when its hypothesis and decision rule were committed to
+the version-controlled project repository before the run; this is not a formal
+registration with a third party. Before any run, we pre-specified two
+predictions of $H_{M}$ with fixed decision rules; the rules are never
+evaluated again on later data.
+% src: EXPERIMENT_PLAN_ATTACKS.md (rev. 2026-07-21, rule block); PLAN.md; DESIGN_CHOICES.md [PRE]
+
+H1 predicted that the detection AUC stays constant over $\varepsilon$. It
+fails all three of its criteria ($|\rho|<0.3$ for the correlation between
+$\varepsilon$ and AUC, variance $<10^{-3}$, mean AUC $>0.95$) for FGSM and
+PGD, because the AUC rises monotonically with the budget: from $0.670$ to
+$1.000$ for FGSM, with saturation at $\varepsilon\geq0.012$, and from $0.663$
+to $1.000$ for PGD (Table~\ref{tab:adv-h1}).
+% src: both magnitude_sweep_metrics.csv; RESEARCH_LOG.md (corrected re-run verdict) [PRE — gate fails]
+H2 predicted $\dauc>0.3$ in the input-matched control; it fails, and leaves a
+$\dauc$ of $0.199$ (Section~\ref{sec:adv-usual}). The input-matched $\dauc$
+also passes a third pre-specified rule, a robustness criterion
+($\dauc-2\sigma > 0.05$ at $\varepsilon\in\{0.002,0.004\}$, at mid and late
+layers, over five seeds); this rule tests whether a detection advantage
+exists, and H2 tests whether it is large.
+% src: gap_robustness_summary.csv; DESIGN_CHOICES.md D12 (G5.3, frozen 2026-07-02) [PRE — G5.3 passes]
+
+\begin{table}[ht]
+  \centering
+  \caption{H1 budget sweep: detection AUC of the clean-vs-attack probe on $z$
+  at \texttt{mlp\_10} (grouped 5-fold cross-validation, $N{=}3200$ per task)
+  and attack success rate (ASR), for FGSM and PGD. The AUC rises with
+  $\varepsilon$ and saturates (FGSM at $\varepsilon\geq0.012$, PGD at
+  $\varepsilon\geq0.016$); H1 predicted a constant AUC.}
+  \label{tab:adv-h1}
+  \small
+  \begin{tabular}{@{}ccccc@{}}
+    \toprule
+     & \multicolumn{2}{c}{FGSM} & \multicolumn{2}{c}{PGD} \\
+    \cmidrule(lr){2-3}\cmidrule(lr){4-5}
+    $\varepsilon$ & AUC & ASR & AUC & ASR \\
+    \midrule
+    $0.001$ & $0.670$ & $0.382$ & $0.663$ & $0.580$ \\
+    $0.002$ & $0.785$ & $0.619$ & $0.827$ & $0.922$ \\
+    $0.004$ & $0.932$ & $0.762$ & $0.969$ & $0.999$ \\
+    $0.008$ & $0.996$ & $0.819$ & $0.993$ & $1.000$ \\
+    $0.012$ & $1.000$ & $0.832$ & $0.999$ & $1.000$ \\
+    $0.016$ & $1.000$ & $0.831$ & $1.000$ & $1.000$ \\
+    $0.024$ & $1.000$ & $0.817$ & $1.000$ & $1.000$ \\
+    $0.032$ & $1.000$ & $0.808$ & $1.000$ & $1.000$ \\
     \bottomrule
   \end{tabular}
   % src: experiments/2026-06-23_corrected-rerun/outputs/h1_sweep/magnitude_sweep_metrics.csv;
   %      experiments/2026-07-02_pgd-h1h2/outputs/h1_sweep/magnitude_sweep_metrics.csv
 \end{table}
 
-\begin{figure}[ht]
-  \centering
-  \includegraphics[width=0.8\linewidth]{figures/interp_adv/fig_h1_sweep.pdf}
-  \caption{H1: detection AUC versus budget for FGSM and PGD, with
-  success-conditioned AUC overlaid (Objection~2, Section~\ref{sec:adv-regime}):
-  successful and failed attacks are equally detectable at every powered
-  budget.}
-  % src: the two magnitude_sweep_metrics.csv; experiments/2026-07-21_success-conditioned/outputs/metrics.json
-  \label{fig:adv-h1}
-\end{figure}
-
-\subsection{H2: specificity at the frozen budget}
-At the frozen budget the attack is at the ceiling and every benign family of
-comparable nominal magnitude is detected at $0.85$--$0.94$ (JPEG $0.939$,
-random dropout $0.921$, Gaussian blur $0.910$, Gaussian noise $0.847$, against
-FGSM $0.9999$). The gap $\dauc = 0.061$ is measured against a ceiling and the
-gate fails on both criteria: the $0.3$ dominance threshold is nowhere near
-approached, and the strongest benign family far exceeds the $0.7$ bound.
-% src: experiments/2026-06-23_corrected-rerun/outputs/h2_crossval/metrics.json [EST/PRE]
-This run predates the per-family $L_2$ emission, so at the frozen budget the
-$L_2$ match is the design intent written into the perturbation configurations;
-the verified match arrives with the de-saturated re-run of
-Section~\ref{sec:adv-regime}.
-
-\subsection{Reading the failure in the right direction}
-Both pre-registered gates fail, and fail stably across two attacks. That is the
-intended negative outcome of the proposal, reported as such: $H_{M}$ is
-eliminated in the tested regime. It would be a mistake, however, to read this
-as a strong confirmation of $H_{D}$. Saturation \emph{removes} discriminative
-power from the gates rather than adding it: once AUC is pinned at the ceiling,
-the H1 gate can no longer separate a magnitude detector from a structure
-detector, and the H2 gap is measured against a ceiling rather than in an
-informative regime. Two rival readings therefore survive the frozen-budget
-runs. The first is Objection~1: the gates fail only because the budget
-saturates, and in a de-saturated regime the attack would separate from its
-benign controls. The second is Objection~2: the monotone curve of
-Table~\ref{tab:adv-h1} is equally compatible with ``the detector reads
-adversarial structure, and structure scales with $\varepsilon$.'' Every
-decisive test from here on runs in the informative sub-saturation regime
-($\varepsilon\approx0.002$--$0.004$), and the next section takes up both
-objections.
-
-% =============================================================================
-% Sections 4.5-4.11 written 2026-09-10 from the paper's final version (v06,
-% 2026-07-28). Narrative contract: each section answers the objections listed
-% in the ledger (Table~\ref{tab:adv-ledger}); refined and open entries are
-% labelled as such in the prose. Notation follows the thesis convention: x is
-% the input, a the probed (mean-pooled) activation, z / \hat{a} / r the SAE
-% latents, reconstruction and residual; \Delta x is the activation displacement
-% induced by perturbing x. Every number is copied from main.tex/appendix.tex;
-% "% src:" trailers name the artifact.
-% =============================================================================
-
-\section{Objections about the regime and the reading}
-\label{sec:adv-regime}
-% Objections 1, 2 and 8. Objection 1 is NOT eliminated here: the de-saturated
-% re-run produces a real residual gap, which is what forces the axis change of
-% Section~\ref{sec:adv-specificity}.
-
-The frozen-budget verdict of Section~\ref{sec:adv-gates} left two rival
-readings standing, and the instrument scope of
-Section~\ref{sec:adv-instrument-scope} raised a third. This section takes them
-in turn. The first is answered by an experiment that made it stronger; the
-chapter is organized around what that experiment forced.
-
-\subsection{Objection 1: the gates fail only because the budget saturates}
-\label{sec:adv-obj1}
-At the frozen budget every representation detects FGSM at the ceiling, so the
-H2 gap of $0.061$ is measured against a ceiling rather than in an informative
-regime. The objection is that a de-saturated attack would separate from its
-benign controls. The test re-runs H2 at $\varepsilon{=}0.004$, where FGSM is
-detected at $0.932$ on the latents $z$ at \texttt{mlp\_10}, and where the
-input-$L_2$ match is now \emph{verified} per family: the realized per-image
-$L_2$ of every benign family lies within $0.999$--$1.008$ of the attack's
-(Table~\ref{tab:adv-h2}).
-% src: experiments/2026-06-29_h2-v2-eps0004/outputs/h2_crossval/metrics.json [EST]
-The picture sharpens rather than collapses. The best benign family, Gaussian
-blur, is detected at $0.733$; random dropout at $0.617$, JPEG at $0.604$, and
-Gaussian noise at $0.574$. Hence $\dauc = 0.199$, with a paired bootstrap
-$95\%$ interval of $[0.188, 0.212]$ over source images and a five-seed
-replication, with full SAE retraining and attack regeneration, of
-$0.204\pm0.014$. PGD at $\varepsilon{=}0.002$, its own sub-saturation budget,
-gives the same: $\dauc = 0.224$, with every benign family below $0.61$.
-% src: 2026-06-29 and 2026-07-02 h2_crossval/metrics.json; stat_package.json (a block); gap_robustness_summary.csv [EST]
-The frozen gate still fails, since the $0.3$ dominance threshold is never
-approached and the strongest benign family exceeds the $0.7$ bound; that
-verdict is untouched. But a residual gap of $0.15$--$0.23$ is real by a
-robustness criterion frozen after the first sub-saturated run and before the
-five-seed replication that tests it ($\dauc - 2\sigma > 0.05$ at both
-$\varepsilon\in\{0.002, 0.004\}$, at both mid and late layers, over five
-seeds), and it has a depth profile: negative at \texttt{mlp\_0}, it rises to
-$0.204\pm0.014$ at \texttt{mlp\_10} (Figure~\ref{fig:adv-decomp-layers}b).
-% src: experiments/2026-07-02_gap-robustness/outputs/gap_robustness_summary.csv; DESIGN_CHOICES.md D12 (G5.3, frozen 2026-07-02, i.e. AFTER the 2026-06-29/30 eps=0.004 run and BEFORE the multiseed gap-robustness run) [PRE — robustness criterion; EST — values]
-
-This is the strongest evidence against $H_{D}$ in the study, and the ledger
-records it as such: Objection~1 is not eliminated by this experiment but
-strengthened. An attack that is more detectable than every benign perturbation
-of the same input norm looks like Degree-2 specificity. The reason it is not,
-which is the hinge of the chapter, is that every control so far matches the
-perturbation in \emph{input} space, while the probe reads \emph{activation}
-space. If the attack and the benign families reach the probed layer with
-different displacements, the residual gap has an entirely non-semantic
-explanation. Section~\ref{sec:adv-specificity} measures the displacements and
-shows that it does.
-
-\begin{table}[ht]
-  \centering
-  \caption{H2 in the informative regime (SAE latents $z$, \texttt{mlp\_10},
-  grouped cross-validation). The pre-registered gate ($\dauc>0.3$ and strongest
-  benign family below $0.7$) fails here as at the frozen budget, yet a residual
-  gap survives. ``$L_2$ ratio'' is the measured per-family input $L_2$ over the
-  attack's; JPEG is absent from the PGD block because its realized $L_2$ cannot
-  reach the $\pm20\%$ band. The bracketed interval is a paired bootstrap $95\%$
-  confidence interval over source images.}
-  % VERIFY (Breno): the ± values are carried from the paper's tab:h2 without a
-  % stated meaning; confirm whether they are fold standard deviations before
-  % describing them in the caption.
-  \label{tab:adv-h2}
-  \small
-  \begin{tabular}{lcc}
-    \toprule
-    Family & AUC & $L_2$ ratio \\
-    \midrule
-    \multicolumn{3}{l}{\emph{FGSM, $\varepsilon{=}0.004$ (matched $L_2$ verified)}}\\
-    FGSM                  & 0.932\,$\pm$\,0.005 & --- \\
-    Gaussian blur         & 0.733\,$\pm$\,0.006 & 1.000 \\
-    random dropout        & 0.617\,$\pm$\,0.005 & 1.005 \\
-    JPEG                  & 0.604\,$\pm$\,0.006 & 1.008 \\
-    Gaussian noise        & 0.574\,$\pm$\,0.007 & 0.999 \\
-    $\dauc$               & \textbf{0.199} [0.188, 0.212] & \\
-    \midrule
-    \multicolumn{3}{l}{\emph{PGD, $\varepsilon{=}0.002$ (matched $L_2$ verified)}}\\
-    PGD                   & 0.827\,$\pm$\,0.015 & --- \\
-    Gaussian blur         & 0.603\,$\pm$\,0.007 & 1.000 \\
-    random dropout        & 0.524\,$\pm$\,0.003 & 0.939 \\
-    Gaussian noise        & 0.512\,$\pm$\,0.001 & 1.001 \\
-    $\dauc$               & \textbf{0.224} & \\
-    \bottomrule
-  \end{tabular}
-  % src: experiments/2026-06-29_h2-v2-eps0004/outputs/h2_crossval/metrics.json;
-  %      experiments/2026-07-02_pgd-h2-eps0002/outputs/h2_crossval/metrics.json;
-  %      experiments/2026-07-21_stat-package/outputs/stat_package.json
-\end{table}
-
-\subsection{Objection 2: adversarial structure grows with the budget}
-\label{sec:adv-obj2}
-The monotone curve of Table~\ref{tab:adv-h1} is compatible with a detector that
-reads adversarial structure, provided that structure scales with
-$\varepsilon$. If that were the mechanism, an attack that succeeds in flipping
-the label, and therefore carries whatever structure does the flipping, should
-be more detectable than one that fails at the same budget. Conditioning
-detection on attack success removes the reading: successful and failed FGSM
-examples are equally detectable at every powered budget, AUC $0.780$ against
-$0.782$ at $\varepsilon{=}0.002$ ($N{=}950$ successful, $650$ failed), $0.928$
-against $0.939$ at $0.004$ ($1170/430$), and $0.997$ against $0.999$ at
-$0.008$ (the overlaid curves of Figure~\ref{fig:adv-h1}).
-% src: experiments/2026-07-21_success-conditioned/outputs/metrics.json [EST — E3]
-The detector responds to the perturbation's presence in activation space, not
-to its functional effect. Objection~2 is eliminated. The result anticipates
-the projection ablation of Section~\ref{sec:adv-residue}: what flips the label
-and what fires the detector are largely orthogonal.
-
-\subsection{Objection 8: the steganographic null shows a blind probe}
-\label{sec:adv-obj8}
-The steganographic control anchors the low-displacement column of the design
-matrix, and the pooled probe cannot see it: AUC $0.542$ on $a$ and $0.519$ on
-$z$ at \texttt{mlp\_10}, and on every representation it decays toward chance
-with depth (Figure~\ref{fig:adv-decomp-layers}a). The objection is that this
-null says nothing about displacement, because mean-pooling over $197$ tokens
-erases a \emph{localized} perturbation by construction: a probe blind to the
-watermark would sit at chance whatever the watermark did to the activation.
-The objection is tested by probing token by token on the same activations
-(Figure~\ref{fig:adv-stego-tokens}). The watermark's tokens light up: the best
-single token reaches AUC $0.667\pm0.010$ (token~5; tokens $1$--$6$ span
-$0.601$--$0.667$), against $0.542$ mean-pooled, $0.517$ on the class token
-alone, and $0.512$ max-pooled.
-% src: experiments/2026-07-21_stego-token/outputs/token_probe_metrics.json [EST — E9]
-Activation space therefore does carry a trace of the watermark; pooling is what
-hides it. And the pooled displacement is measured, not assumed: at
-\texttt{mlp\_10} the control moves the representation by
-$\lVert\Delta x\rVert=0.09$, under $1\%$ of the clean activation norm.
-% src: experiments/2026-07-23_jpeg-matched-l2-dx/outputs/displacement_summary.json [EST]
-This is exactly the behaviour a displacement-reading detector should show, a
-local perturbation producing a small pooled displacement and no pooled signal,
-so the null is rescoped to the instrument rather than discarded, and
-Objection~8 is eliminated. The rescoping cuts both ways: no absence claim in
-this chapter is a claim about token-resolved or non-linear probes
-(Section~\ref{sec:adv-closing}).
-
-\begin{figure}[ht]
-  \centering
-  \includegraphics[width=\linewidth]{figures/interp_adv/fig_decomp_layers.pdf}
-  \caption{Detection across layers. (a) At the saturated budget
-  ($\varepsilon{=}0.012$) every representation detects FGSM at the ceiling at
-  every block, while the steganographic control decays to chance; nothing else
-  can be read there. (b) In the informative regime ($\varepsilon{=}0.004$) the
-  matched-input-$L_2$ gap $\dauc$ is a mid-to-late-layer phenomenon: negative or
-  near zero at the first blocks, largest at \texttt{mlp\_10}. In the legend,
-  $x$ denotes the raw activation $a$ of Equation~\eqref{eq:adv-decomp}.}
-  % src: experiments/2026-06-22_sae-residual-decomp/outputs/decomposition_metrics.csv;
-  %      experiments/2026-07-21_decomp-6layer/outputs/decomposition_metrics.csv;
-  %      experiments/2026-07-02_gap-robustness/outputs/gap_robustness_summary.csv
-  \label{fig:adv-decomp-layers}
-\end{figure}
-
-\begin{figure}[ht]
-  \centering
-  \includegraphics[width=0.7\linewidth]{figures/interp_adv/fig_stego_tokens.pdf}
-  \caption{Per-token detection AUC for the steganographic control over the
-  $14\times14$ patch grid at \texttt{mlp\_10}. The watermark's tokens (top
-  left) reach $0.60$--$0.67$ while pooled probes sit near chance: the signal is
-  local, and pooling, not activation space, is what hides it.}
-  % src: experiments/2026-07-21_stego-token/outputs/token_probe_metrics.json
-  \label{fig:adv-stego-tokens}
-\end{figure}
-
-% =============================================================================
-\section{Objections about specificity: amplification and the matched-displacement control}
-\label{sec:adv-specificity}
-% Objections 3 and 4. This is the hinge of the chapter: the residual gap of
-% Section~\ref{sec:adv-regime} is explained by amplification and vanishes once
-% the benign families are matched on the axis the detector reads.
-
-\subsection{Objection 3: the residual gap is Degree-2 specificity}
-\label{sec:adv-obj3}
-The residual $\dauc$ of $0.199$ survived every input-space control, and the
-objection is that it is what it looks like: a signal specific to the
-adversarial class. The test has two steps. The first measures, per example
-and per layer, the displacement that each perturbation family induces at the
-probed block, Equation~\eqref{eq:adv-dx}; the second re-runs H2 with the
-benign families matched on that displacement rather than on the input.
-
-\paragraph*{Adversarial optimization buys displacement cheaply.}
-Matching input $L_2$ does not match what the detector reads
-(Figure~\ref{fig:adv-amplification}). At matched input norm
-($\varepsilon{=}0.004$), FGSM arrives at \texttt{mlp\_10} with a mean
-displacement of $\lVert\Delta x\rVert=2.00$, while the four $L_2$-matched
-benign families arrive at $0.19$--$0.59$ (Gaussian noise $0.19$, dropout
-$0.21$, JPEG $0.28$, blur $0.59$); the supports barely overlap.
-% src: experiments/2026-07-21_attack-lib-smoke/outputs/smoke_results.json; experiments/2026-07-23_jpeg-matched-l2-dx/outputs/displacement_summary.json [EST]
-The clean activation norm at that layer is $10.0$, so the attack moves the
-representation by $20\%$ of its length where benign perturbations of equal
-input norm move it by $2$--$6\%$.
-% src: displacement_summary.json (x_clean_norm_mean) [EST]
-The Carlini--Wagner attack makes the same point from the other side. It was the
-pre-registered candidate for the low-displacement adversarial cell of the design
-matrix (Table~\ref{tab:adv-design}), because it minimizes input norm: it needs
-only $L_2=4.97$, $0.72\times$ FGSM's budget at $\varepsilon{=}0.004$, to flip
-every label. Yet it lands at $\lVert\Delta x\rVert=1.81\pm1.39$, attack-scale
-displacement, and is detected at AUC $0.865$.
-% src: experiments/2026-07-21_cw-attack/outputs/full/cw_input_l2.json; asr_cw.json; displacement_summary.json; eval/metrics.json [EST — E7]
-PGD traces the same amplification along its sweep, from $\lVert\Delta x\rVert
-= 1.24$ at $\varepsilon{=}0.001$ to $3.11$ at $0.032$; PGD at $0.002$ matches
-FGSM at $0.004$ ($2.01$ against $2.00$), which is why those two budgets are
-paired throughout.
-% src: experiments/2026-07-21_pgd-displacement/outputs/pgd_displacement_summary.csv [EST — E6]
-The low-displacement adversarial cell is therefore empty for every attack that
-optimizes misclassification alone: even the input-norm-minimal attack is
-amplified into a large displacement. The imperceptibility that defines these
-attacks is an input-space property; in activation space they are loud, and that
-is what makes them detectable. Adversarial optimization, precisely because it
-pushes along directions the network is sensitive to, buys displacement cheaply
-while benign corruptions do not. This is where adversarial structure enters
-the account, as a \emph{cause} of displacement, upstream of anything the probe
-reads.
-
-\paragraph*{The matched-displacement control.}
-The decisive experiment re-runs H2 with the four benign families calibrated,
-model in the loop, to FGSM's displacement at the canonical layer (target
-$1.994$; realized $1.78$--$2.06$; Section~\ref{sec:adv-attacks}). The result
-is unambiguous (Table~\ref{tab:adv-matched-dx},
-Figure~\ref{fig:adv-gap-regimes}): at matched $\lVert\Delta x\rVert$ the
-FGSM--benign gap is \emph{negative or zero at every layer}, on the raw
-activation and on the healthy-SAE latents alike, $\dauc^{z} = -0.062$ at
-\texttt{mlp\_10} and $-0.078$ at \texttt{mlp\_11}, $\dauc^{a} = -0.011$ at
-both, and $\dauc^{z}$ between $-0.000$ and $-0.108$ at the sub-gate early
-layers.
-% src: experiments/2026-07-22_h2-matched-dx/outputs/h2_matched_dx_summary.json [EST — E1]
-A five-seed replication, with full SAE retraining and perturbation regeneration
-per seed and the displacement match verified in all $25$ family--seed cells,
-confirms it against a criterion fixed in advance: every cell stays negative,
-including the $+2\sigma$ upper bounds ($\dauc^{z} = -0.063\pm0.003$ at
-\texttt{mlp\_10}, $-0.076\pm0.005$ at \texttt{mlp\_11}). One flag is carried:
-the dead-feature fraction exceeds $0.30$ at \texttt{mlp\_11} in two seeds, and
-excluding those seeds leaves the verdict unchanged.
-% src: experiments/2026-07-23_h2-matched-dx-multiseed/outputs/multiseed_summary.csv; multiseed_verdict.json; README.md (caveat) [EST — replicated 2026-07-23]
-
-The input-$L_2$-matched gap of $0.199$ is thereby explained with no appeal to
-adversarial meaning: it priced in the attack's privileged input-to-activation
-amplification. Equalize the axis the detector reads and a blur is every bit as
-``suspicious'' as the attack; the specificity that survived every input-space
-control does not survive the displacement-space one. Objection~3 is
-eliminated, and with it the Degree-2 reading. This is the hinge of the
-chapter, and it is also the methodological contribution: the control that
-standard detection setups omit is not a benign perturbation of matched input
-norm, which the literature sometimes supplies
-\cite{feinman2017adversarial_artifacts,ma2018lid_adversarial}, but a benign
-perturbation matched on the displacement the detector reads.
-
-\begin{table}[ht]
-  \centering
-  \caption{H2 with the benign families calibrated to FGSM's activation
-  displacement (target $\lVert\Delta x\rVert=1.994$ at \texttt{mlp\_10};
-  realized $1.78$--$2.06$). At matched displacement the best benign family is
-  as detectable as, or more detectable than, the attack at every layer:
-  $\dauc \leq 0$ throughout. $^{\dagger}$FVE below the $0.9$ health gate: $z$
-  cells are reported for completeness only; $\dauc^{a}$ does not depend on the
-  SAE. Five-seed replication: $\dauc^{z} = -0.063\pm0.003$ (\texttt{mlp\_10})
-  and $-0.076\pm0.005$ (\texttt{mlp\_11}).}
-  \label{tab:adv-matched-dx}
-  \small
-  \setlength{\tabcolsep}{4pt}
-  \begin{tabular}{lccccc}
-    \toprule
-    Layer & FVE & FGSM $z$ & best benign $z$ & $\dauc^{z}$ & $\dauc^{a}$ \\
-    \midrule
-    \texttt{mlp\_0}  & 0.753$^{\dagger}$ & 0.944 & 0.999 & $-0.055$ & $-0.001$ \\
-    \texttt{mlp\_3}  & 0.779$^{\dagger}$ & 1.000 & 1.000 & $-0.000$ & $0.000$ \\
-    \texttt{mlp\_6}  & 0.720$^{\dagger}$ & 0.977 & 1.000 & $-0.023$ & $-0.007$ \\
-    \texttt{mlp\_9}  & 0.697$^{\dagger}$ & 0.886 & 0.994 & $-0.108$ & $-0.032$ \\
-    \texttt{mlp\_10} & 0.936 & 0.933 & 0.995 & $\mathbf{-0.062}$ & $\mathbf{-0.011}$ \\
-    \texttt{mlp\_11} & 0.947 & 0.918 & 0.996 & $\mathbf{-0.078}$ & $\mathbf{-0.011}$ \\
-    \bottomrule
-  \end{tabular}
-  % src: experiments/2026-07-22_h2-matched-dx/outputs/h2_matched_dx_summary.json;
-  %      experiments/2026-07-23_h2-matched-dx-multiseed/outputs/multiseed_summary.csv
-\end{table}
-
-\begin{figure}[ht]
-  \centering
-  \includegraphics[width=0.85\linewidth]{figures/interp_adv/fig_gap_regimes.pdf}
-  \caption{$\dauc$ across matching regimes (\texttt{mlp\_10}, latents $z$).
-  Measured against a ceiling at the frozen budget, real under verified matched
-  input-$L_2$, it inverts once the benign families are matched on the axis the
-  detector reads. Error bars: paired bootstrap $95\%$ confidence interval
-  (matched $L_2$); $\pm2\sigma$ over five seeds (matched
-  $\lVert\Delta x\rVert$).}
-  % src: gate blocks of the three h2 metrics.json; multiseed_summary.csv; stat_package.json
-  \label{fig:adv-gap-regimes}
-\end{figure}
-
-\subsection{Objection 4: the SAE is load-bearing}
-\label{sec:adv-obj4}
-The objection is that the gap lives in the interpretable latents $z$ rather
-than in the raw activation $a$, so that the SAE, not displacement, is what
-exposes the attack. Read after the matched-displacement verdict, the residual
-decomposition of Equation~\eqref{eq:adv-decomp} is a post-mortem on the
-input-matched gap, and it settles two things.
-
-First, detection needs no SAE. At $\varepsilon{=}0.004$ the raw activation $a$
-detects FGSM at $0.989$ against $0.932$ on the latents $z$
-(Table~\ref{tab:adv-decomp004}), and in the saturated regime every
-representation is at the ceiling at every layer
-(Table~\ref{tab:adv-decomp}). In information terms the SAE is a lossy
-bottleneck, so $z$ cannot carry detection information that $a$ lacks; a linear
-probe on $z$ could still profit from the encoder's non-linearity, but here it
-does not, and for detection the SAE is not load-bearing.
-% src: experiments/2026-06-30_decomp-eps0004/outputs/decomposition_metrics.csv; experiments/2026-06-22_sae-residual-decomp/outputs/decomposition_metrics.csv [EST — L2]
-Second, the input-$L_2$-matched gap concentrates in the SAE-explained,
-on-manifold component ($0.199$ on $z$, $0.178$ on $\hat{a}$) rather than in the
-off-manifold residual ($0.079$ on $r$, $0.066$ on $a$). The generic detection
-signal lives in $a$ and $r$, which detect at $0.989$--$0.990$ with small gaps,
-while the apparent family separation lives on the manifold, exactly where the
-amplification premium lands when the wrong axis is matched. The scalar residual
-norm $\lVert r\rVert$ collapses to $\dauc = 0.054$ even as the residual
-\emph{vector} stays at $0.990$: the probe reads displacement direction, not
-size. An eleven-signal sweep over the same cell (Figure~\ref{fig:adv-zoo})
-confirms the ordering, with per-feature SAE codes leading the input-matched gap
-and scalar magnitudes trailing.
-% src: 2026-06-30_decomp-eps0004 decomposition_metrics.csv; 2026-07-02_signal-zoo/outputs/zoo/zoo_metrics.csv [EST]
-
-Two qualifications keep this honest. The larger gap on $z$ under input
-matching is real, and a pre-registered anti-condition forbids over-reading it:
-at $\varepsilon{=}0.004$ the logit-scale difference on the raw activation $a$
-is compatible with that on $z$, so ``the SAE amplifies specificity'' may not be
-claimed from that cell (only at $\varepsilon{=}0.002$ is $z$ logit-distinct
-from $a$).
-% src: gap_robustness_summary.csv (logit columns); DESIGN_CHOICES.md D12 (G5.3, frozen 2026-07-02) [PRE — anti-condition]
-And the gap on $z$ has the depth profile of Section~\ref{sec:adv-obj1}, absent
-at \texttt{mlp\_0} and largest at \texttt{mlp\_10}, whereas displacement
-detectability is present already at the first block. Once the displacement is
-equalized, none of the on-manifold separation survives
-(Table~\ref{tab:adv-matched-dx}). Objection~4 is eliminated for detection: the
-SAE's interpretable features are a lossy view of a signal that the raw
-activation carries better, and the one thing they appeared to add was
-amplification read on the wrong axis.
-
-\begin{table}[ht]
-  \centering
-  \caption{Residual decomposition at the sub-saturated budget
-  ($\varepsilon{=}0.004$, \texttt{mlp\_10}, $N{=}3200$, SAE FVE $0.938$).
-  $\dauc$ (Equation~\eqref{eq:adv-dauc}) is the AUC on FGSM minus that on the
-  strongest \emph{matched input-$L_2$} benign family, Gaussian blur for every
-  representation. The generic detection signal lives in $a$ and $r$ (high AUC,
-  small gap); the family separation under input-$L_2$ matching concentrates in
-  the SAE-explained component $z$, $\hat{a}$, and vanishes at matched
-  displacement (Table~\ref{tab:adv-matched-dx}).}
-  \label{tab:adv-decomp004}
-  \begin{tabular}{lcccc}
-    \toprule
-    Representation & FGSM & Blur (best benign) & Stego & $\dauc$ \\
-    \midrule
-    $a$              & 0.989 & 0.923 & 0.542 & 0.066 \\
-    $z$              & 0.932 & 0.733 & 0.519 & 0.199 \\
-    $\hat{a}$        & 0.963 & 0.785 & 0.532 & 0.178 \\
-    $r$              & 0.990 & 0.911 & 0.539 & 0.079 \\
-    $\lVert r\rVert$ & 0.594 & 0.540 & 0.502 & 0.054 \\
-    \bottomrule
-  \end{tabular}
-  % src: experiments/2026-06-30_decomp-eps0004/outputs/decomposition_metrics.csv
-\end{table}
-
-\begin{table}[ht]
-  \centering
-  \caption{Detection AUC (grouped cross-validation, $K{=}5$, $N{=}3200$) by
-  representation and layer at the \emph{saturated} budget
-  ($\varepsilon{=}0.012$). FGSM is at the ceiling everywhere; the
-  steganographic control is near chance. At the ceiling cross-representation
-  comparisons are vacuous, which is what motivates the sub-saturated regime of
-  Table~\ref{tab:adv-decomp004}.}
-  \label{tab:adv-decomp}
-  \small
-  \begin{tabular}{llcccc}
-    \toprule
-    Layer & Task & $a$ & $z$ & $\hat{a}$ & $r$ \\
-    \midrule
-    \multirow{2}{*}{\texttt{mlp\_0}}  & FGSM  & 1.000 & 0.996 & 1.000 & 1.000 \\
-                                      & stego & 0.675 & 0.539 & 0.541 & 0.677 \\
-    \multirow{2}{*}{\texttt{mlp\_3}}  & FGSM  & 1.000 & 1.000 & 1.000 & 1.000 \\
-                                      & stego & 0.685 & 0.604 & 0.604 & 0.664 \\
-    \multirow{2}{*}{\texttt{mlp\_6}}  & FGSM  & 1.000 & 1.000 & 1.000 & 1.000 \\
-                                      & stego & 0.549 & 0.531 & 0.537 & 0.542 \\
-    \multirow{2}{*}{\texttt{mlp\_9}}  & FGSM  & 1.000 & 0.999 & 0.998 & 1.000 \\
-                                      & stego & 0.530 & 0.513 & 0.524 & 0.530 \\
-    \multirow{2}{*}{\texttt{mlp\_10}} & FGSM  & 1.000 & 1.000 & 1.000 & 1.000 \\
-                                      & stego & 0.543 & 0.519 & 0.532 & 0.540 \\
-    \multirow{2}{*}{\texttt{mlp\_11}} & FGSM  & 1.000 & 0.997 & 1.000 & 1.000 \\
-                                      & stego & 0.544 & 0.513 & 0.524 & 0.542 \\
-    \bottomrule
-  \end{tabular}
-  % src: experiments/2026-06-22_sae-residual-decomp/outputs/decomposition_metrics.csv
-\end{table}
-
-\begin{figure}[ht]
-  \centering
-  \includegraphics[width=0.85\linewidth]{figures/interp_adv/fig_zoo.pdf}
-  \caption{The signal zoo: input-$L_2$-matched $\dauc$ (FGSM minus the
-  strongest matched benign family) for eleven detection signals at
-  $\varepsilon{=}0.004$, \texttt{mlp\_10}. Per-feature SAE codes lead; scalar
-  magnitudes trail. In the legend, $x$ and $\hat{x}$ denote the raw activation
-  $a$ and its reconstruction $\hat{a}$ of Equation~\eqref{eq:adv-decomp}.}
-  % src: experiments/2026-07-02_signal-zoo/outputs/zoo/zoo_metrics.csv
-  \label{fig:adv-zoo}
-\end{figure}
-
-% =============================================================================
-\section{What remains at equal displacement}
-\label{sec:adv-residue}
-% Objections 5, 6 and 9. Objection 5 is REFINED, not eliminated: the families
-% do not collapse onto one curve, but the axis that separates them is texture.
-% Objection 9 is REFINED: Degree 3 is a learned direction, not any distance.
-
-With the Degree-2 reading gone, the remaining objections concern what the
-detector reads at equal displacement. They are answered by three experiments,
-two of which do not end in elimination but in a refinement of $H_{D}$.
-
-\subsection{Objection 5: if only magnitude mattered, all families would collapse onto one curve}
-\label{sec:adv-obj5}
-The strongest form of $H_{D}$ predicts \emph{collapse}: a single detector's
-per-example score should be a function of $\lVert\Delta x\rVert$ alone, one
-curve for all families. The test is direct. One clean-versus-FGSM logistic
-detector on $z$ at \texttt{mlp\_10} (held-out AUC $0.933$) scores the four
-benign families out of sample; per-example scores are paired to per-example
-displacements; and a nested $F$-test asks whether family identity adds
-explanatory power over a polynomial in $\lVert\Delta x\rVert$.
-% src: experiments/2026-07-22_collapse-e5/outputs/metrics.json (protocol block) [EXPL — E5, expectations pre-stated]
-Collapse \emph{fails}: family adds power ($\Delta R^2=0.373$, $F=1204$,
-$N=8000$, $p\approx0$).
-% src: same file (collapse_test) [EST]
-But the way it fails is the finding (Figure~\ref{fig:adv-collapse}). In the
-matched band $\lVert\Delta x\rVert\in[1.8,2.2]$ the mean scores are FGSM
-$0.877$, Gaussian noise $0.890$, random dropout $0.519$, JPEG $0.291$, and
-Gaussian blur $0.206$.
-% src: same file (per_family_score, matched band) [EST]
-The attack's nearest neighbour on the score axis is a \emph{benign} family,
-i.i.d.\ noise, while the smooth corruptions score low at the same displacement.
-The axis that separates families is not adversarial-versus-benign but
-high-frequency-noise-like versus smooth: \emph{texture}. The detector is not
-family-blind, but the information it uses is textural, and the attack carries
-no premium over benign noise of equal displacement and similar texture.
-
-Objection~5 therefore refines $H_{D}$ rather than eliminating it, and the
-ledger records the amendment. Together with the matched-displacement verdict,
-the refined claim reads: the detector reads off-manifold displacement magnitude
-plus perturbation texture; adversarial meaning enters only upstream, as the
-cause of the displacement, not as something the probe reads.
-
-\begin{figure}[ht]
-  \centering
-  \includegraphics[width=0.9\linewidth]{figures/interp_adv/fig_collapse.pdf}
-  \caption{The collapse test. Per-example score of a single clean-versus-FGSM
-  detector against $\lVert\Delta x\rVert$ at \texttt{mlp\_10}; dots are
-  examples, lines are binned means. The curves do not collapse, but the axis
-  that separates them is texture: FGSM rides the same curve as benign Gaussian
-  noise, far above the smooth and structured families at equal displacement.}
-  % src: experiments/2026-07-22_collapse-e5/outputs/collapse_table.csv
-  \label{fig:adv-collapse}
-\end{figure}
-
-\subsection{Objection 6: the probe reads the direction that flips the label}
-\label{sec:adv-obj6}
-If the probe read the \emph{attack}, it would read the part of $\Delta x$
-inside the classification head's sensitive subspace. At the representation the
-linear head consumes this subspace is exact, $J = W$, so the displacement
-splits as $\Delta x = \Delta x_\parallel + \Delta x_\perp$ into the functional
-direction and its orthogonal complement.
-% src: EXPERIMENT_PLAN_ATTACKS.md §E12 (definition) [EXPL — E12a]
-On FGSM at $\varepsilon{=}0.004$ ($N{=}1600$), $87.7\%$ of the displacement's
-energy is in $\Delta x_\perp$, and a projection ablation shows that the
-detector lives there: AUC $0.968$ on the full displacement, $0.967$ on
-$\Delta x_\perp$ alone, and $0.694$ on $\Delta x_\parallel$ alone
-(Figure~\ref{fig:adv-jspace}).
-% src: experiments/2026-07-21_jacobian/outputs/e12a_full/jacobian_metrics.json [EST]
-Two scoping notes keep this honest. The head has rank at most $10$ in $768$
-dimensions, so an isotropic displacement would put only about $1.3\%$ of its
-energy in $\Delta x_\parallel$; the measured $12.3\%$ is a roughly $10\times$
-\emph{enrichment}. The attack does concentrate energy in the functional
-direction, and the probe reads mostly $\Delta x_\perp$ \emph{despite} that, not
-because $\Delta x_\parallel$ is empty. And the ablated AUCs compare subspaces of
-very different dimension (at most $10$ against about $758$), so they locate
-where the signal lives rather than forming a paired contrast.
-% [EST — arithmetic on sourced values: 10/768 = 0.013; 1 - 0.877 = 0.123]
-Objection~6 is eliminated with that caveat. What flips the label and what
-fires the detector are largely orthogonal, consistent with detection being
-independent of attack success (Section~\ref{sec:adv-obj2}) and with
-amplification: the attack pushes through the head via a small
-$\Delta x_\parallel$, while its large, detectable $\Delta x_\perp$ wake is what
-the probe sees.
-
-\begin{figure}[ht]
-  \centering
-  \includegraphics[width=0.6\linewidth]{figures/interp_adv/fig_jspace.pdf}
-  \caption{Projection ablation at the head input ($J = W$, exact). Removing the
-  functional direction $\Delta x_\parallel$ costs the detector nothing; the
-  functional direction alone is barely detectable.}
-  % src: experiments/2026-07-21_jacobian/outputs/e12a_full/jacobian_metrics.json
-  \label{fig:adv-jspace}
-\end{figure}
-
-\subsection{Objection 9: then any off-manifold distance should reproduce the probe}
-\label{sec:adv-obj9}
-Degree~3 does not mean that any off-manifold distance fires. A Mahalanobis
-distance in the spirit of \citeonline{lee2018mahalanobis}, computed on the same
-mean-pooled raw activations under the same source-image splits, does
-\emph{not} reproduce the trained probe: on FGSM at $\varepsilon{=}0.004$,
-\texttt{mlp\_10}, it reaches $0.710$ where the logistic probe reaches $0.989$,
-and it is at or near chance on the matched benign families ($0.482$--$0.557$)
-and on the steganographic control ($0.498$).
-% src: experiments/2026-07-21_mahalanobis/outputs/maha_vs_logit.csv; maha_baseline.py (single clean Gaussian, shrinkage 1e-3, per-layer) [EST — E8]
-The baseline is run in its simplest form, a single Gaussian fitted to the clean
-training-fold activations at one layer, without the original's layer-wise
-ensemble or input pre-processing, so the claim is not that the method of
-\citeonline{lee2018mahalanobis} fails but that a bare off-manifold distance does
-not land where the probe does. Objection~9 refines $H_{D}$ a second time: what
-the chapter characterizes is a \emph{learned} direction in displacement space,
-one that aligns with displacement magnitude and texture rather than with
-adversarial identity. The detector is generic in \emph{what} it responds to
-and specific in \emph{how} it reads it.
-
-% =============================================================================
-\section{The empty cell: a minimal-displacement attack}
-\label{sec:adv-lowdx}
-% Objection 7 — OPEN. Exploratory run (E7 lineage, 2026-07-25), outcome
-% branches and benign band pre-stated before the full run. This is NOT the
-% frozen A5.4 adaptive PGD, which remains unrun (Section~\ref{sec:adv-closing}).
-% Decision (Breno, 2026-07-28): the asymmetry is reported, not interpreted.
-
-The last objection is the deepest: adversarial and high-displacement are
-confounded by construction, because every attack examined so far optimizes
-misclassification and pays displacement as collateral. If the top-right cell
-of the design matrix (Table~\ref{tab:adv-design}) cannot be occupied, $H_{D}$
-has never been tested against a successful attack at benign displacement. The
-section attempts to occupy the cell on purpose.
-
-``Quiet'' means two incompatible things here. An adversarial example is quiet
-\emph{to the human}: its input perturbation is small and the image is visually
-unchanged. It is anything but quiet \emph{to the detector}: the same
-imperceptible perturbation moves the activation by $2.00$, and that is why the
-detector works. The empty cell asks for the opposite trade, an attack quiet to
-the detector whatever it costs the input. The attack is run with that
-objective, per image minimizing the displacement at the canonical block,
-\begin{equation}
-  \min_{\tilde{x}} \;\lVert a_{10}(\tilde{x}) - a_{10}(x)\rVert_2^2
-  \;+\; c\cdot\max\bigl(\mathrm{margin}(\tilde{x}), -\kappa\bigr),
-  \label{eq:adv-mindisp}
-\end{equation}
-where $a_{10}$ is the mean-pooled \texttt{mlp\_10} activation, a $\tanh$
-reparametrization keeps $\tilde{x}$ in pixel space, and an outer binary search
-drives $c$ to the smallest weight that still flips the label. The \emph{floor}
-is the smallest realized $\lVert\Delta x\rVert$ among successful iterates, an
-upper bound on the true minimum by construction. The benign band was fixed in
-advance at $\lVert\Delta x\rVert \leq 0.30$, anchored on the measured
-displacement of matched-$L_2$ JPEG, $0.284$.
-% src: experiments/2026-07-25_min-displacement-cw/README.md (pre-registration block); src/adv_interp/attacks/cw_min_displacement.py [EXPL — outcome branches pre-stated]
-
-\paragraph*{The cell is occupiable, at a price.}
-On all $1536$ images that the model classifies correctly when clean, the attack
-succeeds (ASR $1.000$) with a floor of median $\lVert\Delta x\rVert = 0.298$ at
-\texttt{mlp\_10} (interquartile range $[0.235, 0.368]$; $50.7\%$ of the images
-inside the benign band), an order of magnitude below FGSM at
-$\varepsilon{=}0.004$ ($2.00$) and six times below input-norm-minimal CW
-($1.81$); one block up, at \texttt{mlp\_11}, the same images sit at $0.579$.
-% src: experiments/2026-07-25_min-displacement-cw/outputs/full/floor_summary.json; verdict.json [EST — pre-registered branch 1, marginally: the floor straddles the benign anchor]
-A successful attack at benign displacement scale exists; finding it required
-optimizing displacement itself. The price is the other kind of silence, and it
-is not subtle: holding the activation nearly still while flipping the label
-costs a median pixel $L_\infty$ of $0.137$, $34\times$ FGSM's budget at
-$\varepsilon{=}0.004$ ($L_2 = 8.39$), on visibly perturbed images.
-% src: same floor_summary.json (input_linf/input_l2 blocks) [EST]
-This is the section's result, not a caveat on it: the two silences are
-mutually exclusive here. Input norm and activation displacement trade off, so
-quiet to the detector is bought with loud to the eye, exactly as quiet to the
-eye is bought with loud to the detector; an attacker gets one form of
-imperceptibility or the other, not both. The floor is an upper bound, and a
-fair one: the search bottoms out rather than exhausting its budget (median
-successful displacement flat at about $0.31$ over the last three halvings of
-$c$), though at roughly half the sketched inner budget, so the safe statement
-is that no success was found below the first quartile, about $0.24$.
-% src: same experiment, outputs/full/pareto_trace.csv; params.yaml (attack.search_budget_rationale) [EST — upper-bound discipline]
-
-\paragraph*{What the detector does on the floor set.}
-The detector is \emph{not} evaded: clean-versus-floor AUC is $0.999$ on $a$
-and $0.990$ on $z$ at \texttt{mlp\_10}.
-% src: outputs/full/detection_auc.json (floor_set cells) [EST]
-This is the run's sharpest fact, because at essentially the same displacement
-the benign control sits far lower: JPEG at $\lVert\Delta x\rVert = 0.284$ is
-detected at $0.604$ on $z$, an asymmetry of about $0.39$ AUC at matched
-displacement.
-% src: detection_auc.json; 2026-06-29_h2-v2-eps0004/outputs/h2_crossval/metrics.json (benign_jpeg) [EST — the asymmetry itself]
-The asymmetry is reported without being interpreted, because one alternative
-explanation stays open: the floor set's input perturbation is enormous
-compared with JPEG's, so its small displacement may simply point far off the
-data manifold, a \emph{direction} that a linear probe reads without reading
-magnitude. Separating ``adversarial structure beyond displacement'' from
-``input-driven off-manifold direction'' needs a control this run lacks, a
-benign family matched to the floor set's input $L_\infty$. Objection~7 is
-therefore left as a bounded open question in the ledger: it marks the edge of
-the displacement reading rather than overturning it, and the missing control
-is the natural next experiment.
-% [DECISION 2026-07-28 (Breno): reported, not interpreted; L∞-matched control not run]
-The mechanism reading, meanwhile, is unchanged and sharper than for FGSM:
-$92.4\%$ of the floor displacement's energy is orthogonal to the head's
-functional subspace (FGSM: $87.7\%$), the probe's signal lives there (AUC
-$0.9996$ on the full displacement, $0.9997$ on $\Delta x_\perp$ alone, $0.7804$
-on $\Delta x_\parallel$ alone), and locally at \texttt{mlp\_10} the functional
-component alone is at chance ($0.518$).
-% src: outputs/full/perp_parallel.json [EST — E12-consistent]
-Even an attack optimized to move the activation as little as possible is read
-by the part of its displacement that is not the attack.
+Because the two rules test $H_{M}$, their failure is only consistent with
+$H_{D}$ and does not test it. A test counts as evidence for $H_{D}$ only if it
+could have failed under $H_{D}$ \cite{mayo2018severe_testing}; this is the
+method of strong inference with multiple working hypotheses
+\cite{platt1964strong_inference,chamberlin1890multiple_working_hypotheses}.
+For this reason, the failures of H1 and of H2 carry less weight than the
+displacement-matched control (Section~\ref{sec:adv-main}). The later
+experiments test predictions of $H_{D}$ itself: the displacement-matched
+control (Section~\ref{sec:adv-main}), the success split and the head split
+(Sections~\ref{sec:adv-success} and~\ref{sec:adv-head-split}), and the
+collapse test (Section~\ref{sec:adv-collapse}). These experiments are
+exploratory: we wrote down their expected outcomes before execution, but they
+were not pre-specified.
+% src: EXPERIMENT_PLAN_ATTACKS.md (rev. 2026-07-21) [EXPL]
+The two APGD experiments came last, and both were pre-specified with fixed
+decision rules: the APGD-CE replication (Section~\ref{sec:adv-apgd-ce}) and
+the adaptive attack against the probe (Section~\ref{sec:adv-adaptive}).
+% src: JOURNAL_V3.md §8b (P7, frozen 2026-10-19), §8c (P8, frozen 2026-10-27) [PRE]
 
 % =============================================================================
 \section{Reconciliation with deployment work}
 \label{sec:adv-reconciliation}
-% Objection 11 — SAEgis. All three corroborations verified against
-% arXiv:2605.07447 (HTML) on 2026-07-24; paraphrase only.
+% All three agreements verified against arXiv:2605.07447 (HTML) on 2026-07-24;
+% paraphrase only.
 
-The remaining objection is external: SAEgis \cite{wang2026saegis} builds a
-working SAE-based adversarial firewall for vision--language models, so, the
-objection runs, SAE-based detection works. The specificity ladder of
-Section~\ref{sec:adv-ladder} locates the disagreement. SAEgis's own
-cross-attack analysis already argues against Degree~1: the features its
-firewall uses overlap heavily across attack methods at the earliest vision
-block, with the overlap decreasing with depth.
-% [EXT — verified: near-complete overlap between attack families at vision block 0; claim scoped to that block]
-The matched input-$L_2$ control of this chapter is the Degree-2 instrument:
-taken alone it finds \emph{apparent} class-specificity
-(Section~\ref{sec:adv-regime}), and the displacement axis dissolves it
-(Section~\ref{sec:adv-specificity}). The detector sits at Degree~3, the degree
-an input-space analysis alone could never reach, and Section~\ref{sec:adv-obj9}
-qualifies what Degree~3 means.
-
-This makes the chapter's result a complement to deployment work, not a
-contradiction of it: none of SAEgis's measurements is contradicted, and where
-the two studies overlap they corroborate this one. Its dense, SAE-free
-baseline ties the SAE firewall in domain and beats it on one domain, matching
-$a \geq z$ here. Its SAE reconstruction-error score, which is the scalar
-$\lVert r\rVert$ of this chapter up to a monotone transform (per-example
-reconstruction error equals $\lVert r\rVert^2/d_{\mathrm{model}}$), gives a
-negligible clean--adversarial difference, matching $\dauc = 0.054$ on
-$\lVert r\rVert$ (Table~\ref{tab:adv-decomp004}). And its earliest vision
-block, its most robust cross-attack detector, is the high-frequency-texture
-signal that the matched-displacement analysis isolates
-(Section~\ref{sec:adv-obj5}).
-% [EXT — all three verified 2026-07-24: (1) dense baseline = cosine to averaged embeddings on raw hidden states, ties on two domains and beats SAEgis on the medical domain; (2) reconstruction-MSE anomaly score shows negligible clean-vs-adversarial difference; (3) vision block 0 most robust cross-attack, high-frequency-texture hypothesis]
-What is contested is only the strong reading, that such detectors read
-adversarial-class-specific meaning; the weak reading, that the features build a
-useful detector, stands. Objection~11 is repositioned rather than eliminated:
-this chapter is, in effect, the control experiment that deployment papers
-need, at both degrees, the input-norm match and the displacement match that
-shows even the former is not control enough.
-
-% =============================================================================
-\section{Methodological case studies}
-\label{sec:adv-bugs}
-% Two measurement bugs, kept in the chapter because they motivated the
-% statistical controls of Section~\ref{sec:adv-protocol}. May move to an
-% appendix at final assembly.
-
-Two measurement bugs caught during this work are documented here because each
-produced a plausible result that was wrong, and each yields a transferable
-rule.
-
-\paragraph*{The clip bug: an out-of-distribution artefact masquerading as
-magnitude-invariant detection.}
-The FGSM routine originally applied $\mathrm{clamp}(\cdot, 0, 1)$ to
-ImageNet-\emph{normalized} images, whose values span roughly $[-2.2, 2.6]$.
-% src: DESIGN_CHOICES.md; RESEARCH_LOG.md 2026-04-23 [EST]
-Clipping in that space squashes most pixels: at $\varepsilon{=}0.012$ the
-measured per-image $L_2$ was about $284$ against the $20$ that the
-$\varepsilon$ arithmetic implies, and the clipped images left the normalized
-manifold entirely, a synthetic, $\varepsilon$-independent out-of-distribution
-signal that the detector simply read off. The pre-fix sweep was therefore
-\emph{flat} at AUC $\approx 0.88$, a false confirmation of H1: the artefact
-contributed about $0.23$ AUC at $\varepsilon{=}0.001$ but only $0.02$ at
-$0.032$, cancelling the true magnitude trend.
-% src: RESEARCH_LOG.md 2026-04-23 (delta table) [EST]
-The fix clips where it is physically meaningful (denormalize, clip in $[0,1]$,
-renormalize); post-fix $L_2$ at $\varepsilon{=}0.012$ is $20.51$, consistent
-with theory, and the sweep recovers the monotone curve of
-Table~\ref{tab:adv-h1}.
-% src: src/adv_interp/attacks/fgsm.py [EST]
-The transferable rule: measure the realized perturbation norm against the
-budget arithmetic \emph{before} reporting any detection number. Had the bug
-survived, the flat sweep would have satisfied the two invariance criteria of
-the pre-registered H1 gate (correlation and variance) on an artefact, failing
-only the mean-AUC floor.
-
-\paragraph*{The first-key bug: a layer-provenance error in SAE training.}
-The SAE trainer selected its target activations as the first non-label key of
-the saved activation file. With forward hooks registered in the order
-$[\texttt{layer\_10}, \texttt{layer\_11}]$, that first key was always
-\texttt{layer\_10}, while the \texttt{target\_layer} field in the configuration
-files was dead code.
-% src: CLUSTER_NOTES.md 2026-06-22; RESEARCH_LOG.md [EST]
-The project's ``canonical'' detection number was thus computed on
-\texttt{mlp\_10} alone, not on the \texttt{mlp\_11} or combined layers the
-documentation claimed: a provenance error, not an invalidation of the
-underlying measurement, since the layer-sweep experiment, which isolates one
-layer per run, was unaffected. The fix plumbs an explicit
-\texttt{--target-layer} argument through SAE training and latent encoding,
-removing the silent dependence on hook registration order; \texttt{mlp\_10} was
-then adopted as the canonical layer on the record.
-% src: CLUSTER_NOTES.md (P5 rewire) [EST]
-The transferable rule: never let an analysis target be selected implicitly by
-container ordering; make it an explicit, logged argument.
+SAEgis \cite{wang2026saegis} is an SAE-based adversarial detector for
+vision--language models, built for deployment. Where the two studies overlap,
+they agree. Its dense baseline without an SAE ties the SAE detector in-domain,
+and beats it on one domain, which agrees with the comparison of $a$ and $z$ in
+Section~\ref{sec:adv-scope}. Its SAE reconstruction error, which is the scalar
+$\lVert r\rVert$ of this chapter up to a monotone transform (the per-example
+reconstruction error is $\lVert r\rVert^2/d_{\mathrm{model}}$), shows a
+negligible clean--adversarial difference, which agrees with the input-matched
+$\dauc$ of $0.054$ on $\lVert r\rVert$
+(Table~\ref{tab:adv-representations}). Its most robust cross-attack detector
+is at the earliest vision block, and its authors attribute it to
+high-frequency texture, which agrees with the noise-like direction of
+Section~\ref{sec:adv-collapse}.
+% [EXT — all three verified 2026-07-24: (1) dense baseline = cosine to averaged embeddings on raw hidden states; ties on two domains and beats SAEgis on the medical domain; (2) reconstruction-MSE anomaly score shows negligible clean-vs-adversarial difference; (3) vision block 0 most robust cross-attack, high-frequency-texture hypothesis]
+We contest only the strong reading, that such detectors read adversarial-class
+meaning; the weak reading, that the features give a useful detector, stands.
 
 % =============================================================================
 \section{Limitations and the reading for the thesis}
 \label{sec:adv-closing}
 
 \subsection{Limitations}
-The claims of this chapter are bounded by the instrument and by the scope of
-the runs behind them.
 
-\paragraph*{A null is a null of this probe.}
-Detection here is a \emph{linear} classifier on \emph{mean-pooled}
-activations, so every absence claim is scoped to that instrument. Pooling can
-hide localized signal (Section~\ref{sec:adv-obj8}), and a small non-linear
-probe once recovered about $0.14$ AUC that the linear probe could not see under
-an earlier protocol (Section~\ref{sec:adv-instrument-scope}). A token-level,
-non-linear probe remains future work.
-% src: token_probe_metrics.json; zoo_metrics.csv; D3b_RESULTS.md §3.1 [EST]
+\paragraph*{The main result is exploratory.}
+The decisive control, the displacement-matched one, is exploratory: we wrote
+down its expected outcome before the run, and it replicates over five seeds,
+but it was not pre-specified. \pendingpaper{A1}{Its pre-specified APGD-CE
+replication is at the ceiling of the AUC (Section~\ref{sec:adv-apgd-ce}), so
+the next step is to pre-specify it below the ceiling and run it on new seeds.}
 
-\paragraph*{Residual single-seed scope.}
-The matched-displacement control, the hinge of the chapter, is replicated
-across five seeds; its displacement calibration is performed at
-\texttt{mlp\_10} and inherited by the other layers. The collapse test, the CW
-attack, the minimal-displacement attack, the token-resolved probe, and the
-projection ablation remain single-seed (the last two single-layer), and the
-six-layer decomposition ran at reduced sample.
-% src: 2026-07-23 multiseed; 2026-07-22_collapse-e5; 2026-07-21_cw-attack; 2026-07-25_min-displacement-cw; 2026-07-21_stego-token; 2026-07-21_jacobian; 2026-07-21_decomp-6layer [EST — scope]
+\paragraph*{Limits of the method.}
+The method excludes only the rival explanations that we state, and this set is
+not complete \cite{odonohue2001weaknesses_strong_inference}. Each exclusion
+also depends on auxiliary assumptions, for example that a match of the mean
+displacement is sufficient. The order of the steps is a reconstruction: most
+tests were designed after earlier results were known
+\cite{gelman2014statistical_crisis}, and for this reason we separate them from
+the pre-specified tests
+\cite{nosek2018preregistration_revolution,wagenmakers2012confirmatory_agenda}.
+A claim that the attack has no detection advantage is an equivalence claim
+\cite{lakens2017equivalence_tests}. Our decision rule (mean $\pm2\sigma$ over
+five seeds against a margin of $0.05$ in AUC) is not a formal equivalence
+test, and the margin, set before the runs from the variation between seeds of
+an earlier multi-seed run (standard deviation of $\dauc$ $\approx0.02$), is a
+choice.
+% src: interp_adversarial_image/DESIGN_CHOICES.md D12 (G5.3 rationale)
 
-\paragraph*{SAE health limits latent claims.}
-The FVE $\geq 0.9$ gate passes only at \texttt{mlp\_10} and \texttt{mlp\_11},
-so all claims about $z$ are scoped to those layers; the per-layer FVE also
-disagrees between runs at early layers, an unexplained fit difference that is
-flagged rather than resolved (Section~\ref{sec:adv-sae}), and the dead-feature
-fraction exceeds its bound at \texttt{mlp\_11} for two seeds, whose exclusion
-leaves the verdict unchanged. Healthy per-layer SAEs are future work.
-% src: h2_matched_dx_summary.json; 2026-07-21_decomp-6layer; 2026-07-23 multiseed README [EST]
+\paragraph*{Scope of the instrument.}
+Every absence claim is scoped to a linear probe on mean-pooled activations,
+and pooling can hide localized signal (Section~\ref{sec:adv-scope}). The
+chapter makes no claim about non-linear or token-level probes.
+\pendingpaper{A3}{It also does not test whether a probe trained to separate
+attacks from benign perturbations at equal displacement succeeds; ``not
+meaning'' is tested here as the change of the label, through the success split
+and the head split.}
 
-\paragraph*{Coverage.}
-One dataset (CIFAR-10 upsampled over an ImageNet-pretrained backbone, with no
-native-resolution replica) and four attack constructions plus the
-steganographic control. The minimal-displacement attack is single-seed and its
-asymmetry awaits the input-$L_\infty$-matched control; the pre-registered
-\emph{adaptive} PGD (item A5.4 of the plan) remains unrun, so nothing here
-speaks to an adversary that optimizes against the detector; and the ViT-L/16
-scale check ran only under an earlier protocol. The system is a ViT
-classifier, and no claim is made about vision--language models.
-% src: DESIGN_CHOICES.md D12 (A5.4); 2026-07-25_min-displacement-cw; 2026-07-23_jpeg-matched-l2-dx [PRE/EXPL/scope]
+\paragraph*{Scope of the runs.}
+The displacement-matched control is replicated over five seeds, at six layers
+on $a$ and at the two layers where the SAE passes its health gate on $z$; it
+is calibrated at \texttt{mlp\_10} and matches the mean displacement over
+images, not the displacement of each image. The collapse test, CW, the
+minimal-displacement attack, the token-level probe and the head split are
+single-seed; the adaptive attack uses one budget, and its transfer to the
+clean-vs-FGSM probe is measured in three of five seeds. The SAE health gate
+passes only at \texttt{mlp\_10} and \texttt{mlp\_11}, the per-layer FVE
+disagrees between runs at early layers, and the SAE is trained on the clean
+images of the detection tasks (Section~\ref{sec:adv-sae}). We use one dataset
+(CIFAR-10, upsampled, over an ImageNet-pretrained backbone), one ViT
+classifier and one SAE architecture, and make no claim about vision--language
+models.
+% src: token_probe_metrics.json; zoo_metrics.csv; 2026-07-23 multiseed; 2026-07-22_collapse-e5; 2026-07-21_cw-attack; 2026-07-25_min-displacement-cw; 2026-07-21_stego-token; 2026-07-21_jacobian; 2026-07-21_decomp-6layer; h2_matched_dx_summary.json [EST — scope]
 
 \subsection{The reading for the thesis}
-The chapter set out to characterize what an activation-space adversarial
-detector in a ViT classifier measures. The pre-registered hypotheses fail, and
-fail stably: detection AUC scales monotonically with budget for FGSM and PGD
-alike, and no regime tested, saturated or de-saturated, either attack, brings
-the adversarial--benign gap near its frozen threshold. The contribution beyond
-the negative is what the residual turned out to be. The $\dauc$ of $0.199$
-that survived every input-space control does not survive the displacement one:
-measured on the axis the detector reads, the apparent specificity is
-amplification, not meaning. This is the sense in which detection here is
-\emph{magnitude, not meaning}: magnitude means measured activation
-displacement, and the attack's only privileged role is how cheaply its
-optimization buys it. The two axes trade off, since a classical adversarial
-example is imperceptible in input space and, precisely because it is, loud in
-activation space, while a purpose-built attack reaches a benign corruption's
-displacement only at a $34\times$ input-norm premium on visibly corrupted
-images. The asymmetry that attack leaves behind is owned as the edge of the
-reading, not folded into it.
+% HOLD (decision of 2026-11-16): the chapter title and the one-sentence thesis
+% reading wait for action point A3. This subsection states only what the
+% current evidence supports. THESIS-STATEMENT.md still says "mede-se
+% ||Delta x|| e prevê-se a AUC"; the data of this chapter contradict that
+% sentence (see the second paragraph below), and it is to be corrected in
+% Phase 4.
 
-For the thesis, three things follow. First, the diagnostics question of
-Chapter~\ref{chpt:intro} receives a definite answer in this setting: for
-perturbations that optimize misclassification alone, sparse-feature signatures
-do not isolate a structurally specific perturbation; they collapse into change
-detection, and the change is measurable as one physical variable per example.
-Second, the sparse autoencoder is not load-bearing for that detection. Its
-latents are a lossy view of a signal that the raw activation carries better,
-and the one thing they appeared to add, a larger gap under input-norm
-matching, was amplification read on the wrong axis. The interpretable
-substrate is a legitimate measuring instrument, since it defines the
-on-/off-manifold split, but it is not the source of the signal. Third, and
-this is the part that travels beyond this system, the result was only visible
-because of a control that standard evaluations omit and that the
-pre-registration itself did not anticipate: benign perturbations matched on
-the displacement the detector reads, not on the input. The frozen gates were
-necessary to keep the negative honest, but they were not sufficient to find
-the explanation; that took an exploratory experiment whose expectations were
-written down before it ran and whose status the ledger keeps distinct from
-the pre-registered verdict. Before reading meaning into an activation-space
-detector, measure the per-example displacement it induces and match the
-controls there. Matching the input is not control enough.
+The chapter asked what an activation-space adversarial detector in a ViT
+classifier measures. The usual control, which matches benign perturbations to
+the attack in input norm, reports that the attack is more detectable than
+every benign perturbation ($\dauc=0.199$); when the benign perturbations are
+matched in displacement, this advantage disappears. The explanation that the
+detector reads an adversarial category gives way to a geometric one: the probe
+reads the displacement of the activation along a direction that it learns.
+The geometric quantity is measurable for each example, and it can be
+controlled: we matched it, and the advantage disappeared; an attacker rotated
+it away from the probe direction, and the detection disappeared at an
+unchanged displacement.
+
+The geometric quantity is a vector, not a scalar. The norm
+$\lVert\Delta a\rVert$ alone does not predict the detection AUC: the scalar
+norms are near chance, an attack at the benign scale of displacement is
+detected at $0.999$, an adaptive attack at the attack scale is not detected by
+the probe that it knows, and two attacks with equal mean displacement are
+detected at different AUCs. What the evidence supports is narrower. A large
+displacement is sufficient for detection by a probe trained on that family,
+and at equal displacement the attack has no detection advantage over benign
+perturbations.
+
+Three things follow. First, the sparse autoencoder is not needed for this
+detection, and it raises the apparent specificity: the detection advantage in
+the input-matched control is $0.199$ on its latents and $0.066$ on the raw
+activation. The SAE is a legitimate measuring instrument, but it is not the
+source of the signal. Second, the result was visible only with a control that
+the usual evaluations do not have and that the pre-specified hypotheses did
+not anticipate; the pre-specified tests kept the negative result honest, and
+an exploratory experiment found the explanation, so the two are reported with
+different status (Section~\ref{sec:adv-provenance}). Third, we expect the
+methodological rule to apply beyond this system: before reading meaning into
+an activation-space detector, measure the per-example displacement that it
+reads, and match the controls there; a match in input norm is not sufficient.
+One question stays open, and it bounds the reading: whether the probe reads
+adversarial structure in the minimal-displacement examples
+(Section~\ref{sec:adv-lowdx}).
 
 \end{document}
